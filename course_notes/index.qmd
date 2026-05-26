@@ -3,11 +3,11 @@ toc: false
 number-sections: false
 ---
 
-# Course Overview {.unnumbered}
-
 ::: {.callout-warning title="Under construction"}
-These notes are being written in real time for the first offering of MATH 4310 (Spring 2027). Expect rough edges, placeholder sections, and changes between class meetings. If you spot a typo, an error, or a confusing passage, please flag it — the repository is public and the book updates as the course runs.
+I'm writing these notes as I teach MATH 4310 for the first time this semester, so some sections are still placeholders and others will change between class meetings. If you find a typo or something that doesn't make sense, let me know and I'll fix it.
 :::
+
+# Course Overview {.unnumbered}
 
 These are the course notes for MATH 4310 Computational Bioinformatics.
 
