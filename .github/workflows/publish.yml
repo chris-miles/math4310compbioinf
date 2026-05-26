@@ -32,6 +32,9 @@ jobs:
       - name: Install Python dependencies
         run: python -m pip install -r course_notes/requirements.txt
 
+      - name: Sync assignments into course_notes
+        run: python tools/sync_assignments.py
+
       - name: Render Quarto book
         run: quarto render course_notes
 
