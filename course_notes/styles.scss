@@ -90,7 +90,9 @@ img.sidebar-logo,
   display: inline-block;
 }
 
-#quarto-sidebar .sidebar-title {
+#quarto-sidebar .sidebar-title,
+#quarto-sidebar .sidebar-title > a,
+#quarto-sidebar .sidebar-title a {
   color: var(--black);
   font-family: "Montserrat", Arial, Helvetica, sans-serif;
   font-weight: 700;
@@ -99,6 +101,11 @@ img.sidebar-logo,
   line-height: 1.2;
   text-align: center;
   margin-bottom: 0.85rem;
+}
+
+.navbar-brand-logo > img.navbar-logo,
+.navbar-logo {
+  display: none !important;
 }
 
 #quarto-sidebar .sidebar-item-text {

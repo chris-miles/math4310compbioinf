@@ -92,7 +92,7 @@ format:
     crossrefs-hover: true
     citations-hover: true
     footnotes-hover: true
-    highlight-style: arrow
+    highlight-style: ayu
     code-line-numbers: true
     date-modified: last-modified
     include-after-body:
