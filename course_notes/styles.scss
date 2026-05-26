@@ -399,31 +399,23 @@ span.screen-reader-only,
 }
 
 .callout-note {
-  border-left-color: var(--granite-peak) !important;
+  border-left-color: var(--great-salt-lake) !important;
+  background-color: rgba(58, 191, 192, 0.05);
 }
 
 .callout-warning {
-  border-left-color: var(--red-rocks) !important;
+  border-left-color: var(--wasatch-sunrise) !important;
+  background-color: rgba(255, 184, 29, 0.07);
 }
 
 .callout-tip {
   border-left-color: var(--mountain-green) !important;
+  background-color: rgba(108, 194, 74, 0.06);
 }
 
 .callout-important {
   border-left-color: var(--utah-red) !important;
-}
-
-.callout-tip {
-  background-color: rgba(108, 194, 74, 0.06);
-}
-
-.callout-warning {
-  background-color: rgba(137, 0, 0, 0.045);
-}
-
-.callout-note {
-  background-color: rgba(112, 142, 153, 0.055);
+  background-color: rgba(190, 0, 0, 0.05);
 }
 
 .margin-caption,
