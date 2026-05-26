@@ -5,8 +5,10 @@ project:
 book:
   title: "MATH 4310 Computational Bioinformatics"
   subtitle: "Course Notes"
-  author: "Chris Miles"
-  date: "Spring 2027"
+  author:
+    - name: "Chris Miles"
+      affiliation: "Department of Mathematics, University of Utah"
+  date-modified: last-modified
   description: "Course notes for MATH 4310 Computational Bioinformatics, an upper-division undergraduate theory-and-algorithms class at the University of Utah. Covers sequence alignment, assembly graphs, hidden Markov models, phylogenetics, omics matrices, clustering, and mechanistic models."
   site-url: "https://chris-miles.github.io/math4310compbioinf/"
   favicon: "img/UU Logo-CTR_RGB.svg"
@@ -91,6 +93,7 @@ format:
     crossrefs-hover: true
     citations-hover: true
     footnotes-hover: true
+    highlight-style: arrow
     include-after-body:
       - _includes/expand-first-part-on-index.html
     grid:
@@ -104,5 +107,8 @@ execute:
   warning: false
   message: false
   freeze: auto
+
+language:
+  title-block-modified: "Last Updated"
 
 bibliography: references.bib
