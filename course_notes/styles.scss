@@ -73,6 +73,14 @@ img.sidebar-logo,
   backdrop-filter: blur(12px);
 }
 
+#quarto-sidebar .sidebar-header {
+  text-align: center;
+}
+
+#quarto-sidebar .sidebar-logo-link {
+  display: inline-block;
+}
+
 #quarto-sidebar .sidebar-title {
   color: var(--black);
   font-family: "Montserrat", Arial, Helvetica, sans-serif;
