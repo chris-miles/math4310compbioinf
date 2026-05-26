@@ -11,6 +11,13 @@ Utah undergrad with linear algebra (MATH 2270), data structures (CS 2420), and o
 - Present tense for math and algorithms; past tense only for history.
 - Cut filler: "essentially," "basically," "in some sense," "note that," "it turns out that."
 
+## Web Style and Branding
+- The website uses University of Utah core colors for major UI: Utah Red `#BE0000`, black, white, and neutral greys.
+- Accent colors are subordinate. Use them only for small elements such as callout borders, charts, or infographics. Do not use accent colors for headings, links, page backgrounds, or other major brand-bearing elements.
+- Avoid blue or purple as stand-alone interface colors; they can read as other regional university colors.
+- Headings use Montserrat Bold when available; alternate headings may use Vitesse if a properly licensed web font is available. Body copy uses Source Sans when available, with system sans-serif fallbacks.
+- Use the website format deliberately: callouts, margin notes, collapsible code, and accessible figure captions can carry structure that a PDF cannot.
+
 ## Rigor
 Define formally, then immediately give one sentence of intuition — in that order. State theorems precisely. Default to a **proof sketch** carrying the load-bearing idea; give a full proof only when it is short *and* the proof itself teaches a general lesson worth keeping. Mark deferred proofs explicitly. **Always** justify correctness and complexity claims, even if the justification is one sentence.
 

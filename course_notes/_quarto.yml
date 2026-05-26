@@ -7,9 +7,6 @@ book:
   subtitle: "Course Notes"
   author: "Chris Miles"
   date: "Spring 2027"
-  page-footer:
-    left: "Chris Miles, University of Utah"
-    right: "[chris.miles@utah.edu](mailto:chris.miles@utah.edu)"
   sidebar:
     logo: "img/UU Logo-CTR_RGB.svg"
   page-navigation: true

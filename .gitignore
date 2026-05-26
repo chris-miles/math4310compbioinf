@@ -1,6 +1,7 @@
 # Generated Quarto output
 course_notes/_book/
 course_notes/_book_check*/
+course_notes/_book_font_check/
 course_notes/_freeze/
 course_notes/.quarto/
 course_notes/.gitignore
