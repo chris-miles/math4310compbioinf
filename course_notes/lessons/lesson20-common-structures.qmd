@@ -1,0 +1,18 @@
+---
+title: "Review Across Algorithms and Probability"
+---
+
+## Core Question
+
+What is the common structure behind alignment, assembly, and HMMs?
+
+## Lesson Scaffold
+
+- Compare DP tables, graph paths, and likelihood recurrences.
+- Work through a mixed problem.
+- Review proof sketches and implementation-adjacent pseudocode.
+
+## Assignment
+
+PS7 due.
+

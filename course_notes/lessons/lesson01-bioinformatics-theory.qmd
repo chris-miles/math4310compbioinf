@@ -1,0 +1,64 @@
+---
+title: "What Counts as Bioinformatics Theory?"
+---
+
+## Core Question
+
+What makes a biological-data problem algorithmic or mathematical?
+
+## Biological Data as Mathematical Objects
+
+Bioinformatics often starts with biological objects that can be written down as data: DNA strings, protein strings, read collections, gene-expression matrices, trees, and networks. In this course we ask what structure those objects have and which algorithms or models are justified by that structure.
+
+::: {#def-alphabet}
+An alphabet $\Sigma$ is a finite set of symbols. A sequence over $\Sigma$ is an ordered string $x = x_1x_2\ldots x_n$ with each $x_i \in \Sigma$.
+:::
+
+For DNA we usually take $\Sigma = \{A,C,G,T\}$. For proteins, the alphabet contains the standard amino-acid symbols. This definition deliberately ignores chemistry at first. It gives us a clean mathematical object, and then we can ask what biology was lost when we turned molecules into strings.
+
+::: {.biology}
+DNA sequence comparison is useful because related sequences often preserve traces of shared ancestry or shared function. The mathematical problem is not "find the true biology" directly. It is to define a score, optimization problem, or probability model whose assumptions we can inspect.
+:::
+
+## Three Levels of Understanding
+
+We will often separate tool use, explanation, and design.
+
+| Task | Question |
+|---|---|
+| Run a tool | What output did the software return? |
+| Explain a tool | What mathematical object does the tool use? |
+| Design a toy method | What assumptions are needed for the method to work? |
+
+The course mostly lives in the second and third rows. We build small versions of important methods because small implementations expose the recurrence, graph, likelihood, or matrix operation that the full tool relies on.
+
+## A First Similarity Problem
+
+Suppose we compare these short DNA strings:
+
+```{python}
+#| label: code-lesson01-example-strings
+x = "ACGTT"
+y = "ACGCT"
+z = "TTGCA"
+```
+
+It is reasonable to say that $x$ is more similar to $y$ than to $z$, but that sentence is incomplete until we say what "similar" means. We might count matching positions, allow insertions and deletions, weight some substitutions differently, or look for shared short substrings.
+
+::: {.pitfall}
+Similarity is not a property of two strings alone. It is a property of two strings together with a scoring rule or model.
+:::
+
+## Readiness Check
+
+The first week assumes that we can write small functions, loop over strings, use dictionaries, and fill simple tables. The computing conventions appendix includes a short k-mer counter; later versions of the same idea become seed indexes, de Bruijn graph edges, and sequence features.
+
+## Exercises
+
+::: {#exr-lesson01-scoring-rules}
+Choose two different informal rules for comparing `ACGTT` and `ACGCT`. For each rule, compute the score by hand and write one sentence about the biological assumption it makes.
+:::
+
+::: {#exr-lesson01-data-object}
+Name one biological dataset that is not naturally a single sequence. Describe the mathematical object we might use for it: a table, graph, tree, matrix, or something else.
+:::

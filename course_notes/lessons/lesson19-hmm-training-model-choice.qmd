@@ -1,0 +1,19 @@
+---
+title: "Baum-Welch Conceptually"
+---
+
+## Core Question
+
+Can the model learn from unlabeled sequences?
+
+## Lesson Scaffold
+
+- Distinguish supervised and unsupervised HMM estimation.
+- Present EM as expected counts followed by parameter updates.
+- Discuss Baum-Welch conceptually, without full implementation.
+- Name overfitting and model choice as risks.
+
+## Assignment
+
+PS6 due. PS7 out.
+

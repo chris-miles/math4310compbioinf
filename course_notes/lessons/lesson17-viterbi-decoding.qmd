@@ -1,0 +1,18 @@
+---
+title: "Viterbi Algorithm"
+---
+
+## Core Question
+
+What is the most likely hidden path?
+
+## Lesson Scaffold
+
+- Derive max-product recurrence.
+- Convert to log-space max-sum recurrence.
+- Add backpointers.
+- Justify $\mathcal{O}(nK^2)$ complexity.
+- Compare the structure with alignment dynamic programming.
+- Work through a tiny HMM by hand.
+- Test one-state, deterministic-emission, and short known-path cases.
+- Discuss contribution logs and individual addenda for the triad implementation assignment.

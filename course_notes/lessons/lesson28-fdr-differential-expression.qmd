@@ -1,0 +1,18 @@
+---
+title: "FDR and Differential Expression"
+---
+
+## Core Question
+
+What does FDR control, and how do normalization, variance, and testing interact?
+
+## Lesson Scaffold
+
+- Define false discovery proportion and FDR.
+- Present the Benjamini-Hochberg step-up procedure.
+- Use sorted p-values for graphical interpretation.
+- State independence and positive-dependence assumptions at a high level.
+- Use a simulated gene-expression experiment.
+- Contrast effect size and p-value.
+- Introduce volcano plots conceptually.
+- Connect validation and reproducibility to projects.

@@ -1,0 +1,20 @@
+---
+title: "PCA Lab and Failure Modes"
+---
+
+## Core Question
+
+What can a PCA plot tell us, and what can it hide?
+
+## Lesson Scaffold
+
+- Work through a small expression matrix.
+- Interpret a scree plot.
+- Show a batch-effect example.
+- Compare centering, scaling, and feature filtering.
+- Link to project data exploration.
+
+## Assignment
+
+PS8 due. PS9 out.
+

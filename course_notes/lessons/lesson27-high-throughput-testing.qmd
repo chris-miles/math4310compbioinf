@@ -1,0 +1,15 @@
+---
+title: "Many Tests, Many Mistakes"
+---
+
+## Core Question
+
+What changes when we test thousands of genes?
+
+## Lesson Scaffold
+
+- Simulate null p-values.
+- Count expected false positives across many tests.
+- Introduce family-wise error rate.
+- Explain why naive $p < 0.05$ fails for omics.
+

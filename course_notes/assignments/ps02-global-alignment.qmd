@@ -1,0 +1,18 @@
+---
+title: "Problem Set 2: Global Alignment"
+---
+
+## Draft Role
+
+This assignment is the first serious dynamic-programming proof and implementation.
+
+## Planned Sections
+
+1. Define the Needleman-Wunsch recurrence.
+2. Fill a small DP table by hand.
+3. Prove correctness with an optimal-substructure argument.
+4. Implement score-table construction and traceback.
+5. Verify empty-string, one-character, and tie cases.
+6. Compare two scoring systems.
+7. AI/tool disclosure and failure-mode reflection.
+

@@ -1,0 +1,14 @@
+---
+title: "Notation"
+---
+
+This appendix will collect symbols used across chapters.
+
+| Symbol | Meaning |
+|---|---|
+| $x = x_1x_2\ldots x_n$ | Sequence of length $n$ |
+| $|x|$ | Length of sequence $x$ |
+| $\Sigma$ | Finite alphabet |
+| $s(a,b)$ | Score for aligning symbols $a$ and $b$ |
+| $\mathcal{O}(\cdot)$ | Asymptotic growth rate |
+

@@ -1,0 +1,20 @@
+---
+title: "Seed-and-Extend and BLAST Intuition"
+---
+
+## Core Question
+
+How do alignment tools search large databases quickly?
+
+## Lesson Scaffold
+
+- Explain why exact DP against every database sequence is too expensive.
+- Define exact seeds and extension.
+- Discuss sensitivity-speed tradeoffs.
+- Introduce E-values conceptually.
+- Name low-complexity regions, repeats, and composition bias as failure modes.
+
+## Assignment
+
+PS2 due. PS3 out.
+

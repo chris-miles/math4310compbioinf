@@ -1,0 +1,55 @@
+---
+title: "Computing Conventions"
+---
+
+This appendix collects the computing conventions used throughout the notes and assignments.
+
+## Tools
+
+The default language for code examples is Python 3.11 or later. We use standard scientific Python libraries for arrays, tables, plots, and numerical routines:
+
+- `numpy`
+- `scipy`
+- `pandas`
+- `matplotlib`
+- selected domain libraries when they support, rather than replace, the mathematical idea being studied
+
+When an algorithm is central to the course, we implement a small version from scratch before using a library implementation.
+
+## Reproducibility
+
+Every computational answer needs a verification check. A check can be a hand-computed toy case, an edge case with a known answer, a comparison between two independent formulations, or a test that shows a failure mode.
+
+AI coding assistance is allowed when an assignment permits it, but AI output is unverified output. Submitted work must include enough tests and explanation that the result can be defended without appealing to the tool that produced it.
+
+## Figure Setup
+
+Figure-producing chunks in the notes use the shared matplotlib style file.
+
+```{python}
+#| label: code-setup-figure-style
+#| eval: false
+import matplotlib.pyplot as plt
+
+plt.style.use("course_notes/style/figstyle.mplstyle")
+```
+
+Quarto controls figure size through chunk options and `_quarto.yml`. Chapter code should not set `figsize`, `dpi`, or figure-size rcParams.
+
+## Code Style
+
+Student-copyable code favors explicit loops, clear function names, and small examples. A short implementation that reveals the recurrence is better than a library call that hides it.
+
+```{python}
+#| label: code-setup-kmer-counter
+def count_kmers(sequence: str, k: int) -> dict[str, int]:
+    """Count length-k substrings in a sequence."""
+    counts: dict[str, int] = {}
+    for start in range(len(sequence) - k + 1):
+        kmer = sequence[start:start + k]
+        counts[kmer] = counts.get(kmer, 0) + 1
+    return counts
+
+
+count_kmers("ACGACG", 2)
+```

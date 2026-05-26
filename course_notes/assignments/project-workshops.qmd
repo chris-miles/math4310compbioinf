@@ -1,0 +1,28 @@
+---
+title: "Project Workshops"
+---
+
+## Workshop 1: Proposal and Repository Skeleton
+
+Planned deliverables:
+
+- Biological question.
+- Course method.
+- Data source and permission notes.
+- Expected input and output.
+- Validation check.
+- Repository skeleton.
+
+Use this workshop to convert a starter track into a concrete plan. Teams should be able to say what mathematical object they are building, what input it takes, what output it produces, and how they will know whether the output is plausible.
+
+## Workshop 2: Preliminary Results and Limitation Audit
+
+Planned deliverables:
+
+- One result produced by code that runs on a small input.
+- README draft.
+- Validation evidence.
+- One fragile assumption or failure mode.
+- Next steps before final submission.
+
+Use this workshop as a project clinic. The main evidence is not a polished final result yet; it is a working path from data to output, plus a clear statement of what still needs to be checked.

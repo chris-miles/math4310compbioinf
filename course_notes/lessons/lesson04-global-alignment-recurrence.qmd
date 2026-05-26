@@ -1,0 +1,20 @@
+---
+title: "Needleman-Wunsch Recurrence"
+---
+
+## Core Question
+
+How do we align two whole sequences optimally?
+
+## Lesson Scaffold
+
+- Define global alignment.
+- Introduce the DP table entry $F(i,j)$.
+- Derive the three-way recurrence.
+- Set boundary conditions.
+- Fill one small table by hand.
+
+## Notes To Draft
+
+Boundary conditions should be presented as model choices: aligning a prefix to the empty string means paying repeated gap costs.
+

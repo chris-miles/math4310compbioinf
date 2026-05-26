@@ -1,0 +1,15 @@
+---
+title: "ODEs for Gene Regulation"
+---
+
+## Core Question
+
+What is a mechanistic model trying to explain?
+
+## Lesson Scaffold
+
+- Define state variables and parameters.
+- Model production and degradation.
+- Define steady states.
+- Treat numerical simulation as evidence, not proof.
+

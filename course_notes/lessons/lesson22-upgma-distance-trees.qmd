@@ -1,0 +1,15 @@
+---
+title: "UPGMA and Neighbor-Joining Intuition"
+---
+
+## Core Question
+
+How do clustering algorithms build trees?
+
+## Lesson Scaffold
+
+- Run UPGMA step by step.
+- Explain why UPGMA assumes clock-like evolution.
+- Introduce neighbor-joining conceptually.
+- Discuss complexity and tie handling.
+

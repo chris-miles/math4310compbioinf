@@ -1,0 +1,19 @@
+---
+title: "Implementation Clinic"
+---
+
+## Core Question
+
+How do table definitions become reliable code?
+
+## Lesson Scaffold
+
+- Translate table indices into Python list or array indices.
+- Build a score-table function before traceback.
+- Test empty strings and one-character strings.
+- Name common bugs: off-by-one indexing, wrong boundary signs, missing ties.
+
+## Assignment
+
+PS1 due. PS2 out.
+

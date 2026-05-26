@@ -1,0 +1,15 @@
+---
+title: "Distances, Clustering, and kNN Graphs"
+---
+
+## Core Question
+
+What does it mean for samples or cells to be near each other?
+
+## Lesson Scaffold
+
+- Compare Euclidean, correlation, and cosine distances.
+- Briefly review k-means and hierarchical clustering.
+- Construct a k-nearest-neighbor graph.
+- Discuss the curse of dimensionality.
+

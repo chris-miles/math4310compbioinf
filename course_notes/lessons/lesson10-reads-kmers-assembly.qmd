@@ -1,0 +1,15 @@
+---
+title: "Reads, k-mers, and Assembly"
+---
+
+## Core Question
+
+How can short reads reconstruct a long genome?
+
+## Lesson Scaffold
+
+- Define reads, coverage, and sequencing errors.
+- Contrast overlap-layout-consensus with de Bruijn graph framing.
+- Build a k-mer spectrum.
+- Reconstruct a short string from k-mers by hand.
+

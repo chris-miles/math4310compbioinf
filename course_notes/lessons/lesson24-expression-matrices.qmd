@@ -1,0 +1,16 @@
+---
+title: "Expression Data as a Matrix"
+---
+
+## Core Question
+
+What is an RNA-seq or omics matrix mathematically?
+
+## Lesson Scaffold
+
+- Define samples by features.
+- Discuss counts, library size, and log transforms.
+- Introduce centering and scaling.
+- Explain batch effects as unwanted structure.
+- Discuss why more features than samples matters.
+

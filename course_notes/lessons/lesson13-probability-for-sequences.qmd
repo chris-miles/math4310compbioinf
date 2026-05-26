@@ -1,0 +1,15 @@
+---
+title: "Probability Refresher for Sequences"
+---
+
+## Core Question
+
+What is the probability of a biological sequence under a model?
+
+## Lesson Scaffold
+
+- Define random variables, conditional probability, and likelihood.
+- Introduce iid background nucleotide models.
+- Use log-likelihoods to avoid numerical underflow.
+- Distinguish probability of data from probability of parameters.
+

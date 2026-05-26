@@ -1,0 +1,15 @@
+---
+title: "Affine Gap Penalties"
+---
+
+## Core Question
+
+Why should one long gap cost less than many short gaps?
+
+## Lesson Scaffold
+
+- Motivate gap-open and gap-extend penalties.
+- Define three DP states.
+- Derive the state-expanded recurrence.
+- Explain why the runtime remains $\mathcal{O}(nm)$ for a fixed number of states.
+

@@ -1,0 +1,15 @@
+---
+title: "Distances and Molecular Clocks"
+---
+
+## Core Question
+
+How do sequence differences become evolutionary distances?
+
+## Lesson Scaffold
+
+- Compute pairwise distances from aligned sequences.
+- Discuss corrections for multiple hits conceptually.
+- Define the ultrametric assumption.
+- Treat the molecular clock as a model assumption.
+

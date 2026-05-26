@@ -1,0 +1,16 @@
+---
+title: "PCA and SVD"
+---
+
+## Core Question
+
+What does PCA optimize?
+
+## Lesson Scaffold
+
+- Present variance maximization.
+- Present the SVD view.
+- Define scores, loadings, and singular values.
+- Connect PCA to low-rank approximation.
+- Add interpretability warnings.
+

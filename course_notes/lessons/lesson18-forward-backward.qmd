@@ -1,0 +1,17 @@
+---
+title: "Forward-Backward and Posterior Decoding"
+---
+
+## Core Question
+
+What is the total probability of the observed sequence, and how likely is each state at each position?
+
+## Lesson Scaffold
+
+- Contrast sum-product with max-product.
+- Derive the forward recurrence.
+- Compute likelihood of observations.
+- Derive the backward recurrence.
+- Combine forward and backward variables into posterior state probabilities.
+- Compare Viterbi path and marginal posterior decoding.
+- Introduce scaling or log-sum-exp for numerical stability.

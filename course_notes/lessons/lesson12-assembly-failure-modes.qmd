@@ -1,0 +1,19 @@
+---
+title: "Repeats, Errors, and Graph Cleaning"
+---
+
+## Core Question
+
+Where does the elegant graph model fail?
+
+## Lesson Scaffold
+
+- Show repeat-induced path ambiguity.
+- Show error-induced tips and bubbles.
+- Compare two values of $k$.
+- Discuss contiguity, correctness, and coverage as validation ideas.
+
+## Assignment
+
+PS3 due. PS4 out.
+

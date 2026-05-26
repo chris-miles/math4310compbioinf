@@ -1,0 +1,18 @@
+---
+title: "Hill Functions and Toggle Switches"
+---
+
+## Core Question
+
+How does cooperativity create switch-like behavior, and when is a small mechanistic model useful?
+
+## Lesson Scaffold
+
+- Define Hill activation and repression functions.
+- Draw nullclines.
+- Use phase-line or slope intuition for stability.
+- Explain bistability as memory.
+- Write two-gene toggle-switch equations.
+- Sketch a phase plane.
+- Explore parameter sensitivity.
+- Contrast mechanistic ODEs with HMMs and matrix methods.

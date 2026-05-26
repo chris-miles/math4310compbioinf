@@ -1,0 +1,15 @@
+---
+title: "de Bruijn Graphs and Eulerian Paths"
+---
+
+## Core Question
+
+Why does assembly become an Eulerian path problem?
+
+## Lesson Scaffold
+
+- Define nodes as $(k-1)$-mers and edges as $k$-mers.
+- State Eulerian path conditions.
+- Present Hierholzer's algorithm conceptually.
+- Analyze complexity in terms of the number of k-mers.
+

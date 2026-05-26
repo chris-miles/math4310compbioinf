@@ -1,0 +1,61 @@
+---
+title: "Log-Odds Scores and Biological Assumptions"
+---
+
+## Core Question
+
+What does an alignment score mean?
+
+## Scores Are Model Choices
+
+An alignment score assigns numerical value to matches, mismatches, and gaps. The numbers are not neutral. They encode assumptions about which changes are plausible and which changes should count as evidence against relatedness.
+
+::: {#def-log-odds-score}
+For symbols $a$ and $b$, a log-odds score compares a related-sequence model to a background model:
+$$
+s(a,b) = \log \frac{p_{\text{related}}(a,b)}{p_{\text{background}}(a,b)}.
+$$
+:::
+
+Positive scores favor the related model for that aligned pair. Negative scores favor the background model. The base of the logarithm changes the units, but not the ordering of scores.
+
+## A Toy Score Table
+
+The simplest DNA score table gives one value to a match and another to a mismatch.
+
+```{python}
+#| label: code-lesson03-simple-score
+def simple_dna_score(a: str, b: str) -> int:
+    """Score one aligned pair of DNA symbols."""
+    if a == b:
+        return 1
+    return -1
+
+
+[simple_dna_score(a, b) for a, b in zip("ACGTT", "ACGCT")]
+```
+
+This table is easy to compute with, but it treats every mismatch the same. Later we will use richer scoring matrices for proteins and gap penalties for insertions and deletions.
+
+::: {.pitfall}
+If every match has a positive score and mismatches are not penalized enough, long unrelated sequences can receive high scores just by accumulating random matches.
+:::
+
+## Expected Score
+
+A useful scoring system should make unrelated random alignments unattractive on average. For a background distribution $q(a,b)$ over aligned pairs, the expected score is
+$$
+\mathbb{E}[s] = \sum_{a,b} q(a,b)s(a,b).
+$$
+
+The expectation is a model-based warning sign. It does not prove that a particular alignment is meaningful, but it tells us whether random background pairs tend to accumulate positive evidence.
+
+## Exercises
+
+::: {#exr-lesson03-expected-score}
+Assume each DNA pair is equally likely under a background model. Compute the expected score for a match score of $+1$ and mismatch score of $-1$.
+:::
+
+::: {#exr-lesson03-score-assumption}
+Give one biological reason a protein scoring matrix might not treat all mismatches equally.
+:::

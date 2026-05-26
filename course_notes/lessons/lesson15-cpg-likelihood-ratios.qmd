@@ -1,0 +1,20 @@
+---
+title: "CpG Islands as Likelihood Ratios"
+---
+
+## Core Question
+
+How can a probabilistic model classify genomic regions?
+
+## Lesson Scaffold
+
+- Introduce CpG biological motivation.
+- Compare island and background Markov models.
+- Define a log-likelihood ratio classifier.
+- Discuss thresholds, sensitivity, and specificity.
+- Name training bias and genome-specific composition as failure modes.
+
+## Assignment
+
+PS4 due. PS5 out.
+

@@ -1,0 +1,46 @@
+# Shared matplotlib style for MATH 4310 course notes.
+# Apply with: plt.style.use("course_notes/style/figstyle.mplstyle")
+# Do NOT set figure.figsize, figure.dpi, or savefig.dpi here — Quarto
+# controls those via _quarto.yml and per-chunk fig-width/fig-height.
+
+# --- Layout ---
+savefig.bbox:          tight
+figure.constrained_layout.use: True
+
+# --- Font ---
+font.family:           sans-serif
+font.sans-serif:       Arial, Helvetica, DejaVu Sans
+font.size:             10
+mathtext.fontset:      dejavusans
+
+# --- Axes ---
+axes.titlesize:        10
+axes.labelsize:        10
+axes.linewidth:        0.8
+axes.spines.top:       False
+axes.spines.right:     False
+axes.grid:             False
+axes.prop_cycle:       cycler('color', ['#000000', '#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7'])
+
+# --- Ticks ---
+xtick.direction:       out
+ytick.direction:       out
+xtick.labelsize:       9
+ytick.labelsize:       9
+xtick.major.size:      3.5
+ytick.major.size:      3.5
+xtick.major.width:     0.8
+ytick.major.width:     0.8
+
+# --- Lines and markers ---
+lines.linewidth:       1.5
+lines.markersize:      5
+lines.markeredgewidth: 0.0
+
+# --- Legend ---
+legend.frameon:        False
+legend.fontsize:       9
+legend.handlelength:   1.5
+
+# --- Image / colormap defaults ---
+image.cmap:            viridis

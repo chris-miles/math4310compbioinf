@@ -1,0 +1,19 @@
+---
+title: "Method Selection and Modern Frontiers"
+---
+
+## Core Question
+
+Given a biological question, what mathematical object should we build?
+
+## Lesson Scaffold
+
+- Compare strings, graphs, hidden-state sequences, trees, matrices, tests, and ODEs.
+- Build a method-selection guide.
+- Practice with project-style prompts.
+- Require one assumption and one failure mode for each method choice.
+- Audit project validation checks.
+- Long-read assembly as graph plus error model.
+- Pangenome graphs as graph generalization.
+- Profile HMMs as richer sequence-family models.
+- Deep sequence models as learned scores or representations.

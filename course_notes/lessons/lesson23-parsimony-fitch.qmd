@@ -1,0 +1,20 @@
+---
+title: "Parsimony and Fitch's Algorithm"
+---
+
+## Core Question
+
+Can we infer a tree by minimizing character changes?
+
+## Lesson Scaffold
+
+- Define a character matrix.
+- State the parsimony objective.
+- Run Fitch's algorithm on a fixed tree.
+- Explain why tree search is hard.
+- Contrast distance and character methods.
+
+## Assignment
+
+PS8 out.
+

@@ -1,0 +1,16 @@
+---
+title: "Markov Chains"
+---
+
+## Core Question
+
+How does local dependence change sequence probability?
+
+## Lesson Scaffold
+
+- Define a transition matrix.
+- State the first-order Markov assumption.
+- Compute sequence likelihood.
+- Simulate short sequences.
+- Compare iid and Markov likelihoods.
+

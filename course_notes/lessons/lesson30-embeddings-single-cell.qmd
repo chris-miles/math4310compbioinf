@@ -1,0 +1,18 @@
+---
+title: "Embeddings and Single-Cell Case Study"
+---
+
+## Core Question
+
+Why are modern embeddings useful but easy to overinterpret?
+
+## Lesson Scaffold
+
+- Treat embeddings as neighborhood-preserving summaries.
+- Compare t-SNE and UMAP at the level of objectives and tradeoffs.
+- Discuss hyperparameters and instability.
+- Explain why visual clusters are not automatically biological cell types.
+- Start from matrix preprocessing in a single-cell workflow.
+- Use PCA before neighborhood graphs.
+- Separate clustering from annotation.
+- Treat cell labels as claims, not raw data.

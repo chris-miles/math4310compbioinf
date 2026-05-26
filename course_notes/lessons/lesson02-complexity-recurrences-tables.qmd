@@ -1,0 +1,54 @@
+---
+title: "Complexity, Recurrences, and Tables"
+---
+
+## Core Question
+
+Why is exhaustive alignment impossible?
+
+## From Search Trees to Tables
+
+Many bioinformatics algorithms begin with a large search space. If we compare two sequences by allowing matches, mismatches, insertions, and deletions, the number of possible alignments grows too quickly to enumerate for realistic inputs.
+
+::: {#def-asymptotic-growth}
+For nonnegative functions $f$ and $g$, we write $f(n) \in \mathcal{O}(g(n))$ if there are constants $C$ and $n_0$ such that $f(n) \le Cg(n)$ for all $n \ge n_0$.
+:::
+
+The definition suppresses constants so we can compare growth rates. It does not say constants never matter. It says that, once inputs are large enough, the shape of the growth rate dominates the comparison.
+
+## Recurrences as Computational Definitions
+
+A recurrence defines a quantity in terms of smaller quantities. Dynamic programming works when the smaller quantities can be reused instead of recomputed.
+
+::: {#exm-lesson02-grid-paths}
+Let $P(i,j)$ be the number of paths from the upper-left corner of a grid to position $(i,j)$ when each step moves right or down. Then
+$$
+P(i,j) = P(i-1,j) + P(i,j-1)
+$$
+with boundary values $P(0,j)=1$ and $P(i,0)=1$.
+:::
+
+The table is not only an implementation trick. It records the proof structure: every path into $(i,j)$ arrives from exactly one of two smaller positions.
+
+::: {.algorithm}
+Algorithm 2.1. Fill a recurrence table.
+
+1. Define what each table entry means.
+2. Set boundary entries.
+3. Fill entries in an order that makes dependencies available.
+4. Return the entry that represents the desired quantity.
+:::
+
+## Why This Matters for Alignment
+
+Alignment recurrences have the same shape as the grid example, but each move has a score and a biological interpretation. A diagonal move aligns two symbols. A vertical or horizontal move introduces a gap. The table lets us reason about all alignments without listing them one at a time.
+
+## Exercises
+
+::: {#exr-lesson02-growth}
+For each runtime, say which grows faster as $n$ increases: $\mathcal{O}(n)$, $\mathcal{O}(n^2)$, $\mathcal{O}(2^n)$. Then give one biological-data task where the difference would matter.
+:::
+
+::: {#exr-lesson02-table-order}
+Draw a $4 \times 4$ grid-path table and mark an order in which entries can be filled. Explain why your order respects the recurrence.
+:::

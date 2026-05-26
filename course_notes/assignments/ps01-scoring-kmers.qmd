@@ -1,0 +1,17 @@
+---
+title: "Problem Set 1: Scoring, Complexity, and k-mers"
+---
+
+## Draft Role
+
+This assignment is the ramp-up problem set. It checks whether students can translate simple sequence assumptions into scores, reason about growth rates, and write a small k-mer counter.
+
+## Planned Sections
+
+1. Log-odds scoring from toy counts.
+2. Complexity comparison for simple string algorithms.
+3. k-mer counting implementation.
+4. Verification on hand-checkable inputs.
+5. Failure-mode reflection on what k-mers ignore.
+6. AI/tool disclosure.
+

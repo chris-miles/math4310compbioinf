@@ -1,0 +1,32 @@
+# Generated Quarto output
+course_notes/_book/
+course_notes/_book_check*/
+course_notes/_freeze/
+course_notes/.quarto/
+
+# Private/reference materials not suitable for a public course repo
+reference_docs/
+course_notes/planning/source_digests/
+.claude/
+.tools/
+AGENTS.md
+CLAUDE.md
+
+# Large or binary source artifacts
+*.pdf
+*.docx
+*.zip
+*.tar.gz
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/

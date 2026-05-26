@@ -1,0 +1,16 @@
+---
+title: "HMM Definitions"
+---
+
+## Core Question
+
+What changes when the state is hidden?
+
+## Lesson Scaffold
+
+- Define hidden states and observed emissions.
+- State transition and emission probabilities.
+- State conditional independence assumptions.
+- Compute the joint probability of a state path and observations.
+- Connect toy states to CpG status, exon/intron status, or membrane regions.
+

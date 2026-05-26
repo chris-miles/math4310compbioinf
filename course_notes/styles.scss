@@ -1,0 +1,144 @@
+/*-- scss:defaults --*/
+
+$primary: #be0000;
+$link-color: #9e1b32;
+$body-color: #202124;
+$body-bg: #fbfbf9;
+$font-family-sans-serif: Arial, Helvetica, "Segoe UI", sans-serif;
+$headings-font-weight: 650;
+$headings-color: #161616;
+$code-color: #7a1f2b;
+
+/*-- scss:rules --*/
+
+:root {
+  --utah-red: #be0000;
+  --utah-red-dark: #8c0f1f;
+  --ink: #202124;
+  --muted-ink: #5d6670;
+  --paper: #fbfbf9;
+  --soft-gray: #f2f3f3;
+  --rule: #d8dcdf;
+}
+
+body {
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.sidebar-logo {
+  max-width: 180px;
+  margin: 0.6rem auto 1rem;
+}
+
+#quarto-sidebar {
+  border-right: 1px solid var(--rule);
+  background: #ffffff;
+}
+
+#quarto-sidebar .sidebar-title {
+  color: #151515;
+  font-weight: 700;
+}
+
+#quarto-sidebar .sidebar-item-text {
+  line-height: 1.25;
+}
+
+#quarto-sidebar .sidebar-item-section > .sidebar-item-container {
+  color: #151515;
+  font-weight: 700;
+}
+
+#quarto-content {
+  background:
+    linear-gradient(90deg, rgba(190, 0, 0, 0.05), transparent 20rem),
+    var(--paper);
+}
+
+main.content {
+  max-width: 820px;
+}
+
+h1.title {
+  border-bottom: 4px solid var(--utah-red);
+  padding-bottom: 0.45rem;
+  margin-bottom: 1.25rem;
+}
+
+h2 {
+  margin-top: 2rem;
+}
+
+p {
+  line-height: 1.62;
+}
+
+a {
+  text-underline-offset: 0.16em;
+}
+
+blockquote {
+  color: var(--muted-ink);
+  border-left-color: var(--utah-red);
+}
+
+table {
+  font-size: 0.95rem;
+}
+
+.cell-output,
+pre.sourceCode,
+div.sourceCode {
+  border-radius: 6px;
+}
+
+pre.sourceCode {
+  border: 1px solid #e2e5e8;
+}
+
+code {
+  border-radius: 4px;
+}
+
+.code-copy-button {
+  color: var(--muted-ink);
+}
+
+.algorithm,
+.pitfall,
+.biology {
+  border-left: 0.28rem solid #777;
+  margin: 1.15rem 0;
+  padding: 0.85rem 1rem;
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+.algorithm {
+  border-left-color: #0072b2;
+}
+
+.pitfall {
+  border-left-color: #d55e00;
+}
+
+.biology {
+  border-left-color: #009e73;
+}
+
+.algorithm > p:first-child,
+.pitfall > p:first-child,
+.biology > p:first-child {
+  margin-top: 0;
+}
+
+.callout {
+  border-radius: 6px;
+}
+
+.nav-page {
+  border-top: 1px solid var(--rule);
+  margin-top: 2rem;
+}
+

@@ -1,0 +1,95 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "MATH 4310 Computational Bioinformatics"
+  subtitle: "Course Notes"
+  author: "Chris Miles"
+  date: "Spring 2027"
+  page-footer:
+    left: "Chris Miles, University of Utah"
+    right: "[chris.miles@utah.edu](mailto:chris.miles@utah.edu)"
+  sidebar:
+    logo: "img/UU Logo-CTR_RGB.svg"
+  page-navigation: true
+  chapters:
+    - index.qmd
+    - using-notes.qmd
+    - part: "Foundations"
+      chapters:
+        - lessons/lesson01-bioinformatics-theory.qmd
+        - lessons/lesson02-complexity-recurrences-tables.qmd
+        - lessons/lesson03-log-odds-scoring.qmd
+    - part: "Pairwise Alignment"
+      chapters:
+        - lessons/lesson04-global-alignment-recurrence.qmd
+        - lessons/lesson05-global-alignment-correctness.qmd
+        - lessons/lesson06-global-alignment-implementation.qmd
+        - lessons/lesson07-local-alignment.qmd
+        - lessons/lesson08-affine-gap-models.qmd
+        - lessons/lesson09-seed-extend-search.qmd
+    - part: "Assembly Graphs"
+      chapters:
+        - lessons/lesson10-reads-kmers-assembly.qmd
+        - lessons/lesson11-de-bruijn-graphs.qmd
+        - lessons/lesson12-assembly-failure-modes.qmd
+    - part: "Probabilistic Sequence Models"
+      chapters:
+        - lessons/lesson13-probability-for-sequences.qmd
+        - lessons/lesson14-markov-chains.qmd
+        - lessons/lesson15-cpg-likelihood-ratios.qmd
+        - lessons/lesson16-hidden-markov-models.qmd
+        - lessons/lesson17-viterbi-decoding.qmd
+        - lessons/lesson18-forward-backward.qmd
+        - lessons/lesson19-hmm-training-model-choice.qmd
+        - lessons/lesson20-common-structures.qmd
+    - part: "Phylogenetics"
+      chapters:
+        - lessons/lesson21-phylogenetic-distances.qmd
+        - lessons/lesson22-upgma-distance-trees.qmd
+        - lessons/lesson23-parsimony-fitch.qmd
+    - part: "Omics Matrices and Testing"
+      chapters:
+        - lessons/lesson24-expression-matrices.qmd
+        - lessons/lesson25-pca-svd.qmd
+        - lessons/lesson26-pca-failure-modes.qmd
+        - lessons/lesson27-high-throughput-testing.qmd
+        - lessons/lesson28-fdr-differential-expression.qmd
+    - part: "Clustering, Single-Cell Data, and Mechanistic Models"
+      chapters:
+        - lessons/lesson29-clustering-neighborhood-graphs.qmd
+        - lessons/lesson30-embeddings-single-cell.qmd
+        - lessons/lesson31-gene-regulation-odes.qmd
+        - lessons/lesson32-hill-functions-toggle-switches.qmd
+    - part: "Synthesis"
+      chapters:
+        - lessons/lesson33-method-selection-frontiers.qmd
+    - part: "Assignments"
+      chapters:
+        - assignments/ps01-scoring-kmers.qmd
+        - assignments/ps02-global-alignment.qmd
+        - assignments/project-workshops.qmd
+  appendices:
+    - appendices/computing-conventions.qmd
+    - appendices/notation.qmd
+
+format:
+  html:
+    theme: cosmo
+    css: styles.scss
+    toc: true
+    number-sections: true
+    code-copy: true
+    code-overflow: wrap
+    fig-width: 6
+    fig-height: 4
+    fig-dpi: 150
+
+execute:
+  echo: true
+  warning: false
+  message: false
+  freeze: auto
+
+bibliography: references.bib

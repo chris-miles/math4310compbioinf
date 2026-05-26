@@ -1,0 +1,20 @@
+---
+title: "Correctness and Traceback"
+---
+
+## Core Question
+
+Why does the recurrence actually find an optimum?
+
+## Lesson Scaffold
+
+- State the optimal-substructure claim.
+- Give a proof sketch for the Needleman-Wunsch recurrence.
+- Define traceback pointers.
+- Discuss ties and multiple optimal alignments.
+- Justify $\mathcal{O}(nm)$ time and memory.
+
+## Notes To Draft
+
+Use a small example where two tracebacks tie so students see that an optimal score need not imply a unique alignment.
+

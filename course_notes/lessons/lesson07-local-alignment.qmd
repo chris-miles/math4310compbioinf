@@ -1,0 +1,15 @@
+---
+title: "Smith-Waterman Local Alignment"
+---
+
+## Core Question
+
+How do we find the best matching region inside longer sequences?
+
+## Lesson Scaffold
+
+- Contrast local and global biological use cases.
+- Add zero to the alignment recurrence.
+- Explain the traceback stopping rule.
+- Interpret a local score as evidence for one region, not the whole sequence.
+
