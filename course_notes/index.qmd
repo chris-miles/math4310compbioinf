@@ -9,9 +9,7 @@ I'm writing these notes as I teach MATH 4310 for the first time this semester, s
 
 # Course Overview {.unnumbered}
 
-These are the course notes for MATH 4310 Computational Bioinformatics.
-
-The lesson sequence is organized by mathematical object rather than by class meeting. The outline below gives the rough path through the semester.
+Lessons are grouped by mathematical object rather than by class day, so some take a single meeting and others span a week.
 
 ::: {.timeline-table}
 | Weeks | Module | Main topics |
@@ -26,5 +24,3 @@ The lesson sequence is organized by mathematical object rather than by class mee
 | 13 | Mechanistic models | Gene-regulation ODEs, Hill functions, bistability, toggle switches |
 | 14 | Synthesis | Method choice, validation checks, project connections, modern extensions |
 :::
-
-The first half of the course focuses on strings, dynamic programs, graphs, and hidden-state models. The second half moves from evolutionary trees to high-dimensional matrices, statistical testing, clustering, and compact mechanistic models.
