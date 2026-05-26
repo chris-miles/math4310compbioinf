@@ -37,8 +37,8 @@ $code-color: #890000;
 body {
   color: var(--ink);
   background:
-    linear-gradient(90deg, rgba(190, 0, 0, 0.10), rgba(190, 0, 0, 0.03) 16rem, transparent 34rem) fixed,
-    linear-gradient(270deg, rgba(58, 191, 192, 0.06), rgba(58, 191, 192, 0.02) 18rem, transparent 36rem) fixed,
+    linear-gradient(90deg, rgba(190, 0, 0, 0.14), rgba(190, 0, 0, 0.05) 22rem, transparent 44rem) fixed,
+    linear-gradient(270deg, rgba(58, 191, 192, 0.04), transparent 28rem) fixed,
     var(--page-wash);
 }
 
@@ -49,12 +49,14 @@ body::before {
   pointer-events: none;
   z-index: -1;
   background:
-    /* Top-left: red rocks (anchor) */
-    radial-gradient(circle at 8rem 5rem, rgba(190, 0, 0, 0.20), transparent 22rem),
-    /* Bottom-right: great salt lake (subtle teal) */
-    radial-gradient(circle at calc(100% - 6rem) calc(100% - 6rem), rgba(58, 191, 192, 0.10), transparent 24rem),
-    /* Bottom-left: granite peak (cool blue-grey balance) */
-    radial-gradient(circle at 4rem calc(100% - 8rem), rgba(112, 142, 153, 0.13), transparent 22rem);
+    /* Top-left: utah red (large anchor) */
+    radial-gradient(ellipse 34rem 28rem at 2rem 0, rgba(190, 0, 0, 0.24), transparent 75%),
+    /* Top-right: red rocks (deeper red accent) */
+    radial-gradient(circle at calc(100% - 8rem) 5rem, rgba(137, 0, 0, 0.16), transparent 22rem),
+    /* Bottom-right: great salt lake (small teal accent) */
+    radial-gradient(circle at calc(100% - 6rem) calc(100% - 6rem), rgba(58, 191, 192, 0.08), transparent 18rem),
+    /* Bottom-left: granite peak (subtle cool balance) */
+    radial-gradient(circle at 4rem calc(100% - 10rem), rgba(112, 142, 153, 0.09), transparent 18rem);
   background-repeat: no-repeat;
 }
 
