@@ -49,13 +49,11 @@ body::before {
   pointer-events: none;
   z-index: -1;
   background:
-    /* Top-left: red rocks */
+    /* Top-left: red rocks (anchor) */
     radial-gradient(circle at 8rem 5rem, rgba(190, 0, 0, 0.20), transparent 22rem),
-    /* Top-right: wasatch sunrise (gold) */
-    radial-gradient(circle at calc(100% - 10rem) 4rem, rgba(255, 184, 29, 0.14), transparent 22rem),
-    /* Bottom-right: great salt lake (teal) */
+    /* Bottom-right: great salt lake (subtle teal) */
     radial-gradient(circle at calc(100% - 6rem) calc(100% - 6rem), rgba(58, 191, 192, 0.10), transparent 24rem),
-    /* Bottom-left: granite peak (cool blue-grey) */
+    /* Bottom-left: granite peak (cool blue-grey balance) */
     radial-gradient(circle at 4rem calc(100% - 8rem), rgba(112, 142, 153, 0.13), transparent 22rem);
   background-repeat: no-repeat;
 }
