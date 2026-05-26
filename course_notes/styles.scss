@@ -357,13 +357,44 @@ code {
 }
 
 .callout {
+  border: 0 !important;
   border-radius: 8px;
   background-color: #ffffff;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.045);
 }
 
 .callout.callout-style-default {
-  border-left-width: 0.28rem;
+  border-left-width: 0.28rem !important;
+  border-left-style: solid !important;
+}
+
+.callout-header,
+.callout-body {
+  border: 0 !important;
+}
+
+.callout-title,
+.callout-title-container,
+.callout-title strong,
+.callout-title-container strong,
+.callout-titled .callout-title-container {
+  font-family: "Montserrat", Arial, Helvetica, sans-serif;
+  font-weight: 700;
+}
+
+.screen-reader-only,
+.visually-hidden,
+span.screen-reader-only,
+.callout span.screen-reader-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 .callout-note {

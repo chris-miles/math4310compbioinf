@@ -14,6 +14,7 @@ Python only. Code is in service of understanding the algorithm and is **explicit
 - Single-letter names only where they match the math ($i, j, k$ indices; $n, m$ lengths; $x, y$ sequences when consistent with chapter notation).
 - Type hints on every function signature; none inside function bodies.
 - One function per algorithmic idea. No clever one-liners.
+- Favor explicit loops, small helper functions, and named intermediate variables over compact comprehensions or chained one-liners. Students should be able to step through copied code by hand and modify a single input without untangling a dense expression.
 
 ## Comments
 Comments explain **why**, the **biological meaning**, or the **link to the math** — never restate the code. Aim for one comment per logical block, not per line. Every non-trivial function gets a one-line docstring; longer docstrings only when arguments are non-obvious.
