@@ -83,6 +83,11 @@ format:
     fig-width: 6
     fig-height: 4
     fig-dpi: 150
+    grid:
+      sidebar-width: 220px
+      body-width: 1280px
+      margin-width: 220px
+      gutter-width: 1.5rem
 
 execute:
   echo: true
