@@ -398,19 +398,19 @@ span.screen-reader-only,
 }
 
 .callout-note {
-  border-left-color: var(--granite-peak);
+  border-left-color: var(--granite-peak) !important;
 }
 
 .callout-warning {
-  border-left-color: var(--red-rocks);
+  border-left-color: var(--red-rocks) !important;
 }
 
 .callout-tip {
-  border-left-color: var(--mountain-green);
+  border-left-color: var(--mountain-green) !important;
 }
 
 .callout-important {
-  border-left-color: var(--utah-red);
+  border-left-color: var(--utah-red) !important;
 }
 
 .callout-tip {
