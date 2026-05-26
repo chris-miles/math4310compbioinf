@@ -233,6 +233,31 @@ a.quarto-title-author-email:hover {
   text-decoration: underline;
 }
 
+.quarto-title-block {
+  position: relative;
+}
+
+.quarto-title-meta > div:has(.date-modified) {
+  position: absolute;
+  top: 0.1rem;
+  right: 0;
+  text-align: right;
+  margin: 0;
+}
+
+.quarto-title-meta > div:has(.date-modified) .quarto-title-meta-heading {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.1rem;
+}
+
+.quarto-title-meta > div:has(.date-modified) .quarto-title-meta-contents,
+.quarto-title-meta > div:has(.date-modified) .quarto-title-meta-contents p {
+  font-size: 0.78rem;
+  margin: 0;
+  color: var(--muted-ink);
+}
+
 h2 {
   margin-top: 2rem;
 }
