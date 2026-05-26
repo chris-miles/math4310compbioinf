@@ -1,6 +1,7 @@
 project:
   type: book
   output-dir: _book
+  pre-render: python ../tools/sync_assignments.py
 
 book:
   title: "MATH 4310 Computational Bioinformatics"
@@ -71,9 +72,9 @@ book:
         - lessons/lesson33-method-selection-frontiers.qmd
     - part: "Assignments"
       chapters:
-        - ../assignments/ps01-scoring-kmers.qmd
-        - ../assignments/ps02-global-alignment.qmd
-        - ../assignments/project-workshops.qmd
+        - assignments/ps01-scoring-kmers.qmd
+        - assignments/ps02-global-alignment.qmd
+        - assignments/project-workshops.qmd
   appendices:
     - appendices/computing-conventions.qmd
     - appendices/notation.qmd
@@ -98,6 +99,7 @@ format:
     date-modified: last-modified
     include-after-body:
       - _includes/expand-first-part-on-index.html
+      - _includes/inject-author-email.html
     grid:
       sidebar-width: 220px
       body-width: 1280px

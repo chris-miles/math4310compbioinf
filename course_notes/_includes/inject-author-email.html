@@ -1,0 +1,19 @@
+<script>
+(function () {
+  function injectEmail() {
+    document.querySelectorAll("a.quarto-title-author-email").forEach(function (a) {
+      var href = a.getAttribute("href") || "";
+      var email = href.replace(/^mailto:/, "");
+      if (!email) return;
+      a.innerHTML = "";
+      a.textContent = email;
+      a.setAttribute("aria-label", "Email " + email);
+    });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", injectEmail);
+  } else {
+    injectEmail();
+  }
+})();
+</script>

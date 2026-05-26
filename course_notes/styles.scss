@@ -37,27 +37,18 @@ $code-color: #890000;
 body {
   color: var(--ink);
   background:
+    /* Top-left: utah red (large anchor) */
+    radial-gradient(ellipse 34rem 28rem at 2rem 0, rgba(190, 0, 0, 0.24), transparent 75%) fixed no-repeat,
+    /* Top-right: red rocks (deeper red accent) */
+    radial-gradient(circle at calc(100% - 8rem) 5rem, rgba(137, 0, 0, 0.16), transparent 22rem) fixed no-repeat,
+    /* Bottom-right: great salt lake (small teal accent) */
+    radial-gradient(circle at calc(100% - 6rem) calc(100% - 6rem), rgba(58, 191, 192, 0.08), transparent 18rem) fixed no-repeat,
+    /* Bottom-left: granite peak (subtle cool balance) */
+    radial-gradient(circle at 4rem calc(100% - 10rem), rgba(112, 142, 153, 0.09), transparent 18rem) fixed no-repeat,
+    /* Left and right linear washes for diffuse warmth/cool */
     linear-gradient(90deg, rgba(190, 0, 0, 0.14), rgba(190, 0, 0, 0.05) 22rem, transparent 44rem) fixed,
     linear-gradient(270deg, rgba(58, 191, 192, 0.04), transparent 28rem) fixed,
     var(--page-wash);
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  background:
-    /* Top-left: utah red (large anchor) */
-    radial-gradient(ellipse 34rem 28rem at 2rem 0, rgba(190, 0, 0, 0.24), transparent 75%),
-    /* Top-right: red rocks (deeper red accent) */
-    radial-gradient(circle at calc(100% - 8rem) 5rem, rgba(137, 0, 0, 0.16), transparent 22rem),
-    /* Bottom-right: great salt lake (small teal accent) */
-    radial-gradient(circle at calc(100% - 6rem) calc(100% - 6rem), rgba(58, 191, 192, 0.08), transparent 18rem),
-    /* Bottom-left: granite peak (subtle cool balance) */
-    radial-gradient(circle at 4rem calc(100% - 10rem), rgba(112, 142, 153, 0.09), transparent 18rem);
-  background-repeat: no-repeat;
 }
 
 .sidebar-logo,
@@ -212,6 +203,9 @@ h6 {
   color: var(--ink);
 }
 
+/* Visible email text is injected by _includes/inject-author-email.html,
+   which reads the mailto: href so changing the email in _quarto.yml is
+   sufficient (no CSS update needed). */
 a.quarto-title-author-email {
   font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
   font-size: 0.82em;
@@ -222,10 +216,6 @@ a.quarto-title-author-email {
 
 a.quarto-title-author-email i {
   display: none;
-}
-
-a.quarto-title-author-email::after {
-  content: "chris.miles@utah.edu";
 }
 
 a.quarto-title-author-email:hover {
@@ -256,6 +246,17 @@ a.quarto-title-author-email:hover {
   font-size: 0.78rem;
   margin: 0;
   color: var(--muted-ink);
+}
+
+/* On narrow viewports the title block stacks, so the absolutely-positioned
+   Last Updated corner would overlap the author/affiliation rows. Drop it
+   back into normal flow below the sidebar breakpoint. */
+@media (max-width: 991.98px) {
+  .quarto-title-meta > div:has(.date-modified) {
+    position: static;
+    text-align: left;
+    margin-top: 0.6rem;
+  }
 }
 
 h2 {
