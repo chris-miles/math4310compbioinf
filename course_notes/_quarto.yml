@@ -9,6 +9,8 @@ book:
   date: "Spring 2027"
   sidebar:
     logo: "img/UU Logo-CTR_RGB.svg"
+    style: floating
+    collapse-level: 1
   page-navigation: true
   chapters:
     - index.qmd
