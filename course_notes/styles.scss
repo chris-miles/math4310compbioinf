@@ -212,6 +212,27 @@ h6 {
   color: var(--ink);
 }
 
+a.quarto-title-author-email {
+  font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  color: var(--muted-ink);
+  text-decoration: none;
+  margin-left: 0.45rem;
+}
+
+a.quarto-title-author-email i {
+  display: none;
+}
+
+a.quarto-title-author-email::after {
+  content: "chris.miles@utah.edu";
+}
+
+a.quarto-title-author-email:hover {
+  color: var(--utah-red);
+  text-decoration: underline;
+}
+
 h2 {
   margin-top: 2rem;
 }
