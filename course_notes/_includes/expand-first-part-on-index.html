@@ -1,0 +1,32 @@
+<script>
+(function () {
+  function isIndexPage() {
+    var path = window.location.pathname.replace(/\/+$/, "");
+    return (
+      path === "" ||
+      path.endsWith("/index") ||
+      path.endsWith("/index.html") ||
+      /\/math4310compbioinf$/.test(path)
+    );
+  }
+  function expandFirstPart() {
+    var section = document.getElementById("quarto-sidebar-section-1");
+    if (!section || section.classList.contains("show")) return;
+    var toggle = document.querySelector(
+      'a.sidebar-item-toggle[data-bs-target="#quarto-sidebar-section-1"], ' +
+      'a.sidebar-item-text[data-bs-target="#quarto-sidebar-section-1"]'
+    );
+    if (toggle) {
+      toggle.click();
+    } else {
+      section.classList.add("show");
+    }
+  }
+  if (!isIndexPage()) return;
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", expandFirstPart);
+  } else {
+    expandFirstPart();
+  }
+})();
+</script>

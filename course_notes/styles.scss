@@ -58,12 +58,20 @@ body::before {
 img.sidebar-logo,
 #quarto-sidebar img.sidebar-logo,
 #quarto-sidebar .sidebar-logo img {
-  display: block;
+  width: 60px !important;
+  height: auto !important;
   max-width: 60px;
   max-height: 60px;
-  width: auto;
-  height: auto;
-  margin: 0.35rem auto 0.35rem;
+}
+
+@media (min-width: 992px) {
+  .sidebar-logo,
+  img.sidebar-logo,
+  #quarto-sidebar img.sidebar-logo,
+  #quarto-sidebar .sidebar-logo img {
+    display: block !important;
+    margin: 0.35rem auto 0.35rem !important;
+  }
 }
 
 #quarto-sidebar {
@@ -162,6 +170,18 @@ h4,
 h5,
 h6 {
   font-family: "Montserrat", Arial, Helvetica, sans-serif;
+}
+
+.quarto-title-meta-heading,
+.quarto-title-meta-contents,
+.quarto-title-meta {
+  font-family: "Montserrat", Arial, Helvetica, sans-serif;
+}
+
+.quarto-title-meta-heading {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted-ink);
 }
 
 h2 {
