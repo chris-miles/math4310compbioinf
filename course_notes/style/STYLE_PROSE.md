@@ -22,7 +22,7 @@ Define formally, then immediately give one sentence of intuition — in that ord
 5. Pitfalls (short callout).
 6. Exercises (4–8: derivation, small implementation, ≥1 failure-mode reflection).
 
-## Theorem-likes and Callouts
+## Theorem-likes, Callouts, and Sidenotes
 
 For numbered, cross-referenceable environments use Quarto's crossref div syntax:
 
@@ -44,13 +44,23 @@ Reference with `@def-edit-distance`. Quarto auto-numbers per chapter ("Definitio
 | `exm-` | Worked example with concrete numbers |
 | `exr-` | End-of-chapter exercise |
 
-Non-numbered custom div classes (styled via project SCSS later):
+Use Quarto callouts for student-facing emphasis:
+
+| Callout | Use |
+|---|---|
+| `callout-note` | Important definitions, conventions, or model assumptions that do not need theorem numbering. |
+| `callout-warning` | Pitfalls, common misconceptions, or failure modes. |
+| `callout-tip` | Practical checks, coding hints, or verification habits. |
+| `callout-important` | High-stakes constraints, such as data-use or reproducibility requirements. |
+
+Reserve custom div classes for cases where Quarto callouts are a poor fit:
 
 | Class | Use |
 |---|---|
 | `.algorithm` | Pseudocode / numbered steps. Title manually: "Algorithm 4.1". |
-| `.pitfall` | Common failure mode or misconception. |
-| `.biology` | Biological framing — never load-bearing for the math. |
+| `.biology` | Biological framing when the content should not look like a warning or note. |
+
+Use sidenotes or margin notes for historical comments, optional connections, and interesting context that is not load-bearing for the argument. A sidenote should be short enough to skip without losing the mathematical thread.
 
 ## Math Notation
 - Sequences: $x = x_1 x_2 \ldots x_n$, $|x| = n$.

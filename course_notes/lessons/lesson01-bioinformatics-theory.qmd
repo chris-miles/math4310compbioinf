@@ -10,7 +10,7 @@ What makes a biological-data problem algorithmic or mathematical?
 
 Bioinformatics often starts with biological objects that can be written down as data: DNA strings, protein strings, read collections, gene-expression matrices, trees, and networks. In this course we ask what structure those objects have and which algorithms or models are justified by that structure.
 
-::: {#def-alphabet}
+::: {.callout-note title="Definition: Alphabet and Sequence"}
 An alphabet $\Sigma$ is a finite set of symbols. A sequence over $\Sigma$ is an ordered string $x = x_1x_2\ldots x_n$ with each $x_i \in \Sigma$.
 :::
 
@@ -45,7 +45,7 @@ z = "TTGCA"
 
 It is reasonable to say that $x$ is more similar to $y$ than to $z$, but that sentence is incomplete until we say what "similar" means. We might count matching positions, allow insertions and deletions, weight some substitutions differently, or look for shared short substrings.
 
-::: {.pitfall}
+::: {.callout-warning title="Pitfall"}
 Similarity is not a property of two strings alone. It is a property of two strings together with a scoring rule or model.
 :::
 

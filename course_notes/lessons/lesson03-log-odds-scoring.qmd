@@ -10,7 +10,7 @@ What does an alignment score mean?
 
 An alignment score assigns numerical value to matches, mismatches, and gaps. The numbers are not neutral. They encode assumptions about which changes are plausible and which changes should count as evidence against relatedness.
 
-::: {#def-log-odds-score}
+::: {.callout-note title="Definition: Log-Odds Score"}
 For symbols $a$ and $b$, a log-odds score compares a related-sequence model to a background model:
 $$
 s(a,b) = \log \frac{p_{\text{related}}(a,b)}{p_{\text{background}}(a,b)}.
@@ -37,7 +37,7 @@ def simple_dna_score(a: str, b: str) -> int:
 
 This table is easy to compute with, but it treats every mismatch the same. Later we will use richer scoring matrices for proteins and gap penalties for insertions and deletions.
 
-::: {.pitfall}
+::: {.callout-warning title="Pitfall"}
 If every match has a positive score and mismatches are not penalized enough, long unrelated sequences can receive high scores just by accumulating random matches.
 :::
 

@@ -172,6 +172,35 @@ code {
 
 .callout {
   border-radius: 6px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+.callout.callout-style-default {
+  border-left-width: 0.28rem;
+}
+
+.callout-note {
+  border-left-color: #0072b2;
+}
+
+.callout-warning {
+  border-left-color: #d55e00;
+}
+
+.callout-tip {
+  border-left-color: #009e73;
+}
+
+.callout-important {
+  border-left-color: var(--utah-red);
+}
+
+.margin-caption,
+.column-margin {
+  color: var(--muted-ink);
+  font-size: 0.88rem;
+  line-height: 1.4;
 }
 
 .nav-page {

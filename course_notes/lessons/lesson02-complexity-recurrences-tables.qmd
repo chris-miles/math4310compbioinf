@@ -10,7 +10,7 @@ Why is exhaustive alignment impossible?
 
 Many bioinformatics algorithms begin with a large search space. If we compare two sequences by allowing matches, mismatches, insertions, and deletions, the number of possible alignments grows too quickly to enumerate for realistic inputs.
 
-::: {#def-asymptotic-growth}
+::: {.callout-note title="Definition: Asymptotic Growth"}
 For nonnegative functions $f$ and $g$, we write $f(n) \in \mathcal{O}(g(n))$ if there are constants $C$ and $n_0$ such that $f(n) \le Cg(n)$ for all $n \ge n_0$.
 :::
 
