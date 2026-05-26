@@ -5,6 +5,10 @@ number-sections: false
 
 # Course Overview {.unnumbered}
 
+::: {.callout-warning title="Under construction"}
+These notes are being written in real time for the first offering of MATH 4310 (Spring 2027). Expect rough edges, placeholder sections, and changes between class meetings. If you spot a typo, an error, or a confusing passage, please flag it — the repository is public and the book updates as the course runs.
+:::
+
 These are the course notes for MATH 4310 Computational Bioinformatics.
 
 The lesson sequence is organized by mathematical object rather than by class meeting. The outline below gives the rough path through the semester.
