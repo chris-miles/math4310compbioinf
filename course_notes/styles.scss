@@ -26,9 +26,16 @@ body {
   background: var(--paper);
 }
 
-.sidebar-logo {
-  max-width: 180px;
-  margin: 0.6rem auto 1rem;
+.sidebar-logo,
+img.sidebar-logo,
+#quarto-sidebar img.sidebar-logo,
+#quarto-sidebar .sidebar-logo img {
+  display: block;
+  max-width: 88px;
+  max-height: 88px;
+  width: auto;
+  height: auto;
+  margin: 0.5rem auto 0.85rem;
 }
 
 #quarto-sidebar {
@@ -47,6 +54,18 @@ body {
 
 #quarto-sidebar .sidebar-item-section > .sidebar-item-container {
   color: #151515;
+  font-weight: 700;
+}
+
+#quarto-sidebar .sidebar-item-section > .sidebar-item-container .menu-text {
+  color: var(--utah-red-dark);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+#quarto-sidebar .sidebar-item .chapter-number {
+  color: var(--utah-red-dark);
   font-weight: 700;
 }
 
@@ -85,6 +104,22 @@ blockquote {
 
 table {
   font-size: 0.95rem;
+}
+
+.timeline-table table {
+  width: 100%;
+}
+
+.timeline-table th,
+.timeline-table td {
+  text-align: left;
+  vertical-align: top;
+}
+
+.timeline-table td:first-child,
+.timeline-table th:first-child {
+  width: 5.5rem;
+  white-space: nowrap;
 }
 
 .cell-output,
@@ -141,4 +176,3 @@ code {
   border-top: 1px solid var(--rule);
   margin-top: 2rem;
 }
-

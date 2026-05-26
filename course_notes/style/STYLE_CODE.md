@@ -32,7 +32,7 @@ Apply `figstyle.mplstyle` once at chapter top (see `STYLE_FIGURES.md`). **Never*
 
 ## Reproducibility
 - Set `np.random.seed(0)` (or a chapter-specific seed) at the top of any chunk using randomness.
-- Tiny illustrative inputs inline; larger inputs loaded from `course_notes/data/`. Never download at render time.
+- Tiny illustrative inputs inline; larger inputs loaded from `data/`. Never download at render time.
 
 ## Snippets for Assignments
 Mark starter chunks students will modify:

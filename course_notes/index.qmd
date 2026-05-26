@@ -7,10 +7,11 @@ number-sections: false
 
 These are the course notes for MATH 4310 Computational Bioinformatics.
 
-The lesson sequence is organized by mathematical object rather than by class meeting. The day-to-day schedule lives separately in the course planning materials, because class time will also include exams, implementation clinics, project workshops, and review.
+The lesson sequence is organized by mathematical object rather than by class meeting. The outline below gives the rough path through the semester.
 
+::: {.timeline-table}
 | Weeks | Module | Main topics |
-|---:|---|---|
+|---|---|---|
 | 1 | Foundations | Biological sequences as strings; complexity; recurrences; log-odds scoring |
 | 2-3 | Pairwise alignment | Global alignment, traceback, correctness, local alignment, affine gaps, seed-and-extend search |
 | 4 | Assembly graphs | Reads, k-mers, de Bruijn graphs, Eulerian paths, repeats, sequencing errors |
@@ -20,6 +21,6 @@ The lesson sequence is organized by mathematical object rather than by class mee
 | 12 | Clustering and single-cell data | Distances, neighborhood graphs, embeddings, single-cell interpretation |
 | 13 | Mechanistic models | Gene-regulation ODEs, Hill functions, bistability, toggle switches |
 | 14 | Synthesis | Method choice, validation checks, project connections, modern extensions |
+:::
 
 The first half of the course focuses on strings, dynamic programs, graphs, and hidden-state models. The second half moves from evolutionary trees to high-dimensional matrices, statistical testing, clustering, and compact mechanistic models.
-

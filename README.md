@@ -29,7 +29,7 @@ GitHub Pages is configured to deploy from GitHub Actions. The workflow in `.gith
 3. renders `course_notes/`, and
 4. publishes `course_notes/_book`.
 
-Generated Quarto output, local caches, private reference materials, PDFs, DOCX files, and large archives are ignored by git. Small public-safe datasets can go in `course_notes/data/`.
+Generated Quarto output, local caches, private reference materials, PDFs, DOCX files, and large archives are ignored by git. Small public-safe datasets can go in `data/`.
 
 ## Current Book Status
 

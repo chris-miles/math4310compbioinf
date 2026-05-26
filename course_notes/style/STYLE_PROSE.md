@@ -85,6 +85,8 @@ BibTeX in `references.bib`. In-text: `@needleman1970`. Parenthetical: `[@needlem
 - Hedge stacks ("might perhaps sometimes").
 - Bullet lists where a paragraph carries the same content.
 - Closing recap paragraphs that restate the section.
+- Student-facing notes should not explain internal course logistics unless the student needs the information to act.
+- Avoid obvious contrast sentences such as "This is not X yet" or "That limitation is useful" when a direct statement of the current model is clearer.
 
 When editing LLM drafts, invoke the `humanizer` skill.
 

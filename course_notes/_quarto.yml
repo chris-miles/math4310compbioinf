@@ -67,17 +67,18 @@ book:
         - lessons/lesson33-method-selection-frontiers.qmd
     - part: "Assignments"
       chapters:
-        - assignments/ps01-scoring-kmers.qmd
-        - assignments/ps02-global-alignment.qmd
-        - assignments/project-workshops.qmd
+        - ../assignments/ps01-scoring-kmers.qmd
+        - ../assignments/ps02-global-alignment.qmd
+        - ../assignments/project-workshops.qmd
   appendices:
     - appendices/computing-conventions.qmd
     - appendices/notation.qmd
 
 format:
   html:
-    theme: cosmo
-    css: styles.scss
+    theme:
+      - cosmo
+      - styles.scss
     toc: true
     number-sections: true
     code-copy: true

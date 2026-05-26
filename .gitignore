@@ -3,6 +3,8 @@ course_notes/_book/
 course_notes/_book_check*/
 course_notes/_freeze/
 course_notes/.quarto/
+course_notes/.gitignore
+course_notes/assignments/
 
 # Private/reference materials not suitable for a public course repo
 reference_docs/

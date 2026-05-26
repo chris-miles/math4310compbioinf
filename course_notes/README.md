@@ -8,9 +8,7 @@ Structure:
 - `index.qmd` — book landing page with a rough week-by-week topic timeline.
 - `using-notes.qmd` — student-facing guide to reading lessons and working with code chunks.
 - `lessons/` — numbered student-facing Quarto lessons, grouped by conceptual module in the book navigation.
-- `assignments/` — student-facing assignment and project-workshop shells.
 - `appendices/` — computing conventions and notation appendices.
-- `data/` — small public-safe datasets for examples and assignments.
 - `img/` — image assets, currently including the University of Utah logo used in the sidebar.
 - `style/` — **style guides (read first)**: prose, figures, code, and the shared matplotlib style file. Any human or LLM drafting chapter content must read these before writing.
 - `planning/` — instructor-facing course architecture, daily schedule, homework plan, project plan, and reference map.
@@ -31,3 +29,5 @@ The Quarto book is HTML-only. The active HTML parameters live in `_quarto.yml`:
 - default figure size: 6 by 4 inches at 150 dpi
 
 The public site is built by GitHub Actions from the repository root and publishes `course_notes/_book` to GitHub Pages.
+
+Assignment source files and small public-safe datasets live at the repository root in `assignments/` and `data/`, while the rendered assignment pages are included in the Quarto book navigation.
