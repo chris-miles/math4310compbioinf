@@ -3,7 +3,7 @@
 $primary: #be0000;
 $link-color: #9e1b32;
 $body-color: #202124;
-$body-bg: #fbfbf9;
+$body-bg: #ffffff;
 $font-family-sans-serif: Arial, Helvetica, "Segoe UI", sans-serif;
 $headings-font-weight: 650;
 $headings-color: #161616;
@@ -16,14 +16,17 @@ $code-color: #7a1f2b;
   --utah-red-dark: #8c0f1f;
   --ink: #202124;
   --muted-ink: #5d6670;
-  --paper: #fbfbf9;
+  --paper: #ffffff;
+  --page-wash: #f7f8fa;
   --soft-gray: #f2f3f3;
   --rule: #d8dcdf;
 }
 
 body {
   color: var(--ink);
-  background: var(--paper);
+  background:
+    radial-gradient(circle at 0 0, rgba(190, 0, 0, 0.12), transparent 22rem),
+    linear-gradient(180deg, #ffffff 0%, var(--page-wash) 60%, #ffffff 100%);
 }
 
 .sidebar-logo,
@@ -70,13 +73,12 @@ img.sidebar-logo,
 }
 
 #quarto-content {
-  background:
-    linear-gradient(90deg, rgba(190, 0, 0, 0.05), transparent 20rem),
-    var(--paper);
+  background: transparent;
 }
 
 main.content {
   max-width: 820px;
+  background: #ffffff;
 }
 
 h1.title {
