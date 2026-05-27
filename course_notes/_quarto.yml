@@ -3,7 +3,7 @@ project:
   output-dir: _book
 # NOTE: Before running `quarto render`, mirror the repo-root /assignments
 # directory into course_notes/assignments/ by running:
-#   python tools/sync_assignments.py
+#   python site_tools/sync_assignments.py
 # (the CI workflow does this automatically). Assignment .qmd files live
 # at the repo root for student-facing visibility but Quarto cannot link
 # to files outside its project dir on GitHub Pages, so we copy them in.
