@@ -77,19 +77,12 @@ Undisclosed or inappropriate use of AI or other tools may be treated as academic
 
 ## Grading scale
 
-| Letter | Range |
-|:--|:--|
-| A | 93 to 100% |
-| A− | 90 to 92.9% |
-| B+ | 87 to 89.9% |
-| B | 83 to 86.9% |
-| B− | 80 to 82.9% |
-| C+ | 77 to 79.9% |
-| C | 73 to 76.9% |
-| C− | 70 to 72.9% |
-| D+ | 67 to 69.9% |
-| D | 63 to 66.9% |
-| D− | 60 to 62.9% |
-| E | Below 60% |
+::: {.grading-scale}
+
+| Letter | A | A− | B+ | B | B− | C+ | C | C− | D+ | D | D− | E |
+|:--|:--|:--|:--|:--|:--|:--|:--|:--|:--|:--|:--|:--|
+| Range | 93–100% | 90–92.9% | 87–89.9% | 83–86.9% | 80–82.9% | 77–79.9% | 73–76.9% | 70–72.9% | 67–69.9% | 63–66.9% | 60–62.9% | Below 60% |
+
+:::
 
 Assessment weights and remaining syllabus details will be posted before the semester begins.
