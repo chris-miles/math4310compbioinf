@@ -77,20 +77,25 @@ def main():
     for path in OUT.rglob("*"):
         if any(part in ("planning", "reference_docs", "source_digests", "syllabus_revised", ".git", ".tools") for part in path.relative_to(OUT).parts):
             errors.append(f"Private or non-site path in output: {path}")
-    topics = json.loads((ROOT / "site/schedule.json").read_text(encoding="utf-8"))
-    active_topics = [topic for topic in topics if topic["lessons"]]
-    if home.count('class="topic-heading"') != len(active_topics):
-        errors.append("Schedule does not have one heading per topic")
-    if home.count('class="topic-lectures"') != len(active_topics):
-        errors.append("Schedule does not group individual lectures under topics")
-    lesson_numbers = [n for topic in topics for n in topic["lessons"]]
+    schedule = json.loads((ROOT / "site/schedule.json").read_text(encoding="utf-8"))
+    weeks = schedule["weeks"]
+    if home.count('class="module-heading"') != len(schedule["modules"]):
+        errors.append("Expected one heading per broad module")
+    if home.count('class="week-row"') != 14:
+        errors.append("Expected one compact row per instructional week")
+    lesson_numbers = [n for week in weeks for n in week["lessons"]]
     if sorted(lesson_numbers) != list(range(1, 25)):
-        errors.append("Expected each of the 24 lectures in exactly one topic")
-    for topic in topics:
-        if f'id="topic-{topic["id"]}"' not in home:
-            errors.append("Missing schedule topic " + topic["title"])
-    if home.count('Problem set') != len(active_topics):
-        errors.append("Expected one problem-set entry per topic")
+        errors.append("Expected each lecture in exactly one weekly row")
+    module_lessons = [n for module in schedule["modules"] for n in module["lessons"]]
+    if sorted(module_lessons) != list(range(1, 25)):
+        errors.append("Expected each lecture in exactly one module")
+    for week in weeks:
+        if f'id="week-{week["week"]}"' not in home:
+            errors.append("Missing schedule week " + str(week["week"]))
+        if week["lessons"] and not week["assignment"]:
+            errors.append("Missing weekly problem-set slot")
+    if home.count('Problem set') != 14:
+        errors.append("Expected one problem-set entry per instructional week")
     for path in pages:
         text = path.read_text(encoding="utf-8")
         if any(label in text for label in ("View Markdown source", "Print this page", '<footer')):
@@ -102,7 +107,7 @@ def main():
         errors.append("Unsettled project activities in public schedule")
     if errors:
         raise SystemExit("\n".join(errors))
-    print(f"Checked {len(pages)} HTML pages, {len(index)} searchable pages, all local links and fragments, topic groupings, and draft exclusion.")
+    print(f"Checked {len(pages)} HTML pages, {len(index)} searchable pages, all local links and fragments, module groupings and weekly assignments, and draft exclusion.")
 
 
 if __name__ == "__main__":

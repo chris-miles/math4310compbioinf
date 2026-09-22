@@ -30,7 +30,7 @@ Change **published: false** to **published: true** to make the title clickable i
 
 Only set this flag after reviewing the page. Existing lessons 1–12 are initially linked; the explicit scaffolds in lessons 13–24 and the assignment drafts are not linked.
 
-The schedule is organized around broad subject areas such as probabilistic models, phylogenetics, and omics. Edit each topic in site/schedule.json: its title, provisional week range, list of lecture numbers, and single problem-set ID and label. Lectures can move between topics without changing the page layout. An assignment ID matches its filename without .md; entries without a source file remain unlinked. The homepage, lecture index, and assignment catalog use this same topic mapping.
+The schedule has broad modules and compact weekly rows. Edit site/schedule.json: the modules list groups lecture numbers by subject, and the weeks list assigns lectures and one problem-set slot to each instructional week. An assignment ID matches its filename without .md; entries without a source file remain unlinked. The homepage, lecture index, and assignment catalog share this schedule.
 
 ## Markdown and mathematics
 

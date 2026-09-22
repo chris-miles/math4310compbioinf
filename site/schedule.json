@@ -1,145 +1,236 @@
-[
-  {
-    "id": "foundations",
-    "title": "Foundations",
-    "weeks": [
-      1
-    ],
-    "lessons": [
-      1,
-      2
-    ],
-    "assignment": {
-      "id": "ps01-scoring-kmers",
-      "label": "Problem set"
+{
+  "modules": [
+    {
+      "id": "strings",
+      "title": "Algorithms on Strings & Sequences",
+      "lessons": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "id": "probabilistic-models",
+      "title": "Probabilistic Models for Genomics",
+      "lessons": [
+        9,
+        10,
+        11,
+        12,
+        13
+      ]
+    },
+    {
+      "id": "phylogenetics",
+      "title": "Phylogenetics",
+      "lessons": [
+        14,
+        15
+      ]
+    },
+    {
+      "id": "omics",
+      "title": "Mathematics for High-Dimensional Omics",
+      "lessons": [
+        16,
+        17,
+        18,
+        19,
+        20
+      ]
+    },
+    {
+      "id": "biological-systems",
+      "title": "Models of Biological Systems",
+      "lessons": [
+        21,
+        22
+      ]
+    },
+    {
+      "id": "synthesis",
+      "title": "Synthesis",
+      "lessons": [
+        23,
+        24
+      ]
     }
-  },
-  {
-    "id": "sequence-alignment",
-    "title": "Sequence Alignment",
-    "weeks": [
-      2,
-      3
-    ],
-    "lessons": [
-      3,
-      4,
-      5,
-      6
-    ],
-    "assignment": {
-      "id": "ps02-global-alignment",
-      "label": "Problem set"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "topic": "Sequence comparison",
+      "lessons": [
+        1,
+        2
+      ],
+      "assignment": {
+        "id": "ps01-scoring-kmers",
+        "label": "Problem set 1"
+      }
+    },
+    {
+      "week": 2,
+      "topic": "Global alignment",
+      "lessons": [
+        3,
+        4
+      ],
+      "assignment": {
+        "id": "ps02-global-alignment",
+        "label": "Problem set 2"
+      }
+    },
+    {
+      "week": 3,
+      "topic": "Local alignment and search",
+      "lessons": [
+        5,
+        6
+      ],
+      "assignment": {
+        "id": "ps03",
+        "label": "Problem set 3"
+      }
+    },
+    {
+      "week": 4,
+      "topic": "Genome assembly",
+      "lessons": [
+        7,
+        8
+      ],
+      "assignment": {
+        "id": "ps04",
+        "label": "Problem set 4"
+      }
+    },
+    {
+      "week": 5,
+      "topic": "Probability and Markov chains",
+      "lessons": [
+        9
+      ],
+      "assignment": {
+        "id": "ps05",
+        "label": "Problem set 5"
+      }
+    },
+    {
+      "week": 6,
+      "topic": "CpG islands and HMMs",
+      "lessons": [
+        10,
+        11
+      ],
+      "assignment": {
+        "id": "ps06",
+        "label": "Problem set 6"
+      }
+    },
+    {
+      "week": 7,
+      "topic": "Decoding and inference",
+      "lessons": [
+        12,
+        13
+      ],
+      "assignment": {
+        "id": "ps07",
+        "label": "Problem set 7"
+      }
+    },
+    {
+      "week": 8,
+      "topic": "Phylogenetics",
+      "lessons": [
+        14,
+        15
+      ],
+      "assignment": {
+        "id": "ps08",
+        "label": "Problem set 8"
+      }
+    },
+    {
+      "week": 9,
+      "topic": "Spring break",
+      "lessons": [],
+      "assignment": null
+    },
+    {
+      "week": 10,
+      "topic": "Expression matrices and PCA",
+      "lessons": [
+        16
+      ],
+      "assignment": {
+        "id": "ps09",
+        "label": "Problem set 9"
+      }
+    },
+    {
+      "week": 11,
+      "topic": "PCA and multiple testing",
+      "lessons": [
+        17,
+        18
+      ],
+      "assignment": {
+        "id": "ps10",
+        "label": "Problem set 10"
+      }
+    },
+    {
+      "week": 12,
+      "topic": "Clustering and single-cell data",
+      "lessons": [
+        19,
+        20
+      ],
+      "assignment": {
+        "id": "ps11",
+        "label": "Problem set 11"
+      }
+    },
+    {
+      "week": 13,
+      "topic": "Gene regulation",
+      "lessons": [
+        21,
+        22
+      ],
+      "assignment": {
+        "id": "ps12",
+        "label": "Problem set 12"
+      }
+    },
+    {
+      "week": 14,
+      "topic": "Method selection",
+      "lessons": [
+        23
+      ],
+      "assignment": {
+        "id": "ps13",
+        "label": "Problem set 13"
+      }
+    },
+    {
+      "week": 15,
+      "topic": "Modern frontiers",
+      "lessons": [
+        24
+      ],
+      "assignment": {
+        "id": "ps14",
+        "label": "Problem set 14"
+      }
     }
-  },
-  {
-    "id": "genome-assembly",
-    "title": "Genome Assembly",
-    "weeks": [
-      4
-    ],
-    "lessons": [
-      7,
-      8
-    ],
-    "assignment": {
-      "id": "ps-genome-assembly",
-      "label": "Problem set"
-    }
-  },
-  {
-    "id": "probabilistic-models",
-    "title": "Probabilistic Models",
-    "weeks": [
-      5,
-      6,
-      7
-    ],
-    "lessons": [
-      9,
-      10,
-      11,
-      12,
-      13
-    ],
-    "assignment": {
-      "id": "ps-probabilistic-models",
-      "label": "Problem set"
-    }
-  },
-  {
-    "id": "phylogenetics",
-    "title": "Phylogenetics",
-    "weeks": [
-      8
-    ],
-    "lessons": [
-      14,
-      15
-    ],
-    "assignment": {
-      "id": "ps-phylogenetics",
-      "label": "Problem set"
-    }
-  },
-  {
-    "id": "spring-break",
-    "title": "Spring break",
-    "weeks": [
-      9
-    ],
-    "lessons": [],
-    "assignment": null
-  },
-  {
-    "id": "omics",
-    "title": "Omics",
-    "weeks": [
-      10,
-      11,
-      12
-    ],
-    "lessons": [
-      16,
-      17,
-      18,
-      19,
-      20
-    ],
-    "assignment": {
-      "id": "ps-omics",
-      "label": "Problem set"
-    }
-  },
-  {
-    "id": "mechanistic-models",
-    "title": "Mechanistic Models",
-    "weeks": [
-      13
-    ],
-    "lessons": [
-      21,
-      22
-    ],
-    "assignment": {
-      "id": "ps-mechanistic-models",
-      "label": "Problem set"
-    }
-  },
-  {
-    "id": "synthesis",
-    "title": "Synthesis",
-    "weeks": [
-      14,
-      15
-    ],
-    "lessons": [
-      23,
-      24
-    ],
-    "assignment": {
-      "id": "ps-synthesis",
-      "label": "Problem set"
-    }
-  }
-]
+  ]
+}

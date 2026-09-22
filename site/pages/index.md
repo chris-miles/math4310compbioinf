@@ -10,6 +10,6 @@ toc: false
 
 ## Course schedule
 
-Week ranges are provisional. Gray titles are not yet available.
+The schedule is provisional. Gray titles are not yet available.
 
 <!-- WEEKLY_SCHEDULE -->
