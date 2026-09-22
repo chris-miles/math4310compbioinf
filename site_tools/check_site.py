@@ -92,10 +92,16 @@ def main():
     for week in weeks:
         if f'id="week-{week["week"]}"' not in home:
             errors.append("Missing schedule week " + str(week["week"]))
-        if week["lessons"] and not week["assignment"]:
-            errors.append("Missing weekly problem-set slot")
-    if home.count('Problem set') != 14:
-        errors.append("Expected one problem-set entry per instructional week")
+    if len(weeks) != 16 or [week["week"] for week in weeks] != list(range(1, 17)):
+        errors.append("Expected 16 dated calendar weeks through April 27")
+    if weeks[0]["date_start"] != "2027-01-11" or weeks[-1]["date_end"] != "2027-04-27":
+        errors.append("Schedule dates do not cover the official teaching term")
+    if weeks[8]["date_start"] != "2027-03-06" or weeks[8]["date_end"] != "2027-03-14":
+        errors.append("Spring break dates do not match the official calendar")
+    if home.count('class="week-dates"') != 16:
+        errors.append("A week is missing its displayed date range")
+    if home.count('Problem set') != 11:
+        errors.append("Expected 11 problem sets at topic boundaries")
     for path in pages:
         text = path.read_text(encoding="utf-8")
         if any(label in text for label in ("View Markdown source", "Print this page", '<footer')):
@@ -107,7 +113,7 @@ def main():
         errors.append("Unsettled project activities in public schedule")
     if errors:
         raise SystemExit("\n".join(errors))
-    print(f"Checked {len(pages)} HTML pages, {len(index)} searchable pages, all local links and fragments, module groupings and weekly assignments, and draft exclusion.")
+    print(f"Checked {len(pages)} HTML pages, {len(index)} searchable pages, all local links and fragments, module groupings and assignment placement, and draft exclusion.")
 
 
 if __name__ == "__main__":

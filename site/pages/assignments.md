@@ -3,6 +3,6 @@ title: "Assignments"
 toc: false
 ---
 
-One problem set accompanies each instructional week. Materials will be linked when released; deadlines and submission details will be posted in Canvas.
+Eleven problem sets accompany the main course topics. Materials will be linked when released; deadlines and submission details will be posted in Canvas.
 
 <!-- ASSIGNMENT_CATALOG -->

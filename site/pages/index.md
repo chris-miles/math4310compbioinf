@@ -10,6 +10,4 @@ toc: false
 
 ## Course schedule
 
-The schedule is provisional. Gray titles are not yet available.
-
 <!-- WEEKLY_SCHEDULE -->

@@ -72,7 +72,9 @@
       "assignment": {
         "id": "ps01-scoring-kmers",
         "label": "Problem set 1"
-      }
+      },
+      "date_start": "2027-01-11",
+      "date_end": "2027-01-15"
     },
     {
       "week": 2,
@@ -84,7 +86,10 @@
       "assignment": {
         "id": "ps02-global-alignment",
         "label": "Problem set 2"
-      }
+      },
+      "date_start": "2027-01-18",
+      "date_end": "2027-01-22",
+      "note": "Jan 18: Martin Luther King Jr. Day — no class"
     },
     {
       "week": 3,
@@ -96,7 +101,9 @@
       "assignment": {
         "id": "ps03",
         "label": "Problem set 3"
-      }
+      },
+      "date_start": "2027-01-25",
+      "date_end": "2027-01-29"
     },
     {
       "week": 4,
@@ -108,7 +115,9 @@
       "assignment": {
         "id": "ps04",
         "label": "Problem set 4"
-      }
+      },
+      "date_start": "2027-02-01",
+      "date_end": "2027-02-05"
     },
     {
       "week": 5,
@@ -116,10 +125,9 @@
       "lessons": [
         9
       ],
-      "assignment": {
-        "id": "ps05",
-        "label": "Problem set 5"
-      }
+      "assignment": null,
+      "date_start": "2027-02-08",
+      "date_end": "2027-02-12"
     },
     {
       "week": 6,
@@ -129,9 +137,12 @@
         11
       ],
       "assignment": {
-        "id": "ps06",
-        "label": "Problem set 6"
-      }
+        "id": "ps05",
+        "label": "Problem set 5"
+      },
+      "date_start": "2027-02-15",
+      "date_end": "2027-02-19",
+      "note": "Feb 15: Presidents Day — no class"
     },
     {
       "week": 7,
@@ -141,9 +152,11 @@
         13
       ],
       "assignment": {
-        "id": "ps07",
-        "label": "Problem set 7"
-      }
+        "id": "ps06",
+        "label": "Problem set 6"
+      },
+      "date_start": "2027-02-22",
+      "date_end": "2027-02-26"
     },
     {
       "week": 8,
@@ -153,15 +166,19 @@
         15
       ],
       "assignment": {
-        "id": "ps08",
-        "label": "Problem set 8"
-      }
+        "id": "ps07",
+        "label": "Problem set 7"
+      },
+      "date_start": "2027-03-01",
+      "date_end": "2027-03-05"
     },
     {
       "week": 9,
       "topic": "Spring break",
       "lessons": [],
-      "assignment": null
+      "assignment": null,
+      "date_start": "2027-03-06",
+      "date_end": "2027-03-14"
     },
     {
       "week": 10,
@@ -170,9 +187,11 @@
         16
       ],
       "assignment": {
-        "id": "ps09",
-        "label": "Problem set 9"
-      }
+        "id": "ps08",
+        "label": "Problem set 8"
+      },
+      "date_start": "2027-03-15",
+      "date_end": "2027-03-19"
     },
     {
       "week": 11,
@@ -182,9 +201,11 @@
         18
       ],
       "assignment": {
-        "id": "ps10",
-        "label": "Problem set 10"
-      }
+        "id": "ps09",
+        "label": "Problem set 9"
+      },
+      "date_start": "2027-03-22",
+      "date_end": "2027-03-26"
     },
     {
       "week": 12,
@@ -194,9 +215,11 @@
         20
       ],
       "assignment": {
-        "id": "ps11",
-        "label": "Problem set 11"
-      }
+        "id": "ps10",
+        "label": "Problem set 10"
+      },
+      "date_start": "2027-03-29",
+      "date_end": "2027-04-02"
     },
     {
       "week": 13,
@@ -206,9 +229,11 @@
         22
       ],
       "assignment": {
-        "id": "ps12",
-        "label": "Problem set 12"
-      }
+        "id": "ps11",
+        "label": "Problem set 11"
+      },
+      "date_start": "2027-04-05",
+      "date_end": "2027-04-09"
     },
     {
       "week": 14,
@@ -216,10 +241,9 @@
       "lessons": [
         23
       ],
-      "assignment": {
-        "id": "ps13",
-        "label": "Problem set 13"
-      }
+      "assignment": null,
+      "date_start": "2027-04-12",
+      "date_end": "2027-04-16"
     },
     {
       "week": 15,
@@ -227,10 +251,24 @@
       "lessons": [
         24
       ],
-      "assignment": {
-        "id": "ps14",
-        "label": "Problem set 14"
-      }
+      "assignment": null,
+      "date_start": "2027-04-19",
+      "date_end": "2027-04-23"
+    },
+    {
+      "week": 16,
+      "topic": "Final class meeting · Monday, April 26",
+      "lessons": [],
+      "assignment": null,
+      "date_start": "2027-04-26",
+      "date_end": "2027-04-27"
     }
-  ]
+  ],
+  "calendar": {
+    "source": "https://registrar.utah.edu/academic-calendars/pdf-academic-calendars/main_and_online_2026_2027.pdf",
+    "term_start": "2027-01-11",
+    "classes_end": "2027-04-27",
+    "spring_break_start": "2027-03-06",
+    "spring_break_end": "2027-03-14"
+  }
 }

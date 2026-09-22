@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import ast
 from collections import defaultdict
+from datetime import date
 from contextlib import redirect_stdout, redirect_stderr
 import html
 import io
@@ -301,8 +302,17 @@ def catalogs() -> dict[str, str]:
 
     def problem_set(group):
         assignment = group["assignment"]
+        if not assignment:
+            return ""
         item = assignments.get(assignment["id"])
         return entry(item, "assignments", assignment["label"]) if item else unavailable(assignment["label"])
+
+    def week_label(week):
+        start = date.fromisoformat(week["date_start"])
+        end = date.fromisoformat(week["date_end"])
+        dates = f'{start:%b} {start.day}–'
+        dates += str(end.day) if start.month == end.month else f'{end:%b} {end.day}'
+        return f'<span class="week-number">{week["week"]:02}</span><span class="week-dates">{dates}</span>'
 
     schedule_data = json.loads((ROOT / "site/schedule.json").read_text(encoding="utf-8"))
     rows = []
@@ -311,7 +321,7 @@ def catalogs() -> dict[str, str]:
     current_module = None
     for week in schedule_data["weeks"]:
         if not week["lessons"]:
-            rows.append(f'<tr class="schedule-break" id="week-{week["week"]}"><th scope="row">{week["week"]:02}</th><td colspan="2">{html.escape(week["topic"])}</td></tr>')
+            rows.append(f'<tr class="schedule-break" id="week-{week["week"]}"><th scope="row">{week_label(week)}</th><td colspan="2">{html.escape(week["topic"])}</td></tr>')
             continue
         module = next(m for m in schedule_data["modules"] if week["lessons"][0] in m["lessons"])
         if any(n not in module["lessons"] for n in week["lessons"]):
@@ -320,11 +330,14 @@ def catalogs() -> dict[str, str]:
             rows.append(f'<tr class="module-heading" id="module-{module["id"]}"><th colspan="3">{html.escape(module["title"])}</th></tr>')
             current_module = module
         lecture_list = "".join('<div class="schedule-item"><span class="lesson-number">' + f'{n:02}' + '</span>' + entry(lessons[n], "lessons") + '</div>' for n in week["lessons"])
-        rows.append(f'<tr class="week-row" id="week-{week["week"]}"><th scope="row">{week["week"]:02}</th><td>{lecture_list}</td><td>{problem_set(week)}</td></tr>')
-        assignment_items.append('<li><h2>Week ' + str(week["week"]) + ' · ' + html.escape(week["topic"]) + '</h2>' + problem_set(week) + '</li>')
+        if week.get("note"):
+            lecture_list += '<div class="calendar-note">' + html.escape(week["note"]) + '</div>'
+        rows.append(f'<tr class="week-row" id="week-{week["week"]}"><th scope="row">{week_label(week)}</th><td>{lecture_list}</td><td>{problem_set(week)}</td></tr>')
+        if week["assignment"]:
+            assignment_items.append('<li><h2>Week ' + str(week["week"]) + ' · ' + html.escape(week["topic"]) + '</h2>' + problem_set(week) + '</li>')
     for module in schedule_data["modules"]:
         groups.append("## " + module["title"] + "\n\n" + "\n".join(f'<div class="catalog-item"><span class="lesson-number">{n:02}</span>{entry(lessons[n], "lessons")}</div>' for n in module["lessons"]))
-    schedule = '<div class="table-scroll"><table class="course-table"><thead><tr><th scope="col">Week</th><th scope="col">Lectures</th><th scope="col">Assignment</th></tr></thead><tbody>' + "".join(rows) + '</tbody></table></div>'
+    schedule = '<div class="table-scroll"><table class="course-table"><thead><tr><th scope="col">Week / dates</th><th scope="col">Lectures</th><th scope="col">Assignment</th></tr></thead><tbody>' + "".join(rows) + '</tbody></table></div>'
     assignment_list = '<ul class="resource-list">' + "".join(assignment_items) + '</ul>'
     files = subprocess.check_output(["git", "ls-files", "-z", "data"], cwd=ROOT).decode().split("\0")
     datasets = [f for f in files if f and Path(f).suffix.lower() in (".csv", ".tsv", ".fasta", ".fa", ".json", ".txt")]

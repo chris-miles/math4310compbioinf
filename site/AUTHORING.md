@@ -30,7 +30,7 @@ Change **published: false** to **published: true** to make the title clickable i
 
 Only set this flag after reviewing the page. Existing lessons 1–12 are initially linked; the explicit scaffolds in lessons 13–24 and the assignment drafts are not linked.
 
-The schedule has broad modules and compact weekly rows. Edit site/schedule.json: the modules list groups lecture numbers by subject, and the weeks list assigns lectures and one problem-set slot to each instructional week. An assignment ID matches its filename without .md; entries without a source file remain unlinked. The homepage, lecture index, and assignment catalog share this schedule.
+The schedule has broad modules and compact weekly rows. Edit site/schedule.json: the modules list groups lecture numbers by subject, and the weeks list assigns lectures to weeks and places 11 problem sets at topic boundaries. Set assignment to null for a week without a new problem set. Each row also carries date_start and date_end; holiday notes are optional. The calendar source and term boundaries are recorded in the same file. The short final week has a class-meeting entry without a new problem set. An assignment ID matches its filename without .md; entries without a source file remain unlinked. The homepage, lecture index, and assignment catalog share this schedule.
 
 ## Markdown and mathematics
 
