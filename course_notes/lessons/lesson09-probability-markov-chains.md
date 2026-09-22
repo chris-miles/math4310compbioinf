@@ -1,7 +1,7 @@
 ---
 published: true
 title: "Probability and Markov Chains for DNA"
-subtitle: "Lesson 9 · 2027-02-17 · Week 6"
+subtitle: "Lesson 9 · 2027-02-10 · Week 5"
 nocite: |
   @durbin1998
 ---

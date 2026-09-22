@@ -1,7 +1,7 @@
 ---
 published: false
 title: "Gene Expression and PCA"
-subtitle: "Lesson 16 · 2027-03-24 · Week 11"
+subtitle: "Lesson 16 · 2027-03-22 · Week 11"
 ---
 
 ## Core question

@@ -1,7 +1,7 @@
 ---
 published: false
 title: "Parsimony and Fitch's Algorithm"
-subtitle: "Lesson 15 · 2027-03-22 · Week 11"
+subtitle: "Lesson 15 · 2027-03-17 · Week 10"
 ---
 
 ## Core question

@@ -1,7 +1,7 @@
 ---
 published: false
 title: "PCA in Practice"
-subtitle: "Lesson 17 · 2027-03-29 · Week 12"
+subtitle: "Lesson 17 · 2027-03-24 · Week 11"
 ---
 
 ## Core question

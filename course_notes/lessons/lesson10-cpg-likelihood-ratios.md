@@ -1,7 +1,7 @@
 ---
 published: true
 title: "CpG Islands and Likelihood Ratios"
-subtitle: "Lesson 10 · 2027-02-22 · Week 7"
+subtitle: "Lesson 10 · 2027-02-17 · Week 6"
 nocite: |
   @durbin1998
 ---

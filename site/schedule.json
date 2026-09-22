@@ -138,7 +138,7 @@
       "assignment": {
         "id": "ps03",
         "label": "Problem set 3",
-        "due": "2027-02-17"
+        "due": "2027-02-10"
       },
       "date_start": "2027-02-01",
       "date_end": "2027-02-05",
@@ -155,14 +155,15 @@
     },
     {
       "week": 5,
-      "topic": "Assembly and Midterm 1",
+      "topic": "Assembly and probability models",
       "lessons": [
-        8
+        8,
+        9
       ],
       "assignment": {
         "id": "ps04",
         "label": "Problem set 4",
-        "due": "2027-02-24"
+        "due": "2027-02-17"
       },
       "date_start": "2027-02-08",
       "date_end": "2027-02-12",
@@ -173,15 +174,15 @@
         },
         {
           "date": "2027-02-10",
-          "event": "Midterm 1: Lessons 1–8"
+          "lesson": 9
         }
       ]
     },
     {
       "week": 6,
-      "topic": "Probability models for DNA",
+      "topic": "CpG islands",
       "lessons": [
-        9
+        10
       ],
       "assignment": null,
       "date_start": "2027-02-15",
@@ -190,15 +191,14 @@
       "meetings": [
         {
           "date": "2027-02-17",
-          "lesson": 9
+          "lesson": 10
         }
       ]
     },
     {
       "week": 7,
-      "topic": "CpG regions and hidden states",
+      "topic": "Hidden Markov models and Midterm 1",
       "lessons": [
-        10,
         11
       ],
       "assignment": {
@@ -211,11 +211,11 @@
       "meetings": [
         {
           "date": "2027-02-22",
-          "lesson": 10
+          "lesson": 11
         },
         {
           "date": "2027-02-24",
-          "lesson": 11
+          "event": "Midterm 1: Lessons 1–8"
         }
       ]
     },
@@ -255,54 +255,54 @@
     },
     {
       "week": 10,
-      "topic": "Midterm 2 and evolutionary distances",
+      "topic": "Phylogenetics",
       "lessons": [
-        14
+        14,
+        15
       ],
-      "assignment": null,
+      "assignment": {
+        "id": "ps07",
+        "label": "Problem set 7",
+        "due": "2027-03-24"
+      },
       "date_start": "2027-03-15",
       "date_end": "2027-03-19",
       "meetings": [
         {
           "date": "2027-03-15",
-          "event": "Midterm 2: Lessons 9–13"
+          "lesson": 14
         },
         {
           "date": "2027-03-17",
-          "lesson": 14
+          "lesson": 15
         }
       ]
     },
     {
       "week": 11,
-      "topic": "Evolutionary trees and expression data",
+      "topic": "Gene expression and PCA",
       "lessons": [
-        15,
-        16
+        16,
+        17
       ],
-      "assignment": {
-        "id": "ps07",
-        "label": "Problem set 7",
-        "due": "2027-03-31"
-      },
+      "assignment": null,
       "date_start": "2027-03-22",
       "date_end": "2027-03-26",
       "meetings": [
         {
           "date": "2027-03-22",
-          "lesson": 15
+          "lesson": 16
         },
         {
           "date": "2027-03-24",
-          "lesson": 16
+          "lesson": 17
         }
       ]
     },
     {
       "week": 12,
-      "topic": "PCA and multiple testing",
+      "topic": "Multiple testing and Midterm 2",
       "lessons": [
-        17,
         18
       ],
       "assignment": {
@@ -315,11 +315,11 @@
       "meetings": [
         {
           "date": "2027-03-29",
-          "lesson": 17
+          "lesson": 18
         },
         {
           "date": "2027-03-31",
-          "lesson": 18
+          "event": "Midterm 2: Lessons 9–15"
         }
       ]
     },

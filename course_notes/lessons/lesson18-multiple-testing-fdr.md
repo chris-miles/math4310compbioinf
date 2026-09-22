@@ -1,7 +1,7 @@
 ---
 published: false
 title: "Multiple Testing and False Discovery Rates"
-subtitle: "Lesson 18 · 2027-03-31 · Week 12"
+subtitle: "Lesson 18 · 2027-03-29 · Week 12"
 ---
 
 ## Core question
