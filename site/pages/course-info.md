@@ -23,6 +23,8 @@ toc: true
 
 MATH 4310 studies the mathematical and algorithmic foundations of bioinformatics. We build and analyze methods for biological data, including sequence alignment, probabilistic models, graph-based genome assembly, dynamical systems, and dimensionality reduction for omics data.
 
+For an informal introduction and a comparison with related Utah courses, see [What is this class about?](about-course.html).
+
 ## Prerequisites
 
 A grade of C or better in each of:

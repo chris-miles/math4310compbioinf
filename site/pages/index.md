@@ -8,6 +8,8 @@ toc: false
 <div><dt>Instructor</dt><dd><a class="instructor-name" href="https://profiles.faculty.utah.edu/u0881186">Chris Miles</a><small class="contact-email"><a class="email-address" href="mailto:chris.miles@utah.edu?subject=%5BMATH%204310%5D%20">chris.miles@utah.edu</a> <span class="contact-note">Use <span class="subject-tag">[MATH 4310]</span> in the subject line.</span></small></dd></div>
 </dl>
 
+[What is this class about?](about-course.html) A short introduction to the topics, nearby courses, and why these ideas matter in the age of AI.
+
 ## Course schedule
 
 <!-- WEEKLY_SCHEDULE -->
