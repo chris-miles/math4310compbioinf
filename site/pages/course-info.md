@@ -21,20 +21,20 @@ MATH 4310 studies the mathematical and algorithmic foundations of bioinformatics
 
 ## Preparation
 
-Prerequisites: C or better in MATH 2270, CS 2420, and BIOL 2030. BIOL 3150 is recommended.
+Prerequisites: "C" or better in MATH 2270 **and** CS 1410 **and** (BIOL 2020 **or** BIOL 2021).
 
-## Learning goals
+## Learning outcomes
 
-By the end of the course, students should be able to:
+Upon successful completion of this course, students will be able to:
 
-- Analyze the correctness and computational cost of sequence-alignment algorithms.
-- Implement and interpret Markov chains and hidden Markov models for biological sequences.
-- Explain how de Bruijn graphs support genome assembly.
-- Use linear algebra to justify PCA and SVD methods for transcriptomics, and formulate simple dynamical models of gene regulation.
+- Analyze the correctness and computational complexity of dynamic programming algorithms for sequence alignment and justify the use of scoring matrices like BLOSUM.
+- Implement and interpret probabilistic models, including Markov chains and hidden Markov models (HMMs), to solve problems like gene finding.
+- Explain how graph theory, such as de Bruijn graphs, provides a scalable solution to genome assembly from short-read sequencing data.
+- Use linear algebra to justify dimensionality reduction techniques (PCA/SVD) for transcriptomics and formulate simple dynamical systems models for gene regulatory networks.
 
-## Readings
+## Course materials and submissions
 
-There is no required textbook. Lecture notes and supplementary readings will be provided.
+All course materials, including lecture notes, readings, assignments, and datasets, will be posted on this site. Submit assignments through Canvas; grades will also be posted there.
 
 ## Assessment and policies
 

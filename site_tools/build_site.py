@@ -247,16 +247,15 @@ def render(page: dict, lectures: list[dict]) -> None:
                 node["c"][2][0] = re.sub(r"\.(?:qmd|md)(?=#|$)", ".html", url)
         return node
     doc = walk(page["doc"], links)
-    nav = [("Home", "index.html"), ("Lectures", "lectures.html"),
-           ("Assignments", "assignments.html"), ("Data", "data.html"),
+    nav = [("Schedule", "index.html#course-schedule"),
            ("Course info", "course-info.html"), ("Search", "search.html")]
-    section = "lectures.html" if route.startswith(("lessons/", "appendices/")) else "assignments.html" if route.startswith("assignments/") else route
+    section = "index.html#course-schedule" if route == "index.html" or route.startswith(("lessons/", "assignments/")) else route
     navhtml = "".join(f'<a href="{prefix}{url}"' + (' aria-current="page"' if section == url else '') + f'>{label}</a>' for label, url in nav)
     navhtml += f'<a class="canvas-link" href="{html.escape(CONFIG["canvas"])}">Canvas ↗</a>'
     breadcrumb = ""
     pagination = ""
     if page["number"] and page["meta"].get("published", True):
-        breadcrumb = f'<a href="{prefix}lectures.html">Lectures</a> / Lesson {page["number"]}'
+        breadcrumb = f'<a href="{prefix}index.html#course-schedule">Schedule</a> / Lesson {page["number"]}'
         i = lectures.index(page)
         for neighbor, label in [(i - 1, "← Previous"), (i + 1, "Next →")]:
             if 0 <= neighbor < len(lectures):
