@@ -94,7 +94,7 @@ State theorems precisely. Default to a **proof sketch** carrying the load-bearin
 
 Examples go numbers first, general statement second. If a worked example takes more than five minutes by hand, it is a problem-set problem.
 
-Use just-in-time reminders: expectations and likelihood ratios in Lesson 2, big-O in Lesson 3, conditional and sequence probabilities in Lesson 9. Assume familiarity with basic ideas and explain the specific modeling use. Link to the combined computing and math reference for a reminder. Do not assume prior knowledge of constrained optimization, EM, or information theory; introduce the needed idea or put the advanced derivation in an optional block.
+Use just-in-time reminders: expectations and likelihood ratios in Lesson 2, big-O in Lesson 3, conditional and sequence probabilities in Lesson 9. Assume familiarity with basic ideas and explain the specific modeling use. Keep mathematical reminders in the lesson where they are needed. The reference page is for computing setup and notation conventions; do not fill it with compressed reviews of probability, linear algebra, or differential equations. Do not assume prior knowledge of constrained optimization, EM, or information theory; introduce the needed idea or put the advanced derivation in an optional block.
 
 ## Environments (strict)
 
