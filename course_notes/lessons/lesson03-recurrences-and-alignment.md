@@ -68,7 +68,7 @@ The recurrence gives $D(2,2)=13$, $D(3,3)=63$, and $D(10,10)=8{,}097{,}453$. Two
 We write $f(n)\in\mathcal O(g(n))$ if constants $C>0$ and $n_0$ exist such that $f(n)\le Cg(n)$ for all $n\ge n_0$.
 :::
 
-A table for lengths $n,m$ has $(n+1)(m+1)$ cells. Constant work per cell costs $\mathcal O(nm)$ time. Big-O compares growth rates; it does not say fixed costs are irrelevant.
+A table for lengths $n,m$ has $(n+1)(m+1)$ cells. Constant work per cell costs $\mathcal O(nm)$ time. Big-O compares growth rates; it does not say fixed costs are irrelevant. See the [Big-O reference](../appendices/computing-math-reference.html#big-o-notation) for an example and graph.
 
 ### Repeated recursion and tabulation
 
