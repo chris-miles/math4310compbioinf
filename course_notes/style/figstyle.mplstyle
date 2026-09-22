@@ -20,7 +20,9 @@ axes.linewidth:        0.8
 axes.spines.top:       False
 axes.spines.right:     False
 axes.grid:             False
-axes.prop_cycle:       cycler('color', ['#000000', '#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7'])
+# Categorical series order (Okabe-Ito subset, validated for CVD separation).
+# Hex values are written WITHOUT '#' because '#' starts a comment in rc files.
+axes.prop_cycle:       cycler('color', ['0072B2', 'E69F00', '009E73', 'CC79A7', 'D55E00', '56B4E9'])
 
 # --- Ticks ---
 xtick.direction:       out

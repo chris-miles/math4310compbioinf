@@ -329,7 +329,6 @@ code {
 }
 
 .algorithm,
-.pitfall,
 .biology {
   border-left: 0.28rem solid #777;
   margin: 1.15rem 0;
@@ -343,16 +342,11 @@ code {
   border-left-color: var(--great-salt-lake);
 }
 
-.pitfall {
-  border-left-color: var(--red-rocks);
-}
-
 .biology {
   border-left-color: var(--mountain-green);
 }
 
 .algorithm > p:first-child,
-.pitfall > p:first-child,
 .biology > p:first-child {
   margin-top: 0;
 }

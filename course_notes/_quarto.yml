@@ -28,53 +28,46 @@ book:
     - using-notes.qmd
     - part: "Foundations"
       chapters:
-        - lessons/lesson01-bioinformatics-theory.qmd
-        - lessons/lesson02-complexity-recurrences-tables.qmd
-        - lessons/lesson03-log-odds-scoring.qmd
+        - lessons/lesson01-first-problem.qmd
+        - lessons/lesson02-log-odds-scoring.qmd
     - part: "Pairwise Alignment"
       chapters:
-        - lessons/lesson04-global-alignment-recurrence.qmd
-        - lessons/lesson05-global-alignment-correctness.qmd
-        - lessons/lesson06-global-alignment-implementation.qmd
-        - lessons/lesson07-local-alignment.qmd
-        - lessons/lesson08-affine-gap-models.qmd
-        - lessons/lesson09-seed-extend-search.qmd
+        - lessons/lesson03-recurrences-and-alignment.qmd
+        - lessons/lesson04-global-alignment-correctness.qmd
+        - lessons/lesson05-local-alignment.qmd
+        - lessons/lesson06-affine-gaps-seed-extend.qmd
     - part: "Assembly Graphs"
       chapters:
-        - lessons/lesson10-reads-kmers-assembly.qmd
-        - lessons/lesson11-de-bruijn-graphs.qmd
-        - lessons/lesson12-assembly-failure-modes.qmd
+        - lessons/lesson07-reads-kmers-de-bruijn.qmd
+        - lessons/lesson08-eulerian-paths-repeats.qmd
     - part: "Probabilistic Sequence Models"
       chapters:
-        - lessons/lesson13-probability-for-sequences.qmd
-        - lessons/lesson14-markov-chains.qmd
-        - lessons/lesson15-cpg-likelihood-ratios.qmd
-        - lessons/lesson16-hidden-markov-models.qmd
-        - lessons/lesson17-viterbi-decoding.qmd
-        - lessons/lesson18-forward-backward.qmd
-        - lessons/lesson19-hmm-training-model-choice.qmd
-        - lessons/lesson20-common-structures.qmd
+        - lessons/lesson09-probability-markov-chains.qmd
+        - lessons/lesson10-cpg-likelihood-ratios.qmd
+        - lessons/lesson11-hidden-markov-models.qmd
+        - lessons/lesson12-viterbi-decoding.qmd
+        - lessons/lesson13-forward-backward.qmd
     - part: "Phylogenetics"
       chapters:
-        - lessons/lesson21-phylogenetic-distances.qmd
-        - lessons/lesson22-upgma-distance-trees.qmd
-        - lessons/lesson23-parsimony-fitch.qmd
+        - lessons/lesson14-distances-upgma.qmd
+        - lessons/lesson15-parsimony-fitch.qmd
     - part: "Omics Matrices and Testing"
       chapters:
-        - lessons/lesson24-expression-matrices.qmd
-        - lessons/lesson25-pca-svd.qmd
-        - lessons/lesson26-pca-failure-modes.qmd
-        - lessons/lesson27-high-throughput-testing.qmd
-        - lessons/lesson28-fdr-differential-expression.qmd
-    - part: "Clustering, Single-Cell Data, and Mechanistic Models"
+        - lessons/lesson16-expression-matrices-pca.qmd
+        - lessons/lesson17-pca-in-practice.qmd
+        - lessons/lesson18-multiple-testing-fdr.qmd
+    - part: "Clustering and Single-Cell Data"
       chapters:
-        - lessons/lesson29-clustering-neighborhood-graphs.qmd
-        - lessons/lesson30-embeddings-single-cell.qmd
-        - lessons/lesson31-gene-regulation-odes.qmd
-        - lessons/lesson32-hill-functions-toggle-switches.qmd
+        - lessons/lesson19-clustering-neighborhood-graphs.qmd
+        - lessons/lesson20-embeddings-single-cell.qmd
+    - part: "Mechanistic Models"
+      chapters:
+        - lessons/lesson21-gene-regulation-odes.qmd
+        - lessons/lesson22-hill-functions-toggle-switch.qmd
     - part: "Synthesis"
       chapters:
-        - lessons/lesson33-method-selection-frontiers.qmd
+        - lessons/lesson23-choosing-a-method.qmd
+        - lessons/lesson24-modern-frontiers.qmd
     - part: "Assignments"
       chapters:
         - assignments/ps01-scoring-kmers.qmd
@@ -82,6 +75,7 @@ book:
         - assignments/project-workshops.qmd
   appendices:
     - appendices/computing-conventions.qmd
+    - appendices/math-refreshers.qmd
     - appendices/notation.qmd
 
 format:

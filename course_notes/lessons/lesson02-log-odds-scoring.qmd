@@ -1,5 +1,6 @@
 ---
-title: "Log-Odds Scores and Biological Assumptions"
+title: "Scores Are Models: Log-Odds"
+subtitle: "Lesson 2 · Week 1"
 ---
 
 ## Core Question

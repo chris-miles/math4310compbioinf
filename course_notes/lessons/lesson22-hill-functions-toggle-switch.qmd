@@ -1,0 +1,50 @@
+---
+title: "Hill Functions, Bistability, and the Toggle Switch"
+subtitle: "Lesson 22 · Week 13"
+---
+
+## Core question
+
+How does cooperativity create a switch, and when is a small mechanistic model useful?
+
+::: {.callout-note title="Draft status"}
+This lesson is a scaffold. The headings below follow the order every lesson uses; the bullets are what the finished lesson will cover.
+:::
+
+## Motivation
+
+- Cells remember: a two-gene circuit with two stable states.
+
+## The data as a mathematical object
+
+- Two concentrations $u(t), v(t)$.
+
+## The question
+
+- How many steady states, and which are stable?
+
+## The model
+
+- Mutual repression with Hill kinetics, $\dot{u} = \frac{\alpha}{1 + v^n} - u$ and symmetric.
+
+## The technique
+
+- Nullclines; phase-plane sketch; stability by slope; parameter sensitivity.
+
+## Worked example
+
+- $n = 2$, one $\alpha$ with one steady state and one with three.
+
+## Why it works, and what it costs
+
+- Bistability requires $n > 1$; a proof sketch via the nullcline intersection count.
+
+## Where the model breaks
+
+- Symmetric parameters are a modeling convenience.
+- Contrast with HMMs and PCA: this model answers 'what if,' not 'what is there.'
+
+## Exercises
+
+- Find steady states for given parameters.
+- Explain what changes when $n = 1$.

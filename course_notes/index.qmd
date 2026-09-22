@@ -9,18 +9,30 @@ I'm writing these notes as I teach MATH 4310 for the first time this semester, s
 
 # Course Overview {.unnumbered}
 
-Lessons are grouped by mathematical object rather than by class day, so some take a single meeting and others span a week.
+| Task | Question it answers |
+|---|---|
+| Run a tool (BLAST, an assembler, a clustering package) | What did the software return? |
+| Explain the tool | What mathematical object and what algorithm is it using? |
+| Design a small version of the tool | What assumptions does the method need, and where do they fail? |
+
+This course is the second and third rows. Each lesson is one class meeting. It takes one kind of biological data, writes it as a mathematical object, states a precise problem and the assumptions that make it solvable, and then gives the algorithm, a worked example small enough to check by hand, and the cases where the assumptions fail. The lessons build small versions of real methods because a small implementation exposes the recurrence, graph, likelihood, or matrix operation that the full tool relies on.
 
 ::: {.timeline-table}
-| Weeks | Module | Main topics |
+| Week | Lessons | Topics |
 |---|---|---|
-| 1 | Foundations | Biological sequences as strings; complexity; recurrences; log-odds scoring |
-| 2-3 | Pairwise alignment | Global alignment, traceback, correctness, local alignment, affine gaps, seed-and-extend search |
-| 4 | Assembly graphs | Reads, k-mers, de Bruijn graphs, Eulerian paths, repeats, sequencing errors |
-| 5-7 | Probabilistic sequence models | Sequence likelihoods, Markov chains, CpG islands, HMMs, Viterbi, forward-backward |
-| 8-9 | Integration and phylogenetics | Common algorithmic structures, distances, UPGMA, parsimony, Fitch's algorithm |
-| 10-11 | Omics matrices and testing | Expression matrices, centering, PCA/SVD, high-throughput testing, FDR |
-| 12 | Clustering and single-cell data | Distances, neighborhood graphs, embeddings, single-cell interpretation |
-| 13 | Mechanistic models | Gene-regulation ODEs, Hill functions, bistability, toggle switches |
-| 14 | Synthesis | Method choice, validation checks, project connections, modern extensions |
+| 1 | 1–2 | A first sequence-comparison problem; scores as log-odds models |
+| 2 | 3–4 | Recurrences and tables; global alignment, correctness, traceback |
+| 3 | 5–6 | Local alignment; affine gaps; seed-and-extend search |
+| 4 | 7–8 | Reads, k-mers, de Bruijn graphs; Eulerian paths, repeats, errors |
+| 5 | Midterm 1, 9 | Probability and Markov chains for sequences |
+| 6 | 10–11 | CpG islands as likelihood ratios; hidden Markov models |
+| 7 | 12–13 | Viterbi; forward–backward and posterior decoding |
+| 8 | 14–15 | Distances and UPGMA; parsimony and Fitch's algorithm |
+| 9 | — | Spring break |
+| 10 | Midterm 2, 16 | Expression matrices and PCA through the SVD |
+| 11 | 17–18 | PCA in practice; multiple testing and FDR |
+| 12 | 19–20 | Clustering and neighborhood graphs; embeddings and single-cell data |
+| 13 | 21–22 | ODEs for gene regulation; Hill functions and the toggle switch |
+| 14 | 23, workshop | Choosing a method; project workshop |
+| 15 | 24, work session | Modern frontiers; final project work session |
 :::

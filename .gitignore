@@ -34,3 +34,9 @@ __pycache__/
 .ipynb_checkpoints/
 .venv/
 venv/
+
+# Local render and browser-review artifacts
+*.quarto_ipynb
+/quarto/
+/course_notes/quarto/
+/.playwright-mcp/
