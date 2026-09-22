@@ -40,7 +40,7 @@ The opening must briefly establish what the observed data are, why the biologica
 
 ### Titles and headings
 
-Lesson titles name a recognizable purpose or biological question before specialized machinery: "Finding the Most Likely Genome Annotation" and "How Certain Are Our Genome Labels?" are more inviting than technique names alone. Name Viterbi, forward-backward, and other standard methods in the relevant section so students learn and can find the terminology.
+Keep recognizable topic and method names in lesson titles so students and experts can skim the schedule: "Global Alignment," "Local Alignment," "Markov Chains," "Viterbi Decoding," and "PCA." Add a short purpose or qualifier when it helps, as in "Uncertainty in HMMs: Forward-Backward." Avoid replacing useful keywords with generic descriptions such as "Finding Major Patterns" or "Recovering and Checking an Alignment." Do not force every title into the same formula.
 
 Section headings name the topic, as a textbook would: "Hamming distance", "The alignment recurrence", "Eulerian paths", "Limitations". Never narrative or rhetorical headings ("What the rule assumed", "A better rule, and the first proof", "Three things you can do with a sequence"). Never headings that name the pedagogical step ("The model", "The question") unless that is literally the topic.
 

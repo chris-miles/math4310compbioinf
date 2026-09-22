@@ -1,6 +1,6 @@
 ---
 published: true
-title: "What Makes a Sequence Match Convincing?"
+title: "Log-Odds Scoring"
 subtitle: "Lesson 2 · 2027-01-13 · Week 1"
 nocite: |
   @durbin1998

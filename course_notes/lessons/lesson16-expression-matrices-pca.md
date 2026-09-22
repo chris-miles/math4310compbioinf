@@ -1,6 +1,6 @@
 ---
 published: false
-title: "Finding Major Patterns in Gene Expression"
+title: "Gene Expression and PCA"
 subtitle: "Lesson 16 · 2027-03-24 · Week 11"
 ---
 

@@ -1,6 +1,6 @@
 ---
 published: true
-title: "Finding the Most Likely Genome Annotation"
+title: "Viterbi Decoding"
 subtitle: "Lesson 12 · 2027-03-01 · Week 8"
 nocite: |
   @durbin1998, @compeau2015

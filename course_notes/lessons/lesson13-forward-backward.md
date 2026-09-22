@@ -1,6 +1,6 @@
 ---
 published: true
-title: "How Certain Are Our Genome Labels?"
+title: "Uncertainty in HMMs: Forward-Backward"
 subtitle: "Lesson 13 · 2027-03-03 · Week 8"
 nocite: |
   @durbin1998

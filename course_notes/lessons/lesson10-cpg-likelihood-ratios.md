@@ -1,6 +1,6 @@
 ---
 published: true
-title: "Finding CpG-Rich Regions"
+title: "CpG Islands and Likelihood Ratios"
 subtitle: "Lesson 10 · 2027-02-22 · Week 7"
 nocite: |
   @durbin1998

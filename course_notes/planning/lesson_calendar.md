@@ -2,40 +2,40 @@
 
 Spring 2027, Monday and Wednesday, about 75 minutes per meeting. The public schedule in `site/schedule.json` is the date source of truth.
 
-The official teaching term is January 11 through April 27. January 18 and February 15 are Monday holidays; spring break removes March 8 and 10. April 26 is a class day. This leaves **27 meetings: 24 lessons, two midterms, and one combined project workshop/work session**. There is no extra full-class project work day.
+The official teaching term is January 11 through April 27. January 18 and February 15 are Monday holidays; spring break removes March 8 and 10. April 26 is a class day. This leaves **27 meetings: 23 lessons, two midterms, and two project presentation days**.
 
 Calendar checked against the [University calendar](https://registrar.utah.edu/academic-calendars/pdf-academic-calendars/main_and_online_2026_2027.pdf).
 
 | Week | Date | Meeting |
 |---:|---|---|
 | 1 | 2027-01-11 | Lesson 1: Sequences, Distances, and Alignments |
-| 1 | 2027-01-13 | Lesson 2: What Makes a Sequence Match Convincing? |
-| 2 | 2027-01-20 | Lesson 3: Finding the Best Sequence Alignment |
-| 3 | 2027-01-25 | Lesson 4: Recovering and Checking an Alignment |
-| 3 | 2027-01-27 | Lesson 5: Finding Shared Regions Within Sequences |
-| 4 | 2027-02-01 | Lesson 6: Gaps and Fast Sequence Search |
-| 4 | 2027-02-03 | Lesson 7: Rebuilding a Genome from Short Reads |
-| 5 | 2027-02-08 | Lesson 8: Assembly: Repeats, Errors, and Missing Information |
+| 1 | 2027-01-13 | Lesson 2: Log-Odds Scoring |
+| 2 | 2027-01-20 | Lesson 3: Global Alignment: Dynamic Programming |
+| 3 | 2027-01-25 | Lesson 4: Global Alignment: Traceback and Correctness |
+| 3 | 2027-01-27 | Lesson 5: Local Alignment |
+| 4 | 2027-02-01 | Lesson 6: Affine Gaps and Seed-and-Extend |
+| 4 | 2027-02-03 | Lesson 7: Reads, k-mers, and de Bruijn Graphs |
+| 5 | 2027-02-08 | Lesson 8: Eulerian Paths, Repeats, and Assembly Errors |
 | 5 | 2027-02-10 | Midterm 1: Lessons 1–8 |
-| 6 | 2027-02-17 | Lesson 9: Probability Models for DNA Sequences |
-| 7 | 2027-02-22 | Lesson 10: Finding CpG-Rich Regions |
-| 7 | 2027-02-24 | Lesson 11: Modeling Hidden Regions in a Genome |
-| 8 | 2027-03-01 | Lesson 12: Finding the Most Likely Genome Annotation |
-| 8 | 2027-03-03 | Lesson 13: How Certain Are Our Genome Labels? |
+| 6 | 2027-02-17 | Lesson 9: Probability and Markov Chains for DNA |
+| 7 | 2027-02-22 | Lesson 10: CpG Islands and Likelihood Ratios |
+| 7 | 2027-02-24 | Lesson 11: Hidden Markov Models |
+| 8 | 2027-03-01 | Lesson 12: Viterbi Decoding |
+| 8 | 2027-03-03 | Lesson 13: Uncertainty in HMMs: Forward-Backward |
 | 9 | March 6 to 14 | Spring break; no class |
 | 10 | 2027-03-15 | Midterm 2: Lessons 9–13 |
-| 10 | 2027-03-17 | Lesson 14: Building Evolutionary Trees from Sequence Distances |
-| 11 | 2027-03-22 | Lesson 15: Explaining Sequence Changes on a Tree |
-| 11 | 2027-03-24 | Lesson 16: Finding Major Patterns in Gene Expression |
-| 12 | 2027-03-29 | Lesson 17: Interpreting Gene Expression Plots |
-| 12 | 2027-03-31 | Lesson 18: Many Tests, Many Mistakes |
-| 13 | 2027-04-05 | Lesson 19: Grouping Similar Samples and Cells |
-| 13 | 2027-04-07 | Lesson 20: Reading Maps of Single-Cell Data |
-| 14 | 2027-04-12 | Lesson 21: Modeling How Gene Activity Changes |
-| 14 | 2027-04-14 | Lesson 22: Gene Regulation as a Biological Switch |
-| 15 | 2027-04-19 | Lesson 23: Choosing a Method |
-| 15 | 2027-04-21 | Project workshop and work session |
-| 16 | 2027-04-26 | Lesson 24: Where These Methods Lead |
+| 10 | 2027-03-17 | Lesson 14: Evolutionary Distances and UPGMA |
+| 11 | 2027-03-22 | Lesson 15: Parsimony and Fitch's Algorithm |
+| 11 | 2027-03-24 | Lesson 16: Gene Expression and PCA |
+| 12 | 2027-03-29 | Lesson 17: PCA in Practice |
+| 12 | 2027-03-31 | Lesson 18: Multiple Testing and False Discovery Rates |
+| 13 | 2027-04-05 | Lesson 19: Distances, Clustering, and Neighborhood Graphs |
+| 13 | 2027-04-07 | Lesson 20: Single-Cell Data and Embeddings |
+| 14 | 2027-04-12 | Lesson 21: ODE Models of Gene Regulation |
+| 14 | 2027-04-14 | Lesson 22: Hill Functions and Biological Switches |
+| 15 | 2027-04-19 | Lesson 23: Modern Frontiers in Bioinformatics |
+| 15 | 2027-04-21 | Project presentations |
+| 16 | 2027-04-26 | Project presentations |
 
 ## Assessment timing
 
@@ -56,4 +56,4 @@ Ten problem sets are released after the relevant Wednesday lesson (or the last l
 | 9 | 2027-04-07 | 2027-04-14 | Clustering and embeddings (19–20) |
 | 10 | 2027-04-14 | 2027-04-21 | Gene regulation (21–22) |
 
-The April 21 workshop includes project validation, interpretation, and work time. The April 26 lesson provides a short frontiers discussion and space for final questions. Final repository submission remains in finals week; no exact deadline is invented here.
+April 21 and April 26 are reserved for project presentations. With about 25 students working mainly in pairs, allow for 12 or 13 groups. Eight minutes presenting plus two minutes of questions per group takes 120 to 130 minutes, distributed across the two meetings. Final repository submission remains in finals week; no exact deadline is invented here.

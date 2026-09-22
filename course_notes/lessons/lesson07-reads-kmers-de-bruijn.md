@@ -1,6 +1,6 @@
 ---
 published: true
-title: "Rebuilding a Genome from Short Reads"
+title: "Reads, k-mers, and de Bruijn Graphs"
 subtitle: "Lesson 7 · 2027-02-03 · Week 4"
 nocite: |
   @compeau2015, @pevzner2001

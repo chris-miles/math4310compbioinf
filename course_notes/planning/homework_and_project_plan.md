@@ -1,6 +1,6 @@
 # Homework and Project Plan
 
-The date source of truth is [the lesson calendar](lesson_calendar.md), mirrored in site/schedule.json. The class meets Monday and Wednesday; holidays reduce the available meetings. There are ten problem sets, two in-class midterms, and one combined project workshop/work session.
+The date source of truth is [the lesson calendar](lesson_calendar.md), mirrored in site/schedule.json. The class meets Monday and Wednesday; holidays reduce the available meetings. There are ten problem sets, two in-class midterms, and two project presentation days.
 
 ## Evidence and workload
 
@@ -43,7 +43,7 @@ A feasible project uses one course method, a small public or synthetic dataset, 
 
 A useful starter gives students the biological question, input format, baseline task, and an attainable validation check. Alignment, assembly, hidden-region models, evolutionary trees, and expression analysis are suitable tracks. Gene-regulation projects need more scaffolding because that material arrives late.
 
-Release starter choices during the probability block so students can explore before spring break. Discuss scope after the second midterm. The April 21 workshop combines a result review, validation review, and time to work. Final submission remains in finals week; Canvas supplies the exact deadline and any checkpoint dates.
+Release starter choices during the probability block so students can explore before spring break. Discuss scope after the second midterm. Project presentations take place April 21 and April 26. For about 25 students working mainly in pairs, plan for 12 or 13 groups, with eight minutes presenting and two minutes for questions per group. Final submission remains in finals week; Canvas supplies the exact deadline and any checkpoint dates.
 
 A project repository should contain runnable code, appropriate data provenance, a small check with a known answer, actual results, and a README understandable to a peer. Keep restricted data, student records, instructor solutions, and private reference extracts out of the public course repository.
 

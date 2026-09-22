@@ -1,6 +1,6 @@
 ---
 published: true
-title: "Recovering and Checking an Alignment"
+title: "Global Alignment: Traceback and Correctness"
 subtitle: "Lesson 4 · 2027-01-25 · Week 3"
 nocite: |
   @durbin1998, @compeau2015, @needleman1970

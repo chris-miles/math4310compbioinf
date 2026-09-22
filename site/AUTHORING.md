@@ -20,7 +20,7 @@ Each lecture and assignment has YAML front matter:
 
 ~~~yaml
 ---
-title: "How Certain Are Our Genome Labels?"
+title: "Uncertainty in HMMs: Forward-Backward"
 subtitle: "Lesson 13 · 2027-03-03 · Week 8"
 published: false
 ---
@@ -28,11 +28,11 @@ published: false
 
 Change **published: false** to **published: true** to make the title clickable in the schedule and catalog. Released pages enter search and lecture navigation. Draft text is excluded from the generated website: old URLs show a short availability notice. **The repository is public, so draft sources are still public.** Keep instructor-only material outside tracked files.
 
-Only set this flag after reviewing the page. Lessons 1 to 13 and Problem Set 1 are available. Lessons 14 to 24 and the other assignment drafts remain unlinked until developed.
+Only set this flag after reviewing the page. Lessons 1 to 13 and Problem Set 1 are available. Lessons 14 to 23 and the other assignment drafts remain unlinked until developed.
 
-The schedule has broad modules and compact weekly rows. Edit `site/schedule.json`: `modules` groups lesson numbers by subject, and each week's `meetings` assigns one lesson or event to each actual class date. The week's `lessons` list must agree with those meetings. A week may cross a module boundary. The builder displays each meeting date, including midterms and the combined project workshop/work session. The checker requires exactly one event on every available Monday or Wednesday, with holidays and spring break excluded. There are 27 meetings and ten problem sets.
+The schedule has broad modules and compact weekly rows. Edit `site/schedule.json`: `modules` groups lesson numbers by subject, and each week's `meetings` assigns one lesson or event to each actual class date. The week's `lessons` list must agree with those meetings. A week may cross a module boundary. The builder displays each meeting date, including midterms and two project presentation days. The checker requires exactly one event on every available Monday or Wednesday, with holidays and spring break excluded. There are 27 meetings and ten problem sets.
 
-Set `assignment` to null for a week without a release. An assignment entry has an ID, label, and due date; Canvas controls submission details. The ID matches its filename without `.md`; entries without a released source remain unlinked. The homepage, lecture index, and assignment catalog share this schedule. The final Monday, April 26, is a regular class meeting.
+Set `assignment` to null for a week without a release. An assignment entry has an ID, label, and due date; Canvas controls submission details. The ID matches its filename without `.md`; entries without a released source remain unlinked. The homepage, lecture index, and assignment catalog share this schedule. The final two meetings, April 21 and April 26, are reserved for project presentations.
 
 ## Markdown and mathematics
 

@@ -1,6 +1,6 @@
 ---
 published: true
-title: "Probability Models for DNA Sequences"
+title: "Probability and Markov Chains for DNA"
 subtitle: "Lesson 9 · 2027-02-17 · Week 6"
 nocite: |
   @durbin1998

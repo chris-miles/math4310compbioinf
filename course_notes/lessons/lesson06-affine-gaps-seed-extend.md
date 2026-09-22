@@ -1,6 +1,6 @@
 ---
 published: true
-title: "Gaps and Fast Sequence Search"
+title: "Affine Gaps and Seed-and-Extend"
 subtitle: "Lesson 6 · 2027-02-01 · Week 4"
 nocite: |
   @durbin1998, @gotoh1982, @altschul1990, @compeau2015

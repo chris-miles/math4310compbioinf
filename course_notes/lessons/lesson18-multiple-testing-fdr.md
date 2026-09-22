@@ -1,6 +1,6 @@
 ---
 published: false
-title: "Many Tests, Many Mistakes"
+title: "Multiple Testing and False Discovery Rates"
 subtitle: "Lesson 18 · 2027-03-31 · Week 12"
 ---
 

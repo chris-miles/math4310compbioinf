@@ -56,8 +56,7 @@
       "id": "synthesis",
       "title": "Synthesis",
       "lessons": [
-        23,
-        24
+        23
       ]
     }
   ],
@@ -376,7 +375,7 @@
     },
     {
       "week": 15,
-      "topic": "Method selection and project workshop",
+      "topic": "Modern frontiers and project presentations",
       "lessons": [
         23
       ],
@@ -390,23 +389,21 @@
         },
         {
           "date": "2027-04-21",
-          "event": "Project workshop and work session"
+          "event": "Project presentations"
         }
       ]
     },
     {
       "week": 16,
-      "topic": "Modern frontiers",
-      "lessons": [
-        24
-      ],
+      "topic": "Project presentations",
+      "lessons": [],
       "assignment": null,
       "date_start": "2027-04-26",
       "date_end": "2027-04-27",
       "meetings": [
         {
           "date": "2027-04-26",
-          "lesson": 24
+          "event": "Project presentations"
         }
       ]
     }

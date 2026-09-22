@@ -252,8 +252,12 @@ def render(page: dict, lectures: list[dict]) -> None:
         return node
     doc = walk(page["doc"], links)
     nav = [("Schedule", "index.html#course-schedule"),
-           ("Course info", "course-info.html"), ("Search", "search.html")]
+           ("Course info", "course-info.html"),
+           ("Reference", "appendices/computing-math-reference.html"),
+           ("Search", "search.html")]
     section = "index.html#course-schedule" if route == "index.html" or route.startswith(("lessons/", "assignments/")) else route
+    if route.startswith("appendices/"):
+        section = "appendices/computing-math-reference.html"
     navhtml = "".join(f'<a href="{prefix}{url}"' + (' aria-current="page"' if section == url else '') + f'>{label}</a>' for label, url in nav)
     navhtml += f'<a class="canvas-link" href="{html.escape(CONFIG["canvas"])}">Canvas ↗</a>'
     breadcrumb = ""
@@ -325,11 +329,11 @@ def catalogs() -> dict[str, str]:
     assignment_items = []
     current_module = None
     for week in schedule_data["weeks"]:
-        if not week["lessons"]:
+        if not week["meetings"]:
             rows.append(f'<tr class="schedule-break" id="week-{week["week"]}"><th scope="row">{week_label(week)}</th><td colspan="2">{html.escape(week["topic"])}</td></tr>')
             continue
-        module = next(m for m in schedule_data["modules"] if week["lessons"][0] in m["lessons"])
-        if module != current_module:
+        module = next((m for m in schedule_data["modules"] if week["lessons"] and week["lessons"][0] in m["lessons"]), None)
+        if module is not None and module != current_module:
             rows.append(f'<tr class="module-heading" id="module-{module["id"]}"><th colspan="3">{html.escape(module["title"])}</th></tr>')
             current_module = module
         meeting_items = []

@@ -1,6 +1,6 @@
 ---
 published: true
-title: "Modeling Hidden Regions in a Genome"
+title: "Hidden Markov Models"
 subtitle: "Lesson 11 · 2027-02-24 · Week 7"
 nocite: |
   @durbin1998, @compeau2015

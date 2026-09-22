@@ -82,13 +82,13 @@ def main():
     weeks = schedule["weeks"]
     if home.count('class="module-heading"') != len(schedule["modules"]):
         errors.append("Expected one heading per broad module")
-    if home.count('class="week-row"') != sum(bool(w['lessons']) for w in weeks):
+    if home.count('class="week-row"') != sum(bool(w['meetings']) for w in weeks):
         errors.append("Expected one compact row per instructional week")
     lesson_numbers = [n for week in weeks for n in week["lessons"]]
-    if sorted(lesson_numbers) != list(range(1, 25)):
+    if sorted(lesson_numbers) != list(range(1, 24)):
         errors.append("Expected each lecture in exactly one weekly row")
     module_lessons = [n for module in schedule["modules"] for n in module["lessons"]]
-    if sorted(module_lessons) != list(range(1, 25)):
+    if sorted(module_lessons) != list(range(1, 24)):
         errors.append("Expected each lecture in exactly one module")
     for week in weeks:
         if f'id="week-{week["week"]}"' not in home:
@@ -129,8 +129,12 @@ def main():
         if any(not week["date_start"] <= m["date"] <= week["date_end"] for m in week["meetings"]):
             errors.append("Meeting lies outside its calendar week")
     events = [m for m in meetings if "event" in m]
-    if len(events) != 3 or sum("Midterm" in m["event"] for m in events) != 2:
-        errors.append("Expected two midterms and one combined project workshop/work session")
+    if len(events) != 4 or sum("Midterm" in m["event"] for m in events) != 2:
+        errors.append("Expected two midterms and two presentation meetings")
+    if [m["date"] for m in events if m["event"] == "Project presentations"] != ["2027-04-21", "2027-04-26"]:
+        errors.append("Expected presentations on April 21 and April 26")
+    if 'href="appendices/computing-math-reference.html">Reference</a>' not in home:
+        errors.append("Missing reference page in main navigation")
     if errors:
         raise SystemExit("\n".join(errors))
     print(f"Checked {len(pages)} HTML pages, {len(index)} searchable pages, all local links and fragments, module groupings and assignment placement, and draft exclusion.")

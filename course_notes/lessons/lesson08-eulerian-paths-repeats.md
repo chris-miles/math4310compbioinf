@@ -1,6 +1,6 @@
 ---
 published: true
-title: "Assembly: Repeats, Errors, and Missing Information"
+title: "Eulerian Paths, Repeats, and Assembly Errors"
 subtitle: "Lesson 8 · 2027-02-08 · Week 5"
 nocite: |
   @compeau2015, @pevzner2001

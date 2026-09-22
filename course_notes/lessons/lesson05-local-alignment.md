@@ -1,6 +1,6 @@
 ---
 published: true
-title: "Finding Shared Regions Within Sequences"
+title: "Local Alignment"
 subtitle: "Lesson 5 · 2027-01-27 · Week 3"
 nocite: |
   @smith1981, @durbin1998, @compeau2015

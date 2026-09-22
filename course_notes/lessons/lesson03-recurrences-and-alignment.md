@@ -1,6 +1,6 @@
 ---
 published: true
-title: "Finding the Best Sequence Alignment"
+title: "Global Alignment: Dynamic Programming"
 subtitle: "Lesson 3 · 2027-01-20 · Week 2"
 nocite: |
   @compeau2015, @durbin1998, @needleman1970

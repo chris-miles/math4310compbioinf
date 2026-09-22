@@ -1,6 +1,6 @@
 ---
 published: false
-title: "Modeling How Gene Activity Changes"
+title: "ODE Models of Gene Regulation"
 subtitle: "Lesson 21 · 2027-04-12 · Week 14"
 ---
 

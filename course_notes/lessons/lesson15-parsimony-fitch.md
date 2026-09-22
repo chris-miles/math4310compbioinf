@@ -1,6 +1,6 @@
 ---
 published: false
-title: "Explaining Sequence Changes on a Tree"
+title: "Parsimony and Fitch's Algorithm"
 subtitle: "Lesson 15 · 2027-03-22 · Week 11"
 ---
 

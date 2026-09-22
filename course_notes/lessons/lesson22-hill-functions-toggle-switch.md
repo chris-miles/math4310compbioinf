@@ -1,6 +1,6 @@
 ---
 published: false
-title: "Gene Regulation as a Biological Switch"
+title: "Hill Functions and Biological Switches"
 subtitle: "Lesson 22 · 2027-04-14 · Week 14"
 ---
 
