@@ -1,6 +1,6 @@
 ---
 title: "Course information & syllabus"
-toc: false
+toc: true
 ---
 
 ::: {.course-info-table}
