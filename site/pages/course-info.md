@@ -40,22 +40,56 @@ Upon successful completion of this course, students will be able to:
 - Explain how graph theory (e.g., de Bruijn graphs) provides a scalable solution to the problem of genome assembly from short-read sequencing data.
 - Use linear algebra to justify dimensionality reduction techniques (PCA/SVD) for transcriptomics and formulate simple dynamical systems models for gene regulatory networks.
 
+## Durable skills
+
+Durable skills are transferable, long-lasting abilities that hold up across disciplines, careers, and life stages. The [University of Utah’s Durable Skills Framework](https://durableskills.utah.edu/) names eight of them. MATH 4310 develops five through its regular coursework:
+
+| Durable skill | Where it appears in this course |
+|:--|:--|
+| Critical Thinking & Problem Solving | Proofs, complexity analysis, method comparison, and examining where methods fail. |
+| Information & Technology Literacy | Recording data sources and software versions, checking results, and using tools responsibly. |
+| Communication | Writing clear technical explanations of mathematical reasoning, implementations, and results. |
+| Collaboration & Teamwork | Discussing approaches, comparing reasoning, and giving constructive feedback during class activities. |
+| Career & Self-Development | Learning unfamiliar tools, using feedback to improve work, and identifying what to practice next. |
+
 ## Course materials and submissions
 
 All course materials, including lecture notes, readings, assignments, and datasets, will be posted on this site. Submit assignments through Canvas; grades will also be posted there.
 
-## Final project
-
-The final project requires a reproducible repository, feedback checkpoints, and a revision memo.
-
 ## Workload
 
-This is a 3-credit upper-division course. Expect about 6 to 9 hours per week outside of class for reading, problem sets, implementation, exam preparation, and project work.
+This is a 3-credit upper-division course. Expect about 6 to 9 hours per week outside of class for reading, problem sets, implementation, and exam preparation.
 
 ## Attendance
 
 Regular attendance is expected. Class meetings include derivations, examples, and live coding that may not be fully reproduced in posted materials. If you miss class, you are responsible for catching up using materials on this site and classmates’ notes.
 
-## Assessment and policies
+## Tools, data, and AI use
 
-Assessment details and the complete syllabus will be posted before the semester begins.
+You may use AI coding assistants and existing software tools when an assignment permits them, but you remain responsible for the correctness and interpretation of your work.
+
+- Disclose AI-assisted coding, external libraries, and outside tools when they affect your submitted work.
+- Verify outputs with tests, derivations, hand-checkable examples, or comparisons to known answers.
+- Be prepared to explain how your implementation matches the mathematical recurrence, model, or algorithmic idea used in class.
+- Do not submit AI-generated explanations, proofs, or code you do not understand.
+
+Undisclosed or inappropriate use of AI or other tools may be treated as academic misconduct under [University Policy 6-410](https://regulations.utah.edu/academics/6-410.php).
+
+## Grading scale
+
+| Letter | Range |
+|:--|:--|
+| A | 93 to 100% |
+| A− | 90 to 92.9% |
+| B+ | 87 to 89.9% |
+| B | 83 to 86.9% |
+| B− | 80 to 82.9% |
+| C+ | 77 to 79.9% |
+| C | 73 to 76.9% |
+| C− | 70 to 72.9% |
+| D+ | 67 to 69.9% |
+| D | 63 to 66.9% |
+| D− | 60 to 62.9% |
+| E | Below 60% |
+
+Assessment weights and remaining syllabus details will be posted before the semester begins.
