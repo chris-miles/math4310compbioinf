@@ -23,7 +23,7 @@ cf.use_style()
 
 ## The table as a directed graph
 
-A score of 1 does not tell a biologist where a deletion occurred. To inspect a predicted sequence change, we need the aligned letters and gaps that produced the score. We also need to know whether several equally good explanations place that gap differently.
+For the gene comparison from Lesson 3, the score 1 leaves the correspondence unstated. The alignment ACGT/A-GT places C opposite a gap and pairs the later G and T positions. That is a proposed difference between the records; without an ancestral sequence, it does not establish whether one lineage lost C or the other gained it. Traceback makes the proposed correspondence explicit, and ties reveal when the scoring model cannot locate a gap uniquely.
 
 The data and scoring model are unchanged from Lesson 3. Today's output is one optimal alignment together with checks that its printed columns recover the input strings and reproduce the reported score. The proof explains why the table finds an optimum; the checks help us catch code that fails to implement that proof.
 
@@ -121,6 +121,18 @@ A *tie policy* is a deterministic rule for choosing among maximizing predecessor
 :::
 
 Different programs can print different optimal alignments while agreeing on the score. Enumerating all optimal alignments can take exponential time because there can be exponentially many tied paths.
+
+### Sensitivity to score parameters
+
+An optimality proof applies to the specified scores. We can inspect how a conclusion depends on them by scoring a few competing alignments symbolically.
+
+For ACGT and AGCT, keep the match reward at 1, write the mismatch penalty as $p>0$, and the per-character gap penalty as $d>0$. The ungapped alignment has two matches and two mismatches, giving $2-2p$. Either displayed gapped alignment has three matches and two gap characters, giving $3-2d$. The gapped candidates beat the ungapped candidate exactly when
+$$
+3-2d>2-2p,\qquad\text{or equivalently}\qquad p>d-\tfrac12.
+$$
+With $p=d=1$, they win by one point. Keeping $p=1$ but raising $d$ to 2 reverses this comparison: the ungapped candidate scores 0 and the gapped candidates score $-1$. At $p=d-1/2$ they tie.
+
+This calculation compares these candidates; a complete claim of optimality still requires checking all admissible alignments, which the dynamic program does. It gives a useful prediction before rerunning the code. If a small parameter change moves the chosen gap, that movement can reflect the scoring assumptions even when both implementations are correct. Counting ties at one parameter setting describes exact ambiguity; varying the scores asks whether the answer remains stable under nearby modeling choices.
 
 ## Implementation
 

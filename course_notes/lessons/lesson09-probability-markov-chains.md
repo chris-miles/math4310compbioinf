@@ -22,7 +22,7 @@ import random
 
 A stretch of DNA contains several CG pairs. Is that unusual, or just what we should expect from a region rich in C and G? Sequence alone does not define surprise: we need a background model that says which strings are common and which are rare.
 
-The input today is one DNA string, together with probabilities estimated from representative sequence. We will compute its probability under two models, first treating bases independently and then allowing the previous base to affect the next. Simulation gives another way to examine what each model assumes. These calculations prepare a classifier for island-like regions in Lesson 10.
+The input today is a contiguous region of assembled DNA, together with probabilities estimated from representative sequence. Its adjacent letters represent neighboring genomic bases; joining separate raw reads would invent neighbors the experiment did not observe. We will compute its probability under two models, first treating bases independently and then allowing the previous base to affect the next. Simulation gives another way to examine what each model assumes. These calculations prepare a classifier for island-like regions in Lesson 10.
 
 A genome file contains one observed string. A probability model describes a collection of strings that could have been observed and assigns a probability to each one. The model lets us ask whether an observed pattern is ordinary or surprising under specific assumptions.
 
@@ -199,6 +199,23 @@ Sketch. Consider one transition row, and let $r_b=n_{ab}/N$ be its observed prop
 :::
 
 For `ACGCGT`, the transitions are `AC`, `CG`, `GC`, `CG`, `GT`. Both transitions out of $C$ go to $G$, so the raw estimate has $\widehat a_{CG}=1$ and zeros elsewhere in that row. A new `CA` would have probability zero. Adding one pseudocount to every cell gives $\widehat a_{CG}=(2+1)/(2+4)=0.5$ and reserves probability for unobserved transitions.
+
+### Transition counts and sequence boundaries
+
+For a fixed initial distribution, collect equal transition factors in the sequence likelihood:
+$$
+P(x)=q_{x_1}\prod_{a,b\in\Sigma}a_{ab}^{n_{ab}},\qquad
+\log P(x)=\log q_{x_1}+\sum_{a,b}n_{ab}\log a_{ab}.
+$$
+Here the count form uses positive parameters. With zeros, an unobserved transition contributes no term, while an observed impossible transition makes the log-likelihood $-\infty$. Two strings with the same first base and transition counts receive the same likelihood. A first-order chain retains more order information than an iid model, but still discards distinctions beyond these counts.
+
+For example, $\texttt{ACAGA}$ and $\texttt{AGACA}$ both start with A and contain the transitions AC, CA, AG, and GA once each. Their probabilities are equal under every first-order chain. Their 3-mers differ, so a model remembering two previous bases could distinguish them.
+
+When fitting several independent sequence records, boundaries must remain boundaries. Records $\texttt{ACG}$ and $\texttt{TAC}$ supply four transitions: AC twice, CG once, and TA once. Concatenating them would invent an additional GT transition between unrelated endpoints. The correct joint likelihood is
+$$
+[q_Aa_{AC}a_{CG}][q_Ta_{TA}a_{AC}],
+$$
+with one initial factor per record. This also provides a count check: records of lengths $L_1,\ldots,L_r$, all nonempty, supply $\sum_j(L_j-1)$ transitions. A different total often signals an omitted pair or an artificial join.
 
 ## Simulation
 

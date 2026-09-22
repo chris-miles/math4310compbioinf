@@ -1,6 +1,6 @@
 # Lesson Calendar
 
-Spring 2027, Monday and Wednesday, about 75 minutes per meeting. The public schedule in `site/schedule.json` is the date source of truth.
+Spring 2027, Monday and Wednesday, 80 minutes per meeting. The public schedule in `site/schedule.json` is the date source of truth.
 
 The official teaching term is January 11 through April 27. January 18 and February 15 are Monday holidays; spring break removes March 8 and 10. April 26 is a class day. This leaves **27 meetings: 23 lessons, two midterms, and two project presentation days**.
 

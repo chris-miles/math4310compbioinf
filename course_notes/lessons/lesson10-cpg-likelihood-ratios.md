@@ -224,6 +224,19 @@ For example, if the prior island probability is 0.1, the prior odds are $1/9$. T
 
 A useful comparison shuffles each window many times while preserving its base counts. This changes dinucleotide order while keeping GC content fixed. Comparing original scores with the shuffled score distribution measures how much the ordering contributes beyond composition. Similar classification accuracy alone is inconclusive: a threshold can conceal substantial changes in individual scores.
 
+### Precision and class prevalence
+
+Sensitivity and specificity condition on the true class. A user examining a list of predicted islands asks a different question: what fraction of that list is correct? This fraction is called *precision*, $TP/(TP+FP)$ when at least one positive prediction is made.
+
+In @exm-cpg-confusion, precision is $16/(16+8)=2/3$, even though specificity is 0.90. To see the role of prevalence, suppose sensitivity remains 0.80 and specificity remains 0.90 in a population of 1,000 windows containing only 10 islands. The expected counts are 8 true positives and 99 false positives. Their ratio gives a precision of about $8/107=0.075$ in the corresponding population calculation.
+
+More generally, let $p$ denote island prevalence, $s$ sensitivity, and $t$ specificity. A randomly selected window is a correctly predicted island with probability $sp$, and a falsely predicted island with probability $(1-t)(1-p)$. Therefore
+$$
+P(\text{island}\mid\text{positive prediction})
+=\frac{sp}{sp+(1-t)(1-p)}.
+$$
+This calculation assumes the class-conditional performance transfers to the new population. It explains why evaluating on a balanced sample can misrepresent the usefulness of a genome-wide candidate list. To interpret that list, we need the class frequency as well as performance within each class. Raising the threshold may improve precision, but its new sensitivity and specificity must be measured rather than assumed.
+
 ## Limitations
 
 1. **Fixed windows blur boundaries.** The classifier labels a whole window and cannot say where an island begins. Lesson 11 makes the region label a state that changes along the sequence.

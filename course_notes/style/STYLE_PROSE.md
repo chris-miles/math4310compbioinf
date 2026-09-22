@@ -16,7 +16,7 @@ What we want students to leave with is not the list of techniques, which will ch
 
 ## These Are Lecture Notes
 
-Each numbered lesson corresponds to one class day: one ~75-minute meeting, including board work and discussion. Use actual meeting dates in `site/schedule.json` and `planning/lesson_calendar.md`; a holiday week can have only one meeting. Count exams and project sessions before assigning lessons.
+Each numbered lesson corresponds to one class day: one 80-minute meeting, including board work and discussion. Use actual meeting dates in `site/schedule.json` and `planning/lesson_calendar.md`; a holiday week can have only one meeting. Count exams and project sessions before assigning lessons.
 
 The model is a good set of scribed lecture notes (MIT OCW 6.047 is the reference point): numbered sections whose headings name the topic, and under each heading the content itself, in blocks: definitions, a problem statement, an algorithm, a worked example, a result with its proof sketch, a figure, exercises. Prose supplies enough reasoning for students to follow the notes after class. Use short paragraphs to connect the data, objective, assumptions, and calculation. Avoid transcribing a lecture or leaving bare formulas that require an unstated lecture to explain them. A passage with three consecutive prose paragraphs deserves review, not automatic deletion.
 
@@ -62,7 +62,7 @@ Section headings name the topic, as a textbook would: "Hamming distance", "The a
 
 These are pacing guides, not quotas. Never pad a lesson by repeating definitions, adding generic framing, or expanding every proof. Conversely, a correct page of formulas is not a full class. Check whether students have time to interpret the input, work a small example, follow the derivation, and test a limitation.
 
-Length is calibrated to a 75-minute class with board work and discussion: Lesson 1 at five content sections and about 1,700 words is the reference. A page that could be covered in 35 minutes is missing a section; a page over 2,000 words needs a pacing review. Density matters more than any one number: if a paragraph can become a definition, an example, a table, or a display equation, it should.
+Length is calibrated to an 80-minute class, with roughly 60 minutes of prepared content and room for board work and discussion: Lesson 1 at five content sections and about 1,700 words is the reference. A page that could be covered in 35 minutes is missing a section; a page over 2,000 words needs a pacing review. Density matters more than any one number: if a paragraph can become a definition, an example, a table, or a display equation, it should.
 
 ### Lesson sources and front matter
 

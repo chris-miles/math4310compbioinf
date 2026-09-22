@@ -169,6 +169,24 @@ For an Eulerian graph, every edge is removed exactly once, and every node placed
 
 Each traversal pushes one endpoint, so total time and space are $\mathcal O(|V|+|E|)$. Choosing a different outgoing edge may return a different valid assembly.
 
+### Stack order and path order
+
+Take edges $A\to B$, $B\to A$, and $A\to C$. The degree conditions require starting at $A$ and ending at $C$. Suppose the algorithm first takes $A\to C$, reaching a dead end while two edges remain. A greedy walk that commits this order as its final answer would fail.
+
+The stack algorithm instead postpones the final ordering:
+
+| Action | Stack | Output so far, before reversal |
+|---|---|---|
+| start | A | empty |
+| take $A\to C$ | A, C | empty |
+| pop C | A | C |
+| take $A\to B\to A$ | A, B, A | C |
+| pop until empty | empty | C, A, B, A |
+
+Reversing the output gives $A,B,A,C$, which uses every edge once. The earlier dead end becomes the end of the final path. Popping a vertex records where its completed portion belongs after the remaining excursions have been inserted.
+
+For an independent output check, list all consecutive pairs in the returned path and compare their multiset with the input edge multiset. Checking only that each pair is an allowed edge could accept a path that repeats one edge occurrence and misses another. Degree validation and the algorithm's final length check establish the intended traversal conditions; multiset comparison checks the returned object directly, including parallel-edge multiplicity.
+
 ## Repeats and ambiguity
 
 For `ACGTCGACG` at $k=3$,

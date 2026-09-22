@@ -23,9 +23,9 @@ cf.use_style()
 
 ## Alignment as a grid path
 
-Two versions of the same gene may differ by substitutions and by inserted or deleted bases. We have scores for those changes, but still need to decide which letters correspond. Trying every gap placement is already impractical for short strings. A dynamic-programming table will let us optimize over those placements without listing them.
+Suppose we have assembled DNA from two bacterial isolates and extracted the same gene from each assembly. The inputs are now two gene sequences, rather than two arbitrary raw reads. We expect the records to correspond from beginning to end, but an insertion or deletion can shift their internal coordinates. Global alignment makes that end-to-end expectation part of the problem: every letter in both records must appear in the answer.
 
-The input is a pair of strings and a scoring rule; the output today is the best end-to-end alignment score. We keep the full-length comparison deliberately: both records are assumed to represent corresponding regions. The next lesson recovers the aligned strings from the table.
+We have scores for matches, mismatches, and gaps, but trying every gap placement is already impractical for short strings. Today's dynamic program computes the best score; the next lesson recovers the aligned strings. If the input were instead a short read and an entire chromosome, requiring both full strings would be inappropriate. Lesson 5 changes the boundary rules to express that different task.
 
 Let $x=x_1\cdots x_n$ and $y=y_1\cdots y_m$. An alignment consumes letters in order. A letter over a letter consumes one symbol from each string; a gap column consumes a symbol from one string.
 
@@ -204,6 +204,16 @@ The score table takes $\mathcal O(nm)$ time and $\mathcal O(nm)$ memory.
 ::: {.proof}
 There are $(n+1)(m+1)$ cells. Each interior cell evaluates three candidates, and each boundary cell is set once.
 :::
+
+### Computing with two rows
+
+To compute row $i$, the recurrence reads row $i-1$ and the entries already computed in row $i$. Older rows have no further role in the score calculation. We can therefore retain a previous row and a current row, replacing the previous row after each pass.
+
+In the ACGT/AGT example, the row for prefix AC is $(-4,-1,0,-2)$. To compute the row for ACG, initialize its boundary to $-6$. The first interior cell compares $-4-1$, $-1-2$, and $-6-2$, giving $-3$. The next cell compares $-1+1$, $0-2$, and $-3-2$, giving 0. The final cell is $-1$. We have recovered $(-6,-3,0,-1)$ without reading the rows for the empty prefix or A.
+
+The storage is now $2(m+1)$ numbers, or $\mathcal O(m)$, while the number of cell updates stays $nm$. This distinction matters: a memory improvement need not be a time improvement. For two strings of length 10,000, a full table has roughly $10^8$ cells; two rows have roughly $2\times10^4$ entries. Python containers have additional overhead, so cell counts are more portable than a byte estimate.
+
+The discarded rows matter if we later want the alignment itself. A rolling score calculation supplies the optimum value but loses the intermediate choices needed for ordinary traceback. Lesson 4 keeps those choices explicitly.
 
 ### Maximization and edit distance
 

@@ -12,9 +12,9 @@ How do we model gaps as events, then search a database without filling every tab
 
 ## Gap opening and extension
 
-A database search starts with a query sequence and returns promising matching regions among many records. Two choices affect what we find: how we score a run of missing letters, and which candidate regions we examine at all. A deletion spanning several neighboring bases motivates a different gap score; a large database motivates a shortcut before alignment.
+Suppose sequencing and gene prediction produce a candidate protein whose function is unknown. A database search compares its amino-acid sequence with known records and returns regions worth investigating. Unlike the two-sequence problems so far, we do not know in advance which record contains the useful match. Filling a complete local-alignment table against every record repeats expensive work; seeds first select promising locations.
 
-We first extend the alignment model to remember whether a gap has already started. We then use exact words to select candidate locations. These steps belong to different parts of a search: gap scoring ranks alignments, while seeding determines which regions reach that scoring stage.
+Within a candidate alignment, a stretch of missing residues may reflect one insertion or deletion event. An affine gap score distinguishes that event from several isolated gaps. These are separate choices: the gap model ranks the alignments we examine, while the seed rule determines which locations we examine at all.
 
 A linear gap score $kg$ charges the same amount for one length-$k$ gap as for $k$ separate one-letter gaps. A single insertion or deletion often affects a run of adjacent bases or amino acids. We therefore distinguish starting a gap from continuing it.
 
@@ -73,7 +73,7 @@ The extension candidate wins. The alignment
 $$
 \begin{array}{c}\texttt{ACGT}\\\texttt{A--T}\end{array}
 $$
-scores $1-3+1=-1$. A linear penalty of 2 per gap character gives $1-4+1=-2$.
+scores $1-3+1=-1$. A linear penalty of 2 per gap character gives $1-4+1=-2$. In the DNA interpretation, removing the contiguous segment CG is one possible event behind the two gap characters. The affine model gives that explanation one opening cost; the two sequences alone do not prove its evolutionary history.
 :::
 
 ::: {#prp-affine-correctness}
@@ -159,6 +159,22 @@ Every exact shared $k$-mer occurs as a query word and as an indexed target word,
 :::
 
 Unlike dynamic programming, seed and extend is a heuristic for the unrestricted best-alignment problem. Its limitation is explicit and testable: construct a true alignment with no accepted seed.
+
+### Seed length and candidate counts
+
+Under an iid uniform DNA background, two independent length-$k$ words agree with probability $4^{-k}$. A query of length $n$ and target of length $N$, both at least $k$, offer $(n-k+1)(N-k+1)$ pairs of starting positions. If $H$ counts exact seed hits, linearity of expectation gives
+$$
+\mathbb E[H]=(n-k+1)(N-k+1)4^{-k}.
+$$
+Overlapping words make hit events dependent, but expectation still adds. Independence of the two sequences and the uniform background are the assumptions behind each event's probability.
+
+For a length-100 query and a length-10,000 target, $k=4$ gives an expected $97(9997)/256\approx3788$ random hits. At $k=8$, the expectation is $93(9993)/65536\approx14.2$. These are counts of candidate position pairs, not counts of distinct matching records or final reported alignments.
+
+There is also a deterministic sensitivity bound. In an ungapped length-$L$ alignment with exactly $t$ mismatches, the $L-t$ matching positions are split into at most $t+1$ runs. At least one run therefore has length
+$$
+\left\lceil\frac{L-t}{t+1}\right\rceil.
+$$
+Any exact seed no longer than that run must be present at the corresponding positions. For $L=20$ and $t=3$, some run has at least five matches, guaranteeing a 5-mer seed. An 8-mer seed has no such guarantee. This argument explains why reducing seed length can rescue distributed substitutions; gaps require different accounting because they interrupt correspondence between positions.
 
 ## Database size and E-values
 

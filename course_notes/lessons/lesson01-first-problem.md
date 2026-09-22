@@ -38,10 +38,14 @@ An *alphabet* $\Sigma$ is a finite set of symbols. A *sequence* over $\Sigma$ is
 For DNA, $\Sigma = \{A, C, G, T\}$; for proteins, the twenty amino-acid letters. The string keeps the order of the bases and discards everything else: the second strand, the three-dimensional structure, which stretches are genes.
 
 ::: {.biology}
-A sequencer reads the order of bases along a DNA fragment and writes it as text, one letter per base. One run produces millions of fragments (reads), a few hundred letters each on the common instruments and tens of thousands on long-read machines, with errors, and with no read spanning a chromosome.
+Sequencing begins with DNA molecules extracted from a sample and prepared for an instrument; it produces measurements from which software infers base sequences, called *reads*. In sequencing by synthesis, an instrument images fluorescent signals as a copied DNA strand grows one base per cycle; in nanopore sequencing, it measures changes in electrical current as a strand passes through a pore [@illumina-sbs; @nanopore-technology].
 :::
 
-The two strands of DNA pair $A$ with $T$ and $C$ with $G$ and run in opposite directions. The *reverse complement* of a string is the other strand's reading: the reverse complement of $GAG$ is $CTC$. A sequencer does not report which strand it read, so a string and its reverse complement are the same molecule.
+The conversion from signal to letters is called *basecalling*. A read records sequence along a fragment, but does not arrive with its position in a chromosome. To compare a sample with a known reference genome, we must locate the read and decide which of its bases correspond to reference bases. Exact matching can fail because of a true sequence difference or a measurement error. Alignment allows mismatches and gaps while proposing that correspondence. A reference provides coordinates for comparison; it is not a claim that every sample should have the reference sequence [@nhgri-variation].
+
+For example, suppose a read is $\texttt{ACGTT}$ and a candidate reference segment is $\texttt{ACTT}$. A gap can place the final TT pairs together, suggesting an extra G in the read relative to this segment. The alignment alone cannot tell whether that G is biological or a basecalling error. We first need a precise comparison rule, then evidence from the measurements and other reads to interpret the difference.
+
+The two strands of DNA pair $A$ with $T$ and $C$ with $G$ and run in opposite directions. The *reverse complement* of a string is the other strand's reading: the reverse complement of $GAG$ is $CTC$. In ordinary DNA read mapping, the read's orientation relative to the reference is unknown, so we consider both the sequence and its reverse complement. They describe opposite strands of the same double-stranded fragment.
 
 ## Hamming distance
 
@@ -122,6 +126,18 @@ Sketch. Every substitution is an edit, so the $d_H(x, y)$ substitutions form a v
 :::
 
 The proof has the two-part shape used for every optimization claim in the course: exhibit a solution (upper bound), then rule out anything smaller (lower bound).
+
+### Bounds before computation
+
+Every insertion or deletion changes the length by one, while a substitution leaves it unchanged. Therefore $d_E(x,y)\geq\bigl||x|-|y|\bigr|$. A proposed edit distance smaller than the length difference is impossible, regardless of the letters. This bound can certify an answer when a construction attains it.
+
+For example, changing $\texttt{ACGTT}$ to $\texttt{ACT}$ requires at least two edits because the lengths differ by two. Deleting G and one T achieves two, so the distance is exactly two. For equal-length strings the length bound is zero and may tell us very little; the earlier example needed a separate argument to exclude one substitution.
+
+There is also a useful check involving a third string $z$. Concatenate a shortest edit sequence from $x$ to $y$ with one from $y$ to $z$. This constructs a route from $x$ to $z$ of length $d_E(x,y)+d_E(y,z)$, so
+$$
+d_E(x,z)\leq d_E(x,y)+d_E(y,z).
+$$
+The direct optimum can improve on that route, but cannot cost more. For @exm-edit-distance, the route through $y$ costs $1+3=4$, while the direct route costs 2. Such bounds let us reject inconsistent distance calculations before implementing a search.
 
 ## Counting alignments
 

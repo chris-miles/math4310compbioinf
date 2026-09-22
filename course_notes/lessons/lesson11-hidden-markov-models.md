@@ -255,6 +255,26 @@ The path contains transitions $II,IB,BB,BB$, giving $\widehat a_{II}=\widehat a_
 
 The conditional-independence statement has a precise consequence. If the path is known, learning that $x_{i-1}=S$ does not change the emission distribution at position $i$ beyond what $\pi_i$ already tells us. Dependence can still appear after the path is hidden: two adjacent $S$ symbols are correlated because both are more likely to lie inside the same persistent $I$ run. HMMs create dependence among observations by mixing over correlated hidden states.
 
+### Dependence after hiding the states
+
+We can quantify the dependence between observations using the same B/I model. The first observation is S with probability
+$$
+P(X_1=S)=0.5(0.3)+0.5(0.8)=0.55.
+$$
+Before observing anything, the second hidden state is B with probability $0.5(0.8)+0.5(0.4)=0.6$, and I with probability 0.4. Thus $P(X_2=S)=0.6(0.3)+0.4(0.8)=0.50$.
+
+Now sum the joint probability of SS over its four possible hidden paths:
+$$
+\begin{aligned}
+P(SS)&=0.5(0.3)[0.8(0.3)+0.2(0.8)]\\
+&\quad+0.5(0.8)[0.4(0.3)+0.6(0.8)]\\
+&=0.06+0.24=0.30.
+\end{aligned}
+$$
+Independence would instead give $0.55(0.50)=0.275$. Observing the first S raises the probability of a second S to $0.30/0.55\approx0.545$. The first observation supplies evidence for I; persistence of that hidden state carries some of the evidence to the next position.
+
+This calculation also clarifies what to check in a simulation. Matching the overall frequency of S is insufficient: a simulator that draws independent symbols can reproduce a marginal frequency while getting adjacent pairs wrong. For this model, both the first-position frequency and the SS frequency have exact targets. They need not match frequencies at every later position, because the initial hidden distribution need not remain unchanged after a transition. Conditional independence of emissions is a statement made after fixing the hidden path; summing over that path can produce dependent observations.
+
 ## Limitations
 
 1. **Emissions are conditionally independent.** Once the state is known, the model forgets the previous symbol. A two-state, single-base HMM cannot directly express extra probability for $CG$; the state must also carry the previous base or emit pairs.

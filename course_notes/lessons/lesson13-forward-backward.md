@@ -159,6 +159,25 @@ Posterior decoding chooses $\widehat\pi_i=\arg\max_k\gamma_k(i)$ separately at e
 
 For any proposed labels $z_1,\ldots,z_n$, the expected number correct, conditional on $x$, is $\sum_i\gamma_{z_i}(i)$. Choosing a largest probability in each column maximizes that sum. Viterbi instead maximizes the probability that the entire path is correct. Posterior decoding can violate path constraints when transitions are forbidden.
 
+### Expected island positions and boundary support
+
+Posterior probabilities can answer quantitative questions without committing to one path. Let $N_I$ be the number of positions labeled I in the hidden path. Write it as a sum of indicators, one for each position. Linearity of conditional expectation gives
+$$
+\mathbb E[N_I\mid x]=\sum_{i=1}^n\gamma_I(i).
+$$
+For SSWS, the displayed posteriors give approximately $0.780+0.656+0.290+0.516=2.242$ island positions. A noninteger expectation is natural: it averages the integer counts across possible paths. Viterbi reports two island positions and posterior decoding reports three; neither count is required to equal this average.
+
+Uncertainty about a boundary involves two neighboring labels. For example, the probability of an I-to-B transition between positions 2 and 3 is
+$$
+P(\pi_2=I,\pi_3=B\mid x)
+=\frac{f_I(2)a_{IB}e_B(W)b_B(3)}{P(x)}
+=\frac{0.216(0.4)(0.7)(0.40)}{0.060576}
+\approx0.399.
+$$
+The factorization joins a prefix ending in I, the specified transition and next emission, and the remaining suffix. It counts every complete path having that boundary. Multiplying the separate marginal probabilities $\gamma_I(2)\gamma_B(3)$ would give about 0.466 and would incorrectly assume those labels are independent conditional on the observations.
+
+An annotation can therefore report a likely region while assigning only moderate support to its exact endpoint. State posteriors describe positions; transition posteriors describe boundaries. Both sum over alternative paths rather than treating one decoded path as known.
+
 ## Implementation and checks
 
 ::: {.algorithm}

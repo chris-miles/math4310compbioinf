@@ -148,6 +148,21 @@ which is smaller than $0.0129024$ for $\texttt{IIBB}$. The emission-only choice 
 
 Viterbi keeps a best prefix for each possible ending state because the next transition depends on that state. It cannot replace the whole column with a single winning prefix: a prefix that loses now may have a much better transition to a state needed later. The proof identifies exactly which histories can be merged safely.
 
+### Evidence needed to introduce a region
+
+Consider a run of $r\geq1$ observed S symbols between two positions whose hidden labels are fixed to B. Compare two candidate paths inside this interval: keeping all $r$ positions in B, or changing them all to I and returning to B afterward. Factors outside the interval, including the flanking emissions, cancel in the probability ratio.
+
+The all-B candidate uses $r+1$ transitions of probability 0.8 and $r$ emissions of probability 0.3. The island candidate uses a B-to-I transition of probability 0.2, $r-1$ I self-transitions of probability 0.6, an I-to-B transition of probability 0.4, and $r$ emissions of probability 0.8. Consequently,
+$$
+\frac{P(\text{island candidate},x)}{P(\text{all-B candidate},x)}
+=\frac{0.2(0.6)^{r-1}(0.4)}{(0.8)^{r+1}}
+\left(\frac{0.8}{0.3}\right)^r
+=\frac{2^{r-1}}{3}.
+$$
+For run lengths 1, 2, and 3, the ratios are $1/3$, $2/3$, and $4/3$. Three consecutive S emissions make this island candidate preferable; one or two do not compensate for introducing and ending the region.
+
+This is a comparison of two paths with fixed flanking states, not a minimum-length rule for every Viterbi island. At a sequence boundary the initial probability replaces one transition, and uncertain flanking labels can change the comparison. The calculation shows explicitly how evidence from several emissions can pay for a state change. Viterbi performs all such compatible comparisons together.
+
 ## Log-space implementation
 
 Long products underflow. For example, $0.25^{1000}$ is smaller than the representable positive range of a standard Python float. Define $V_k(i)=\log v_k(i)$. The recurrence becomes

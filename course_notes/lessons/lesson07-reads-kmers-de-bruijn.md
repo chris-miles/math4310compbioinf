@@ -23,7 +23,7 @@ cf.use_style()
 
 ## Reads and coverage
 
-Sequencing a genome produces fragments, often with overlapping sequence but without a label saying where each fragment belongs. When there is no suitable reference genome, the task is to reconstruct a longer sequence from those overlaps. Repeated DNA makes the placement ambiguous even before sequencing errors enter.
+Read mapping in Lesson 5 assumed a reference sequence to supply coordinates. For a newly sampled organism without a suitable reference, sequencing still gives reads, but their order must be inferred from overlaps with one another. This is *de novo assembly*. Repeated DNA makes placement ambiguous even before sequencing errors enter: a shared word can come from the same genomic location or from two copies of a repeat.
 
 We begin with the reads as a collection of strings, then isolate a simpler problem: reconstruct one string from its exact short-word counts. That idealization makes the graph construction visible. Comparing the two kinds of counts will show which assumptions separate the toy problem from an actual assembly.
 
@@ -33,7 +33,7 @@ Let $G$ be a genome string. An *ideal read* is a substring of $G$ or its reverse
 :::
 
 ::: {.biology}
-A short-read sequencer reports millions of fragments without their genomic positions. Sampling is uneven, and errors enter before assembly begins.
+The DNA sample contains many molecules covering overlapping genomic regions; sequencing samples fragments from them, so a genomic position can be observed repeatedly. These repeated measurements help distinguish sequence from errors, but their counts also reflect uneven sampling rather than just the number of copies in the genome.
 :::
 
 If $m$ reads have length $L$ and the genome has length $n$, the nominal coverage is $C=mL/n$. Coverage is an average, not a guarantee at every position.
@@ -210,6 +210,22 @@ Sketch. Start with the first node. At each edge, the next node overlaps the curr
 
 Construction takes $\mathcal O(|K|)$ time for fixed $k$ and stores $|K|$ edges. Reconstruction now asks for a walk using every edge occurrence once. Lesson 8 supplies that algorithm.
 
+
+### How one error changes the spectrum
+
+Consider a read of length $L\geq k$ with one substituted base at one-based position $p$. A length-$k$ window beginning at $i$ contains the error exactly when $i\leq p\leq i+k-1$. Combining this with the valid start positions gives
+$$
+\max(1,p-k+1)\leq i\leq\min(p,L-k+1).
+$$
+The number of affected occurrences is therefore
+$$
+\min(p,L-k+1)-\max(1,p-k+1)+1.
+$$
+It is at most $k$, and is smaller near a read boundary.
+
+For $\texttt{ACGTTAC}$ with $k=3$, changing the fourth base T to C gives $\texttt{ACGCTAC}$. The middle words change from $\texttt{CGT,GTT,TTA}$ to $\texttt{CGC,GCT,CTA}$; the end words $\texttt{ACG}$ and $\texttt{TAC}$ survive. A substitution at the first base would affect only the first 3-mer.
+
+Each affected occurrence changes its word, but the number of newly distinct words can be smaller than the number of affected occurrences: a changed word might already appear elsewhere. Counts can also partly cancel when one word is lost in one window and gained in another. Thus the formula counts corrupted observations, not necessarily new graph edges with distinct labels. Increasing $k$ gives longer overlap context while allowing one base error to disturb more consecutive windows. The resulting graph errors are correlated, because those windows share the same wrong base.
 
 ## What changes with k
 

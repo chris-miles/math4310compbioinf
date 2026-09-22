@@ -23,11 +23,21 @@ cf.use_style()
 
 ## Substrings instead of whole strings
 
-A protein can share a functional domain with another protein while having different sequence on either side. Comparing both proteins end to end can bury the shared region under penalties for unrelated flanks. We want the strongest matching pair of substrings, with their locations in the original records.
+After translating a predicted coding sequence, we may compare the resulting amino-acid string with a characterized protein. A *domain* is a region of a protein that often folds as a unit and carries a particular activity, such as binding another molecule [@ebi-domains]. Two proteins may share a domain while having different regions around it. Requiring an end-to-end alignment can bury the domain match under penalties for those flanks; local alignment lets the shared region determine its own endpoints.
 
 Our input remains two strings and column scores. The change is which letters the output must use: we may now leave prefixes and suffixes outside the alignment. The Smith-Waterman algorithm makes that change precise with one extra recurrence candidate and new traceback rules.
 
-Global alignment uses every letter. Local alignment can isolate a shared protein domain. Mapping an entire read inside a chromosome often instead uses a free-end alignment: it consumes the read while leaving reference flanks uncharged. Which letters must appear in the answer is part of the problem specification.
+Which letters must appear in the answer depends on the biological task:
+
+| Input and intended comparison | Letters required | Alignment choice |
+|---|---|---|
+| Two complete versions of a corresponding gene | both full records | global |
+| Two proteins sharing a domain | the shared regions | local |
+| A read placed within a reference chromosome | the whole read, a reference interval | fitting (free reference ends) |
+
+: Biological tasks determine alignment boundaries. {#tbl-alignment-biological-tasks}
+
+The fitting model assumes the whole read belongs in one reference interval. A read with an adapter or an unreliable end may need trimming or an alignment that leaves those bases unaligned. We will keep the simpler whole-read requirement when deriving the fitting recurrence.
 
 ::: {#def-local-alignment}
 ## Local alignment problem
@@ -193,6 +203,19 @@ The algorithm still fills $(n+1)(m+1)$ cells and traces at most $n+m$ moves. Its
 The recurrence, borders, answer cell, and stopping rule act together. Start from the three-way global recurrence, without a zero candidate in interior cells. Zero borders and a required bottom-right answer allow free leading ends but charge trailing ends. Global borders and an answer taken from the last row or last column instead charge leading ends and allow free trailing ends. These are free-end variants; neither permits the arbitrary internal restart used by local alignment.
 
 A program that reports coordinates should check them as well as the score. The teaching function returns only the score and aligned strings; it could also return the traceback's start and stop cells. On TACG/ACGT, an answer of 3 must select ACG/ACG. A program that reports the same score while including a terminal mismatch has inconsistent traceback.
+
+### Fitting an entire read inside a reference
+
+Suppose $x$ is a read of length $n$ and $y$ is a longer reference of length $m$. We want every read base represented, while reference bases before and after the placement are free. Let $F(i,j)$ use the global three-way recurrence, with rows for read prefixes and columns for reference prefixes. Choose
+$$
+F(0,j)=0,\qquad F(i,0)=ig,\qquad
+\text{answer}=\max_{0\leq j\leq m}F(n,j).
+$$
+The zero top row lets us skip a reference prefix. The penalized first column prevents skipping a read prefix for free. Taking the answer anywhere in the last row leaves the unused reference suffix uncharged but requires consuming the whole read. Traceback stops on the top row, where $i=0$; it does not stop at an arbitrary interior zero.
+
+For read $\texttt{AC}$ and reference $\texttt{TTACGG}$, using match $+1$, mismatch $-1$, and gap $-2$, the fitting alignment scores 2 and places the read at reference positions 3 and 4. Two is also an upper bound: each of the two read letters can contribute at most one match reward, and gaps have negative scores. Global alignment instead must account for four additional reference letters; local alignment is allowed to omit part of the read.
+
+These boundary choices express a biological requirement in the table. Before modifying an alignment routine, state which input letters the output must consume, then choose its initialization and endpoint to enforce that requirement.
 
 ## Scoring and region length
 
