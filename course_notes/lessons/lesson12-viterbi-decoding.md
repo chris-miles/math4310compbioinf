@@ -1,7 +1,9 @@
 ---
 published: true
-title: "Viterbi Decoding"
-subtitle: "Lesson 12 · Week 7"
+title: "Finding the Most Likely Genome Annotation"
+subtitle: "Lesson 12 · 2027-03-01 · Week 8"
+nocite: |
+  @durbin1998, @compeau2015
 ---
 
 ## Core question
@@ -23,6 +25,10 @@ cf.use_style()
 ```
 
 ## The decoding problem
+
+A hidden-region model assigns a probability to every possible annotation, but a genome browser needs a concrete set of intervals. We therefore want one complete path of labels through the sequence. Deciding each label from its base alone would ignore the model's preference for regions that continue across neighboring positions.
+
+We retain the B/I model and observed S/W string from Lesson 11. Viterbi decoding chooses the most probable complete path, balancing emissions against the cost of switching states. The output is an annotation under this model; it will not tell us how confidently each individual base should receive its label.
 
 Lesson 11 assigned a joint probability $P(x,\pi)$ to every observation and hidden path. Given only $x$, decoding chooses the path with the largest joint probability.
 
@@ -291,6 +297,6 @@ Explain why keeping only the largest score at each state is safe, but keeping on
 Suppose only $E$ of the $K^2$ state transitions have positive probability. State the time cost of Viterbi when the implementation visits only allowed transitions.
 :::
 
-## Further reading
-
-Durbin et al. give the probabilistic derivation of Viterbi decoding in Section 3.2 [@durbin1998]. Compeau and Pevzner present the trellis as a Viterbi graph and connect its running time to the graph's edges in Chapter 10 [@compeau2015].
+::: {#refs}
+**References**
+:::

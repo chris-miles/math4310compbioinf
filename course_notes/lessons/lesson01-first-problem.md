@@ -1,7 +1,7 @@
 ---
 published: true
 title: "Sequences, Distances, and Alignments"
-subtitle: "Lesson 1 · Week 1"
+subtitle: "Lesson 1 · 2027-01-11 · Week 1"
 ---
 
 ## Core question
@@ -230,7 +230,7 @@ The cost is one pass over each string with a dictionary, $\mathcal{O}(n + m)$, a
 
 1. **Hamming distance assumes no shifts.** One insertion or deletion makes $d_H$ large between strings that differ by a single event. It is the right distance only when positions are known to correspond, as for reads already placed at the same reference position.
 2. **Edit distance assumes every edit costs one.** In real genomes an $A \leftrightarrow G$ substitution is more common than $A \leftrightarrow T$, and insertions and deletions are rarer than substitutions. Lesson 2 replaces the count with scores derived from how often each event occurs.
-3. **$k$-mer composition ignores order.** Two different strings can have identical $k$-mer spectra (@exr-first-problem-kmers), and a repeated $k$-mer in a genome appears once in the spectrum. Both facts are exactly what makes assembly hard (Lesson 8).
+3. **$k$-mer composition ignores order.** Two different strings can have identical $k$-mer spectra (@exr-first-problem-kmers), and comparing only distinct shared words discards their multiplicities. Both facts are exactly what makes assembly hard (Lesson 8).
 4. **All three ignore the other strand.** $GAG$ and $CTC$ are the same molecule. Any comparison of DNA strings has to decide whether to compare against the reverse complement as well (Lesson 7).
 
 ## Exercises
@@ -253,4 +253,9 @@ Find two different strings of length 5 with the same 2-mer spectrum. Then decide
 
 ::: {#exr-first-problem-object}
 Name one kind of biological data that is not naturally a single string. Say what mathematical object you would use for it and one thing that object throws away.
+:::
+
+
+::: {#refs}
+**References**
 :::

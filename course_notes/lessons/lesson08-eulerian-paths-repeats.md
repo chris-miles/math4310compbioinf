@@ -1,7 +1,9 @@
 ---
 published: true
-title: "Eulerian Paths, Repeats, and Errors"
-subtitle: "Lesson 8 · Week 4"
+title: "Assembly: Repeats, Errors, and Missing Information"
+subtitle: "Lesson 8 · 2027-02-08 · Week 5"
+nocite: |
+  @compeau2015, @pevzner2001
 ---
 
 ## Core question
@@ -19,6 +21,10 @@ cf.use_style()
 ```
 
 ## Eulerian paths
+
+The graph from Lesson 7 records which short words can follow one another. To reconstruct a genome, we must choose an order that uses the observed word occurrences. An algorithm can find such an order and still have no way to tell whether it is the true genome.
+
+Our input is an ideal genomic k-mer multiset and its directed graph. We seek a walk that uses every edge occurrence once, then ask a separate question: could another complete walk spell a different sequence? The repeated-region example will distinguish an algorithmic failure from information missing in the data.
 
 ::: {#def-eulerian-trail}
 ## Eulerian path and cycle
@@ -260,6 +266,6 @@ Draw the 3-mer paths for `ACGTC` and `ACTTC` together. Mark divergence and rejoi
 Run `eulerian_path` on two disconnected cycles. Explain the final length check.
 :::
 
-## Further reading
-
-Compeau and Pevzner develop Eulerian assembly and repeat ambiguity [@compeau2015]. Pevzner, Tang, and Waterman give the graph basis for assembly with sequencing errors [@pevzner2001].
+::: {#refs}
+**References**
+:::

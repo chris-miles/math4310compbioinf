@@ -7,6 +7,5 @@ toc: false
 
 ## Reference pages
 
-- [Computing conventions](appendices/computing-conventions.html)
-- [Math refreshers](appendices/math-refreshers.html)
+- [Computing and Math Reference](appendices/computing-math-reference.html)
 - [Notation](appendices/notation.html)

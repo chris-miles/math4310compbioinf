@@ -1,7 +1,7 @@
 ---
 published: false
-title: "Hill Functions, Bistability, and the Toggle Switch"
-subtitle: "Lesson 22 · Week 13"
+title: "Gene Regulation as a Biological Switch"
+subtitle: "Lesson 22 · 2027-04-14 · Week 14"
 ---
 
 ## Core question

@@ -1,7 +1,9 @@
 ---
 published: true
-title: "Recurrences, Tables, and the Alignment Recurrence"
-subtitle: "Lesson 3 · Week 2"
+title: "Finding the Best Sequence Alignment"
+subtitle: "Lesson 3 · 2027-01-20 · Week 2"
+nocite: |
+  @compeau2015, @durbin1998, @needleman1970
 ---
 
 ## Core question
@@ -20,6 +22,10 @@ cf.use_style()
 ```
 
 ## Alignment as a grid path
+
+Two versions of the same gene may differ by substitutions and by inserted or deleted bases. We have scores for those changes, but still need to decide which letters correspond. Trying every gap placement is already impractical for short strings. A dynamic-programming table will let us optimize over those placements without listing them.
+
+The input is a pair of strings and a scoring rule; the output today is the best end-to-end alignment score. We keep the full-length comparison deliberately: both records are assumed to represent corresponding regions. The next lesson recovers the aligned strings from the table.
 
 Let $x=x_1\cdots x_n$ and $y=y_1\cdots y_m$. An alignment consumes letters in order. A letter over a letter consumes one symbol from each string; a gap column consumes a symbol from one string.
 
@@ -62,7 +68,7 @@ The recurrence gives $D(2,2)=13$, $D(3,3)=63$, and $D(10,10)=8{,}097{,}453$. Two
 We write $f(n)\in\mathcal O(g(n))$ if constants $C>0$ and $n_0$ exist such that $f(n)\le Cg(n)$ for all $n\ge n_0$.
 :::
 
-A table for lengths $n,m$ has $(n+1)(m+1)$ cells. Constant work per cell costs $\mathcal O(nm)$ time. Big-O compares growth rates; it does not say fixed costs are irrelevant.
+A table for lengths $n,m$ has $(n+1)(m+1)$ cells. Constant work per cell costs $\mathcal O(nm)$ time. Big-O compares growth rates; it does not say fixed costs are irrelevant. The [computing and math reference](../appendices/computing-math-reference.html#asymptotic-notation) collects the notation.
 
 ### Repeated recursion and tabulation
 
@@ -245,6 +251,6 @@ Initialize the borders to zero and score AC against C. Explain which letter is m
 Give two valid cell-filling orders. State the dependency every valid order respects.
 :::
 
-## Further reading
-
-Compeau and Pevzner develop the grid-path route to alignment in Chapter 5 [@compeau2015]. Durbin et al. give the scoring and dynamic-programming formulation in Chapter 2 [@durbin1998]. See also the [asymptotic-notation refresher](../appendices/math-refreshers.md#asymptotic-notation). The original global algorithm is due to Needleman and Wunsch [@needleman1970].
+::: {#refs}
+**References**
+:::

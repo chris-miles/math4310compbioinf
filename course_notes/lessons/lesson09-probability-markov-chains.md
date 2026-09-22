@@ -1,7 +1,9 @@
 ---
 published: true
-title: "Probability and Markov Chains for Sequences"
-subtitle: "Lesson 9 · Week 5"
+title: "Probability Models for DNA Sequences"
+subtitle: "Lesson 9 · 2027-02-17 · Week 6"
+nocite: |
+  @durbin1998
 ---
 
 ## Core question
@@ -17,6 +19,10 @@ import random
 ```
 
 ## Sequences as random variables
+
+A stretch of DNA contains several CG pairs. Is that unusual, or just what we should expect from a region rich in C and G? Sequence alone does not define surprise: we need a background model that says which strings are common and which are rare.
+
+The input today is one DNA string, together with probabilities estimated from representative sequence. We will compute its probability under two models, first treating bases independently and then allowing the previous base to affect the next. Simulation gives another way to examine what each model assumes. These calculations prepare a classifier for island-like regions in Lesson 10.
 
 A genome file contains one observed string. A probability model describes a collection of strings that could have been observed and assigns a probability to each one. The model lets us ask whether an observed pattern is ordinary or surprising under specific assumptions.
 
@@ -176,6 +182,8 @@ markov_log_likelihood("ACGCG", initial, transition)
 
 ## Estimating a chain
 
+A training sequence is a sequence used to choose the parameters. A held-out sequence is set aside until those choices are finished, so it can test prediction on data the model did not fit. Our first estimate is simply the fraction of departures from each base that go to each possible next base.
+
 For a training sequence from the population being modeled, count adjacent pairs. Let $n_{ab}$ be the number of times base $a$ is followed by $b$.
 
 ::: {#prp-markov-mle}
@@ -187,7 +195,7 @@ $$
 :::
 
 ::: {.proof}
-Sketch. The transition log-likelihood is $\sum_a\sum_b n_{ab}\log a_{ab}$. Each row can be maximized separately under $\sum_b a_{ab}=1$. For a row with positive counts, constrained differentiation gives $n_{ab}/a_{ab}=\lambda$ for every $b$. Summing $a_{ab}=n_{ab}/\lambda$ shows that $\lambda=\sum_b n_{ab}$. The log-likelihood is concave, so this stationary point is a maximum. A category with zero count receives zero probability at the boundary; if the whole row has zero count, its distribution is not determined by the data.
+Sketch. Consider one transition row, and let $r_b=n_{ab}/N$ be its observed proportions, where $N=\sum_b n_{ab}>0$. For a proposed row $u$, moving probability to an unobserved category cannot improve the fit. On observed categories, the change in log-likelihood relative to $r$ is $N\sum_b r_b\ln(u_b/r_b)$. The inequality $\ln t\le t-1$ from Lesson 2 bounds this above by $N(\sum_b u_b-1)=0$. A zero proposed probability for an observed category gives likelihood zero. Thus the observed proportions maximize the row likelihood. A row with no observations is undetermined.
 :::
 
 For `ACGCGT`, the transitions are `AC`, `CG`, `GC`, `CG`, `GT`. Both transitions out of $C$ go to $G$, so the raw estimate has $\widehat a_{CG}=1$ and zeros elsewhere in that row. A new `CA` would have probability zero. Adding one pseudocount to every cell gives $\widehat a_{CG}=(2+1)/(2+4)=0.5$ and reserves probability for unobserved transitions.
@@ -265,6 +273,6 @@ Prove that an iid model is a Markov chain whose rows are identical. Then show th
 State two tests for `markov_log_likelihood`: one using a length-one sequence and one using a chain with identical rows. Give the expected result of each.
 :::
 
-## Further reading
-
-Durbin et al. develop Markov sequence models and their use in CpG analysis in Section 3.1 [@durbin1998].
+::: {#refs}
+**References**
+:::

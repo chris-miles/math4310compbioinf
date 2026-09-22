@@ -1,7 +1,9 @@
 ---
 published: true
-title: "Hidden Markov Models"
-subtitle: "Lesson 11 · Week 6"
+title: "Modeling Hidden Regions in a Genome"
+subtitle: "Lesson 11 · 2027-02-24 · Week 7"
+nocite: |
+  @durbin1998, @compeau2015
 ---
 
 ## Core question
@@ -22,6 +24,10 @@ cf.use_style()
 ```
 
 ## Observations and hidden states
+
+Sliding a window along a genome gives overlapping decisions, and neighboring windows may disagree about the same bases. Choosing a window size also fixes how sharply a boundary can be located. Instead, we can model the sequence as alternating hidden regions and let the labels persist or change from one position to the next.
+
+The input is the observed base sequence; a possible explanation is a sequence of region labels. Today we define a model that assigns probabilities to those explanations. Scoring one proposed path and summing over tiny examples will separate the questions that the next two lessons solve efficiently.
 
 The classifier in Lesson 10 decides whether an entire window came from an island or background model. Along a chromosome, the region can change. We observe bases, but the region label at each position is unknown.
 
@@ -274,6 +280,6 @@ Choose $a_{II}$ so that the mean island length is 200 bases. State the correspon
 Describe an HMM state space that remembers both region ($B$ or $I$) and the previous DNA base. How many states does it have, and what dependence can it represent that the two-state model cannot?
 :::
 
-## Further reading
-
-Durbin et al. introduce HMMs through CpG segmentation and derive the joint factorization in Section 3.2 [@durbin1998]. Compeau and Pevzner develop hidden paths and decoding through a graph formulation in Chapter 10 [@compeau2015].
+::: {#refs}
+**References**
+:::

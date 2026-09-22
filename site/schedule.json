@@ -71,106 +71,179 @@
       ],
       "assignment": {
         "id": "ps01-scoring-kmers",
-        "label": "Problem set 1"
+        "label": "Problem set 1",
+        "due": "2027-01-25"
       },
       "date_start": "2027-01-11",
-      "date_end": "2027-01-15"
+      "date_end": "2027-01-15",
+      "meetings": [
+        {
+          "date": "2027-01-11",
+          "lesson": 1
+        },
+        {
+          "date": "2027-01-13",
+          "lesson": 2
+        }
+      ]
     },
     {
       "week": 2,
-      "topic": "Global alignment",
+      "topic": "Finding an alignment",
       "lessons": [
-        3,
-        4
+        3
       ],
-      "assignment": {
-        "id": "ps02-global-alignment",
-        "label": "Problem set 2"
-      },
+      "assignment": null,
       "date_start": "2027-01-18",
       "date_end": "2027-01-22",
-      "note": "Jan 18: Martin Luther King Jr. Day — no class"
+      "note": "Jan 18: Martin Luther King Jr. Day; no class",
+      "meetings": [
+        {
+          "date": "2027-01-20",
+          "lesson": 3
+        }
+      ]
     },
     {
       "week": 3,
-      "topic": "Local alignment and search",
+      "topic": "Traceback and local alignment",
       "lessons": [
-        5,
-        6
+        4,
+        5
       ],
       "assignment": {
-        "id": "ps03",
-        "label": "Problem set 3"
+        "id": "ps02-global-alignment",
+        "label": "Problem set 2",
+        "due": "2027-02-03"
       },
       "date_start": "2027-01-25",
-      "date_end": "2027-01-29"
+      "date_end": "2027-01-29",
+      "meetings": [
+        {
+          "date": "2027-01-25",
+          "lesson": 4
+        },
+        {
+          "date": "2027-01-27",
+          "lesson": 5
+        }
+      ]
     },
     {
       "week": 4,
-      "topic": "Genome assembly",
+      "topic": "Sequence search and assembly",
       "lessons": [
-        7,
+        6,
+        7
+      ],
+      "assignment": {
+        "id": "ps03",
+        "label": "Problem set 3",
+        "due": "2027-02-17"
+      },
+      "date_start": "2027-02-01",
+      "date_end": "2027-02-05",
+      "meetings": [
+        {
+          "date": "2027-02-01",
+          "lesson": 6
+        },
+        {
+          "date": "2027-02-03",
+          "lesson": 7
+        }
+      ]
+    },
+    {
+      "week": 5,
+      "topic": "Assembly and Midterm 1",
+      "lessons": [
         8
       ],
       "assignment": {
         "id": "ps04",
-        "label": "Problem set 4"
+        "label": "Problem set 4",
+        "due": "2027-02-24"
       },
-      "date_start": "2027-02-01",
-      "date_end": "2027-02-05"
+      "date_start": "2027-02-08",
+      "date_end": "2027-02-12",
+      "meetings": [
+        {
+          "date": "2027-02-08",
+          "lesson": 8
+        },
+        {
+          "date": "2027-02-10",
+          "event": "Midterm 1: Lessons 1–8"
+        }
+      ]
     },
     {
-      "week": 5,
-      "topic": "Probability and Markov chains",
+      "week": 6,
+      "topic": "Probability models for DNA",
       "lessons": [
         9
       ],
       "assignment": null,
-      "date_start": "2027-02-08",
-      "date_end": "2027-02-12"
+      "date_start": "2027-02-15",
+      "date_end": "2027-02-19",
+      "note": "Feb 15: Presidents Day; no class",
+      "meetings": [
+        {
+          "date": "2027-02-17",
+          "lesson": 9
+        }
+      ]
     },
     {
-      "week": 6,
-      "topic": "CpG islands and HMMs",
+      "week": 7,
+      "topic": "CpG regions and hidden states",
       "lessons": [
         10,
         11
       ],
       "assignment": {
         "id": "ps05",
-        "label": "Problem set 5"
+        "label": "Problem set 5",
+        "due": "2027-03-03"
       },
-      "date_start": "2027-02-15",
-      "date_end": "2027-02-19",
-      "note": "Feb 15: Presidents Day — no class"
+      "date_start": "2027-02-22",
+      "date_end": "2027-02-26",
+      "meetings": [
+        {
+          "date": "2027-02-22",
+          "lesson": 10
+        },
+        {
+          "date": "2027-02-24",
+          "lesson": 11
+        }
+      ]
     },
     {
-      "week": 7,
-      "topic": "Decoding and inference",
+      "week": 8,
+      "topic": "Genome labels and uncertainty",
       "lessons": [
         12,
         13
       ],
       "assignment": {
         "id": "ps06",
-        "label": "Problem set 6"
-      },
-      "date_start": "2027-02-22",
-      "date_end": "2027-02-26"
-    },
-    {
-      "week": 8,
-      "topic": "Phylogenetics",
-      "lessons": [
-        14,
-        15
-      ],
-      "assignment": {
-        "id": "ps07",
-        "label": "Problem set 7"
+        "label": "Problem set 6",
+        "due": "2027-03-17"
       },
       "date_start": "2027-03-01",
-      "date_end": "2027-03-05"
+      "date_end": "2027-03-05",
+      "meetings": [
+        {
+          "date": "2027-03-01",
+          "lesson": 12
+        },
+        {
+          "date": "2027-03-03",
+          "lesson": 13
+        }
+      ]
     },
     {
       "week": 9,
@@ -178,90 +251,164 @@
       "lessons": [],
       "assignment": null,
       "date_start": "2027-03-06",
-      "date_end": "2027-03-14"
+      "date_end": "2027-03-14",
+      "meetings": []
     },
     {
       "week": 10,
-      "topic": "Expression matrices and PCA",
+      "topic": "Midterm 2 and evolutionary distances",
       "lessons": [
-        16
+        14
       ],
-      "assignment": {
-        "id": "ps08",
-        "label": "Problem set 8"
-      },
+      "assignment": null,
       "date_start": "2027-03-15",
-      "date_end": "2027-03-19"
+      "date_end": "2027-03-19",
+      "meetings": [
+        {
+          "date": "2027-03-15",
+          "event": "Midterm 2: Lessons 9–13"
+        },
+        {
+          "date": "2027-03-17",
+          "lesson": 14
+        }
+      ]
     },
     {
       "week": 11,
+      "topic": "Evolutionary trees and expression data",
+      "lessons": [
+        15,
+        16
+      ],
+      "assignment": {
+        "id": "ps07",
+        "label": "Problem set 7",
+        "due": "2027-03-31"
+      },
+      "date_start": "2027-03-22",
+      "date_end": "2027-03-26",
+      "meetings": [
+        {
+          "date": "2027-03-22",
+          "lesson": 15
+        },
+        {
+          "date": "2027-03-24",
+          "lesson": 16
+        }
+      ]
+    },
+    {
+      "week": 12,
       "topic": "PCA and multiple testing",
       "lessons": [
         17,
         18
       ],
       "assignment": {
-        "id": "ps09",
-        "label": "Problem set 9"
+        "id": "ps08",
+        "label": "Problem set 8",
+        "due": "2027-04-07"
       },
-      "date_start": "2027-03-22",
-      "date_end": "2027-03-26"
+      "date_start": "2027-03-29",
+      "date_end": "2027-04-02",
+      "meetings": [
+        {
+          "date": "2027-03-29",
+          "lesson": 17
+        },
+        {
+          "date": "2027-03-31",
+          "lesson": 18
+        }
+      ]
     },
     {
-      "week": 12,
+      "week": 13,
       "topic": "Clustering and single-cell data",
       "lessons": [
         19,
         20
       ],
       "assignment": {
-        "id": "ps10",
-        "label": "Problem set 10"
+        "id": "ps09",
+        "label": "Problem set 9",
+        "due": "2027-04-14"
       },
-      "date_start": "2027-03-29",
-      "date_end": "2027-04-02"
+      "date_start": "2027-04-05",
+      "date_end": "2027-04-09",
+      "meetings": [
+        {
+          "date": "2027-04-05",
+          "lesson": 19
+        },
+        {
+          "date": "2027-04-07",
+          "lesson": 20
+        }
+      ]
     },
     {
-      "week": 13,
+      "week": 14,
       "topic": "Gene regulation",
       "lessons": [
         21,
         22
       ],
       "assignment": {
-        "id": "ps11",
-        "label": "Problem set 11"
+        "id": "ps10",
+        "label": "Problem set 10",
+        "due": "2027-04-21"
       },
-      "date_start": "2027-04-05",
-      "date_end": "2027-04-09"
+      "date_start": "2027-04-12",
+      "date_end": "2027-04-16",
+      "meetings": [
+        {
+          "date": "2027-04-12",
+          "lesson": 21
+        },
+        {
+          "date": "2027-04-14",
+          "lesson": 22
+        }
+      ]
     },
     {
-      "week": 14,
-      "topic": "Method selection",
+      "week": 15,
+      "topic": "Method selection and project workshop",
       "lessons": [
         23
       ],
       "assignment": null,
-      "date_start": "2027-04-12",
-      "date_end": "2027-04-16"
+      "date_start": "2027-04-19",
+      "date_end": "2027-04-23",
+      "meetings": [
+        {
+          "date": "2027-04-19",
+          "lesson": 23
+        },
+        {
+          "date": "2027-04-21",
+          "event": "Project workshop and work session"
+        }
+      ]
     },
     {
-      "week": 15,
+      "week": 16,
       "topic": "Modern frontiers",
       "lessons": [
         24
       ],
       "assignment": null,
-      "date_start": "2027-04-19",
-      "date_end": "2027-04-23"
-    },
-    {
-      "week": 16,
-      "topic": "Final class meeting · Monday, April 26",
-      "lessons": [],
-      "assignment": null,
       "date_start": "2027-04-26",
-      "date_end": "2027-04-27"
+      "date_end": "2027-04-27",
+      "meetings": [
+        {
+          "date": "2027-04-26",
+          "lesson": 24
+        }
+      ]
     }
   ],
   "calendar": {
@@ -269,6 +416,10 @@
     "term_start": "2027-01-11",
     "classes_end": "2027-04-27",
     "spring_break_start": "2027-03-06",
-    "spring_break_end": "2027-03-14"
+    "spring_break_end": "2027-03-14",
+    "holidays": [
+      "2027-01-18",
+      "2027-02-15"
+    ]
   }
 }

@@ -1,6 +1,6 @@
 # MATH 4310 — Code Style
 
-Python only. Code is in service of understanding the algorithm and is **explicitly intended to be copied by students** into assignments. Write for a strong undergraduate, not for production.
+Lecture examples use Python and are **intended to be copied and adapted by students**. Assignments may be completed in R, Julia, MATLAB, or another language unless a problem has a specific restriction. Python packages and plotting helpers describe the notes' implementation, not student submission requirements. Write small, readable algorithms for undergraduates. Chris will rarely read submissions line by line; the assessed evidence is reasoning, validation, actual output, and interpretation.
 
 ## Stack
 - Python ≥ 3.11.
@@ -23,9 +23,10 @@ Comments explain **why**, the **biological meaning**, or the **link to the math*
 Introduce every algorithm with pseudocode first in a `.algorithm` div, then give the Python implementation in a code chunk. Pseudocode uses mathematical notation; Python uses our naming conventions.
 
 ## Figures from Code
-Apply `figstyle.mplstyle` once at chapter top (see `STYLE_FIGURES.md`). **Never** set `figsize`, `dpi`, or other figure-size rcParams in chunk code — Quarto controls those via `_quarto.yml` and chunk options.
+Apply `figstyle.mplstyle` once at lesson top (see `STYLE_FIGURES.md`). **Never** set `figsize`, `dpi`, or other figure-size rcParams in chunk code — The site builder controls those via `site/config.json` and chunk options.
 
-## Chunks (Quarto)
+## Executable Markdown chunks
+- Active lesson sources are `.md` files. Use a fenced block marked `{.python .execute}` for code the website runs, and a plain `python` fence for nonexecuting examples such as deliberate assignment bugs. The builder retains `#|` options; `.qmd` files are legacy.
 - Chunk labels: `code-{chapter}-{shortname}` for code, `fig-{chapter}-{shortname}` when the chunk produces a figure.
 - Figure-producing chunks set `fig-cap`, `fig-alt`, and `label`.
 - `echo: true` by default — students see the code.
@@ -42,4 +43,4 @@ Mark starter chunks students will modify:
 def viterbi(...):
     raise NotImplementedError
 ```
-These must run as-is (raising at the right line is acceptable).
+Put incomplete starter functions and intentional bugs in nonexecuting code fences. Every executable block must run during a clean site build. Show expected and actual values for checks; avoid assertions that merely repeat the implementation.

@@ -37,6 +37,11 @@ Symbols are defined when they first appear in a lesson. Some letters have differ
 | $e_k(b)$ | Probability of emitting symbol $b$ in state $k$ |
 | $v_k(i)$ | Largest joint probability of an observation prefix and a path ending in state $k$ |
 | $V_k(i)=\log v_k(i)$ | Viterbi score in log space |
+| $f_k(i)$ | Joint probability of the observed prefix and state $k$ at $i$ |
+| $b_k(i)$ | Probability of the observed suffix after $i$, conditional on state $k$ at $i$ |
+| $\gamma_k(i)$ | Posterior state probability $P(\pi_i=k\mid x)$ |
+| $\xi_{k\ell}(i)$ | Posterior probability of transition $k\to\ell$ from $i$ to $i+1$ |
+| $\operatorname{LSE}(z)$ | Log-sum-exp, $\log\sum_j e^{z_j}$ |
 
 In the toy HMM, state $B$ denotes background and state $I$ denotes an island-like region. Observation $S$ groups C/G and observation $W$ groups A/T. These observation symbols are distinct from the window score $S(x)$.
 

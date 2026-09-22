@@ -148,7 +148,10 @@ def prepare(path: Path, route: str, number: str = "") -> dict:
     for marker, value in CONTENT.items():
         body = body.replace("<!-- " + marker + " -->", value)
     body = execute_chunks(body, path, route)
-    doc = json.loads(pandoc(body, "-f", "markdown", "-t", "json"))
+    citation_header = ""
+    if meta.get("nocite"):
+        citation_header = "---\n" + yaml.safe_dump({"nocite": meta["nocite"]}) + "---\n"
+    doc = json.loads(pandoc(citation_header + body, "-f", "markdown", "-t", "json"))
     counters = defaultdict(int)
 
     def labels(node):
@@ -305,7 +308,9 @@ def catalogs() -> dict[str, str]:
         if not assignment:
             return ""
         item = assignments.get(assignment["id"])
-        return entry(item, "assignments", assignment["label"]) if item else unavailable(assignment["label"])
+        label = entry(item, "assignments", assignment["label"]) if item else unavailable(assignment["label"])
+        due = date.fromisoformat(assignment["due"])
+        return label + f'<span class="assignment-due">Due {due:%b} {due.day}</span>'
 
     def week_label(week):
         start = date.fromisoformat(week["date_start"])
@@ -324,12 +329,20 @@ def catalogs() -> dict[str, str]:
             rows.append(f'<tr class="schedule-break" id="week-{week["week"]}"><th scope="row">{week_label(week)}</th><td colspan="2">{html.escape(week["topic"])}</td></tr>')
             continue
         module = next(m for m in schedule_data["modules"] if week["lessons"][0] in m["lessons"])
-        if any(n not in module["lessons"] for n in week["lessons"]):
-            raise ValueError("Each weekly row must belong to one module")
         if module != current_module:
             rows.append(f'<tr class="module-heading" id="module-{module["id"]}"><th colspan="3">{html.escape(module["title"])}</th></tr>')
             current_module = module
-        lecture_list = "".join('<div class="schedule-item"><span class="lesson-number">' + f'{n:02}' + '</span>' + entry(lessons[n], "lessons") + '</div>' for n in week["lessons"])
+        meeting_items = []
+        for meeting in week["meetings"]:
+            day = date.fromisoformat(meeting["date"])
+            date_label = f'{day:%a %b} {day.day}'
+            if "lesson" in meeting:
+                n = meeting["lesson"]
+                content = f'<span class="lesson-number">{n:02}</span>' + entry(lessons[n], "lessons")
+            else:
+                content = '<span class="schedule-event">' + html.escape(meeting["event"]) + '</span>'
+            meeting_items.append('<div class="schedule-item"><span class="meeting-date">' + date_label + '</span>' + content + '</div>')
+        lecture_list = "".join(meeting_items)
         if week.get("note"):
             lecture_list += '<div class="calendar-note">' + html.escape(week["note"]) + '</div>'
         rows.append(f'<tr class="week-row" id="week-{week["week"]}"><th scope="row">{week_label(week)}</th><td>{lecture_list}</td><td>{problem_set(week)}</td></tr>')

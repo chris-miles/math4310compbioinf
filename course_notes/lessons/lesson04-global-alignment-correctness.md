@@ -1,7 +1,9 @@
 ---
 published: true
-title: "Global Alignment: Correctness and Traceback"
-subtitle: "Lesson 4 · Week 2"
+title: "Recovering and Checking an Alignment"
+subtitle: "Lesson 4 · 2027-01-25 · Week 3"
+nocite: |
+  @durbin1998, @compeau2015, @needleman1970
 ---
 
 ## Core question
@@ -20,6 +22,10 @@ cf.use_style()
 ```
 
 ## The table as a directed graph
+
+A score of 1 does not tell a biologist where a deletion occurred. To inspect a predicted sequence change, we need the aligned letters and gaps that produced the score. We also need to know whether several equally good explanations place that gap differently.
+
+The data and scoring model are unchanged from Lesson 3. Today's output is one optimal alignment together with checks that its printed columns recover the input strings and reproduce the reported score. The proof explains why the table finds an optimum; the checks help us catch code that fails to implement that proof.
 
 Keep the model from Lesson 3. For strings $x=x_1\cdots x_n$ and $y=y_1\cdots y_m$, $F(i,j)$ is the best score of a global alignment of their length-$i$ and length-$j$ prefixes. Each cell is a vertex. Its three incoming edges represent the three possible final columns.
 
@@ -267,6 +273,6 @@ Change the traceback condition from "or" to "and". Predict the output for AA aga
 Suppose diagonal moves are forbidden. Write the recurrence and adapt the proof of @thm-global-correctness. Which sentence changes?
 :::
 
-## Further reading
-
-Durbin et al. present the prefix-subproblem proof and traceback structure in Chapter 2 [@durbin1998]. Compeau and Pevzner interpret alignment as a longest path in an acyclic graph [@compeau2015]. Needleman and Wunsch introduced the global method [@needleman1970].
+::: {#refs}
+**References**
+:::

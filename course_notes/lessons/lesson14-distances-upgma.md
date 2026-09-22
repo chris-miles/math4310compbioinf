@@ -1,7 +1,7 @@
 ---
 published: false
-title: "Evolutionary Distances and UPGMA"
-subtitle: "Lesson 14 · Week 8"
+title: "Building Evolutionary Trees from Sequence Distances"
+subtitle: "Lesson 14 · 2027-03-17 · Week 10"
 ---
 
 ## Core question

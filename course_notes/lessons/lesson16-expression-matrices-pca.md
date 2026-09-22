@@ -1,7 +1,7 @@
 ---
 published: false
-title: "Expression Matrices and PCA Through the SVD"
-subtitle: "Lesson 16 · Week 10"
+title: "Finding Major Patterns in Gene Expression"
+subtitle: "Lesson 16 · 2027-03-24 · Week 11"
 ---
 
 ## Core question

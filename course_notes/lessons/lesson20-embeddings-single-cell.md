@@ -1,7 +1,7 @@
 ---
 published: false
-title: "Embeddings and Single-Cell Data"
-subtitle: "Lesson 20 · Week 12"
+title: "Reading Maps of Single-Cell Data"
+subtitle: "Lesson 20 · 2027-04-07 · Week 13"
 ---
 
 ## Core question

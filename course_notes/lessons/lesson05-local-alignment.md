@@ -1,7 +1,9 @@
 ---
 published: true
-title: "Local Alignment"
-subtitle: "Lesson 5 · Week 3"
+title: "Finding Shared Regions Within Sequences"
+subtitle: "Lesson 5 · 2027-01-27 · Week 3"
+nocite: |
+  @smith1981, @durbin1998, @compeau2015
 ---
 
 ## Core question
@@ -21,7 +23,11 @@ cf.use_style()
 
 ## Substrings instead of whole strings
 
-Global alignment uses every letter. That is the wrong question when one protein contains a domain also found inside a longer protein, or when a short read belongs somewhere inside a chromosome.
+A protein can share a functional domain with another protein while having different sequence on either side. Comparing both proteins end to end can bury the shared region under penalties for unrelated flanks. We want the strongest matching pair of substrings, with their locations in the original records.
+
+Our input remains two strings and column scores. The change is which letters the output must use: we may now leave prefixes and suffixes outside the alignment. The Smith-Waterman algorithm makes that change precise with one extra recurrence candidate and new traceback rules.
+
+Global alignment uses every letter. Local alignment can isolate a shared protein domain. Mapping an entire read inside a chromosome often instead uses a free-end alignment: it consumes the read while leaving reference flanks uncharged. Which letters must appear in the answer is part of the problem specification.
 
 ::: {#def-local-alignment}
 ## Local alignment problem
@@ -223,6 +229,6 @@ Remove the zero candidate from @def-local-recurrence while leaving the zero bord
 Find an example with two disjoint local alignments tied for best score. What additional output should a program provide if both matter biologically?
 :::
 
-## Further reading
-
-Smith and Waterman introduced local dynamic programming [@smith1981]. Durbin et al. compare global and local boundary and termination rules in Chapter 2 [@durbin1998]. Compeau and Pevzner develop the same transition from global to local alignment in Chapter 5 [@compeau2015].
+::: {#refs}
+**References**
+:::

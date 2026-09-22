@@ -25,3 +25,8 @@
 .course-info-table table{margin:0 0 22px;font-size:15px;line-height:1.3}.course-info-table td{padding:4px 10px}.course-info-table thead{display:none}.course-info-table td:first-child{width:115px;white-space:nowrap}
 
 .grading-scale{max-width:100%;overflow-x:auto}.grading-scale table{font-size:13px;line-height:1.35;margin:12px 0}.grading-scale th,.grading-scale td{padding:7px 8px;text-align:center;white-space:nowrap}.grading-scale th:first-child,.grading-scale td:first-child{text-align:left}
+
+/* Source credit stays readable without competing with the lesson. */
+#refs{font-size:.8rem;line-height:1.45;color:var(--muted);border-top:1px solid var(--line);margin-top:2rem;padding-top:.75rem}#refs .csl-entry{margin:.4rem 0}#refs>p:first-child{margin:0 0 .5rem}
+
+.meeting-date{display:inline-block;min-width:88px;font-size:11px;color:var(--muted)}.assignment-due{display:block;font-size:11px;color:var(--muted);margin-top:2px}@media(max-width:760px){.meeting-date{display:block;margin-top:4px}}

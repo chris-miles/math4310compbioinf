@@ -1,7 +1,9 @@
 ---
 published: true
-title: "Affine Gaps and Seed-and-Extend"
-subtitle: "Lesson 6 · Week 3"
+title: "Gaps and Fast Sequence Search"
+subtitle: "Lesson 6 · 2027-02-01 · Week 4"
+nocite: |
+  @durbin1998, @gotoh1982, @altschul1990, @compeau2015
 ---
 
 ## Core question
@@ -9,6 +11,10 @@ subtitle: "Lesson 6 · Week 3"
 How do we model gaps as events, then search a database without filling every table?
 
 ## Gap opening and extension
+
+A database search starts with a query sequence and returns promising matching regions among many records. Two choices affect what we find: how we score a run of missing letters, and which candidate regions we examine at all. A deletion spanning several neighboring bases motivates a different gap score; a large database motivates a shortcut before alignment.
+
+We first extend the alignment model to remember whether a gap has already started. We then use exact words to select candidate locations. These steps belong to different parts of a search: gap scoring ranks alignments, while seeding determines which regions reach that scoring stage.
 
 A linear gap score $kg$ charges the same amount for one length-$k$ gap as for $k$ separate one-letter gaps. A single insertion or deletion often affects a run of adjacent bases or amino acids. We therefore distinguish starting a gap from continuing it.
 
@@ -192,6 +198,6 @@ Construct two length-8 strings with a positive ungapped score under match $+1$, 
 A target database is highly repetitive. Predict how decreasing $k$ affects the number of seed hits, runtime, and sensitivity.
 :::
 
-## Further reading
-
-Durbin et al. derive linear and affine gap models and their dynamic programs in Chapter 2 [@durbin1998]. Gotoh gave the standard quadratic-time affine-gap algorithm [@gotoh1982]. Altschul et al. describe BLAST's local-search strategy and statistical reporting [@altschul1990]. Compeau and Pevzner motivate affine penalties as a model of gap events [@compeau2015].
+::: {#refs}
+**References**
+:::

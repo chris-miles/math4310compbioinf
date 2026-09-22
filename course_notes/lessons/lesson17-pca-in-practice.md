@@ -1,7 +1,7 @@
 ---
 published: false
-title: "PCA in Practice"
-subtitle: "Lesson 17 · Week 11"
+title: "Interpreting Gene Expression Plots"
+subtitle: "Lesson 17 · 2027-03-29 · Week 12"
 ---
 
 ## Core question

@@ -1,5 +1,6 @@
 """Check the generated public site before deployment (standard library only)."""
 from html.parser import HTMLParser
+from datetime import date, timedelta
 import json
 from pathlib import Path
 import re
@@ -81,7 +82,7 @@ def main():
     weeks = schedule["weeks"]
     if home.count('class="module-heading"') != len(schedule["modules"]):
         errors.append("Expected one heading per broad module")
-    if home.count('class="week-row"') != 14:
+    if home.count('class="week-row"') != sum(bool(w['lessons']) for w in weeks):
         errors.append("Expected one compact row per instructional week")
     lesson_numbers = [n for week in weeks for n in week["lessons"]]
     if sorted(lesson_numbers) != list(range(1, 25)):
@@ -100,8 +101,8 @@ def main():
         errors.append("Spring break dates do not match the official calendar")
     if home.count('class="week-dates"') != 16:
         errors.append("A week is missing its displayed date range")
-    if home.count('Problem set') != 11:
-        errors.append("Expected 11 problem sets at topic boundaries")
+    if home.count('Problem set') != 10:
+        errors.append("Expected 10 problem sets at topic boundaries")
     for path in pages:
         text = path.read_text(encoding="utf-8")
         if any(label in text for label in ("View Markdown source", "Print this page", '<footer')):
@@ -109,8 +110,27 @@ def main():
     for token in ("{{room}}", "{{meeting_days}}", "{{meeting_time}}"):
         if token in home:
             errors.append("Unexpanded course setting: " + token)
-    if "Project workshop" in home or "Final project" in home:
-        errors.append("Unsettled project activities in public schedule")
+    calendar = schedule["calendar"]
+    current = date.fromisoformat(calendar["term_start"])
+    end = date.fromisoformat(calendar["classes_end"])
+    expected_dates = []
+    while current <= end:
+        day = current.isoformat()
+        in_break = calendar["spring_break_start"] <= day <= calendar["spring_break_end"]
+        if current.weekday() in (0, 2) and day not in calendar["holidays"] and not in_break:
+            expected_dates.append(day)
+        current += timedelta(days=1)
+    meetings = [meeting for week in weeks for meeting in week["meetings"]]
+    if sorted(m["date"] for m in meetings) != expected_dates:
+        errors.append("Every available class date must have exactly one meeting")
+    for week in weeks:
+        if week["lessons"] != [m["lesson"] for m in week["meetings"] if "lesson" in m]:
+            errors.append("Lesson list disagrees with meetings in week " + str(week["week"]))
+        if any(not week["date_start"] <= m["date"] <= week["date_end"] for m in week["meetings"]):
+            errors.append("Meeting lies outside its calendar week")
+    events = [m for m in meetings if "event" in m]
+    if len(events) != 3 or sum("Midterm" in m["event"] for m in events) != 2:
+        errors.append("Expected two midterms and one combined project workshop/work session")
     if errors:
         raise SystemExit("\n".join(errors))
     print(f"Checked {len(pages)} HTML pages, {len(index)} searchable pages, all local links and fragments, module groupings and assignment placement, and draft exclusion.")

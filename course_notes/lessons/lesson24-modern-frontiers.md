@@ -1,7 +1,7 @@
 ---
 published: false
-title: "Modern Frontiers"
-subtitle: "Lesson 24 · Week 15"
+title: "Where These Methods Lead"
+subtitle: "Lesson 24 · 2027-04-26 · Week 16"
 ---
 
 ## Core question

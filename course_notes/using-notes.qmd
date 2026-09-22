@@ -5,7 +5,7 @@ number-sections: false
 
 # Using These Notes {.unnumbered}
 
-The numbered lessons are the main reading sequence. They do not map one-to-one onto class meetings: some are short previews, and some support more than one day of discussion, implementation, or problem-solving.
+The numbered lessons are the main reading sequence.
 
 Assignment pages are in the Assignments section of the left navigation. The editable [assignment source files](https://github.com/chris-miles/math4310compbioinf/tree/main/assignments) are on GitHub, so you can copy LaTeX, code, or starter text directly from the `.qmd` files when that is more convenient than copying from the rendered page.
 

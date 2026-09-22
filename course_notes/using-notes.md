@@ -6,11 +6,13 @@ number-sections: false
 
 # Using These Notes {.unnumbered}
 
-The numbered lessons are the main reading sequence. They do not map one-to-one onto class meetings: some are short previews, and some support more than one day of discussion, implementation, or problem-solving.
+The numbered lessons are the main reading sequence.
 
 Assignment pages are in the Assignments page in the top navigation. The editable [assignment source files](https://github.com/chris-miles/math4310compbioinf/tree/main/assignments) are on GitHub, so you can copy LaTeX, code, or starter text directly from the `.md` files when that is more convenient than copying from the rendered page.
 
-Small datasets for examples and homework will live in the GitHub [data folder](https://github.com/chris-miles/math4310compbioinf/tree/main/data). Assignment pages will link to the specific files they use.
+Small datasets for examples and homework are in the GitHub [data folder](https://github.com/chris-miles/math4310compbioinf/tree/main/data). Assignment pages will link to the specific files they use.
+
+The [Computing and Math Reference](appendices/computing-math-reference.html) collects setup information and reminders. Python is the language used by the examples; assignments also welcome R and other languages unless a problem says otherwise.
 
 Code chunks are part of the notes. They are small mathematical examples, not finished software. Use the copy button to move an example into a notebook or script, change one input, and check whether the output changes in the way the definition predicts.
 

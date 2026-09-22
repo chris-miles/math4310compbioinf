@@ -1,7 +1,7 @@
 ---
 published: false
 title: "Choosing a Method"
-subtitle: "Lesson 23 · Week 14"
+subtitle: "Lesson 23 · 2027-04-19 · Week 15"
 ---
 
 ## Core question

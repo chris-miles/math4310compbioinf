@@ -1,7 +1,9 @@
 ---
 published: true
-title: "Reads, k-mers, and de Bruijn Graphs"
-subtitle: "Lesson 7 · Week 4"
+title: "Rebuilding a Genome from Short Reads"
+subtitle: "Lesson 7 · 2027-02-03 · Week 4"
+nocite: |
+  @compeau2015, @pevzner2001
 ---
 
 ## Core question
@@ -11,6 +13,7 @@ How can a collection of short DNA fragments determine a much longer sequence?
 ```{.python .execute}
 #| label: setup
 #| code-fold: true
+from pathlib import Path
 import sys
 sys.path.insert(0, "../style")
 import matplotlib.pyplot as plt
@@ -19,6 +22,10 @@ cf.use_style()
 ```
 
 ## Reads and coverage
+
+Sequencing a genome produces fragments, often with overlapping sequence but without a label saying where each fragment belongs. When there is no suitable reference genome, the task is to reconstruct a longer sequence from those overlaps. Repeated DNA makes the placement ambiguous even before sequencing errors enter.
+
+We begin with the reads as a collection of strings, then isolate a simpler problem: reconstruct one string from its exact short-word counts. That idealization makes the graph construction visible. Comparing the two kinds of counts will show which assumptions separate the toy problem from an actual assembly.
 
 ::: {#def-read-multiset}
 ## Read multiset
@@ -212,6 +219,25 @@ For a random DNA model with equally likely bases, a particular k-mer has probabi
 
 We can compare graphs at several $k$ values rather than assume one choice is always adequate. Our theorem in Lesson 8 applies to each fixed graph. Deciding which graph best represents the reads is a separate statistical question.
 
+
+:::: {.callout-note collapse="true" title="Going deeper: count words in a reference genome"}
+The [phiX174 reference](../data/phix174-NC_001422.1.fasta) gives us a small real sequence on which to check the same counting code. Download the repository to run this block from the lesson folder. FASTA's first line names the record; its remaining lines hold one continuous sequence.
+
+```{.python .execute}
+#| label: code-reads-reference-kmers
+
+fasta_path = Path("../../data/phix174-NC_001422.1.fasta")
+lines = fasta_path.read_text().splitlines()
+reference = "".join(line for line in lines if not line.startswith(">"))
+counts = kmer_counts([reference], 3)
+assert len(reference) == 5386
+assert sum(counts.values()) == len(reference) - 2
+len(reference), sum(counts.values()), len(counts)
+```
+
+The first two numbers are sequence length and total 3-mer occurrences; the third counts distinct words. The genome is circular, but this calculation treats its FASTA representation as linear and omits the two 3-mers crossing the end/start boundary. This is the genome's composition, not the coverage-weighted counts of a sequencing experiment.
+::::
+
 ## Limitations
 
 1. **Exact composition assumes perfect coverage.** Missing $k$-mers remove edges; repeated sequencing adds observations without adding genomic copies.
@@ -237,6 +263,6 @@ Draw the graph for `ATATAT` at $k=3$, including parallel edges. What is lost if 
 Modify `de_bruijn_edges` to return an adjacency dictionary that retains repeated destinations. Test empty input.
 :::
 
-## Further reading
-
-Compeau and Pevzner develop string reconstruction and de Bruijn graphs in Chapter 3 [@compeau2015]. Pevzner, Tang, and Waterman connect this representation to sequencing reads and errors [@pevzner2001].
+::: {#refs}
+**References**
+:::

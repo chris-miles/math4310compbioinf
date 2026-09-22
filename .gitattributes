@@ -1,0 +1,2 @@
+# Keep downloaded sequence checksums stable across platforms.
+data/*.fasta text eol=lf

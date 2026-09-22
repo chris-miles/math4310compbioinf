@@ -20,21 +20,25 @@ Each lecture and assignment has YAML front matter:
 
 ~~~yaml
 ---
-title: "Forward–Backward and Posterior Decoding"
-subtitle: "Lesson 13 · Week 7"
+title: "How Certain Are Our Genome Labels?"
+subtitle: "Lesson 13 · 2027-03-03 · Week 8"
 published: false
 ---
 ~~~
 
 Change **published: false** to **published: true** to make the title clickable in the schedule and catalog. Released pages enter search and lecture navigation. Draft text is excluded from the generated website: old URLs show a short availability notice. **The repository is public, so draft sources are still public.** Keep instructor-only material outside tracked files.
 
-Only set this flag after reviewing the page. Existing lessons 1–12 are initially linked; the explicit scaffolds in lessons 13–24 and the assignment drafts are not linked.
+Only set this flag after reviewing the page. Lessons 1 to 13 and Problem Set 1 are available. Lessons 14 to 24 and the other assignment drafts remain unlinked until developed.
 
-The schedule has broad modules and compact weekly rows. Edit site/schedule.json: the modules list groups lecture numbers by subject, and the weeks list assigns lectures to weeks and places 11 problem sets at topic boundaries. Set assignment to null for a week without a new problem set. Each row also carries date_start and date_end; holiday notes are optional. The calendar source and term boundaries are recorded in the same file. The short final week has a class-meeting entry without a new problem set. An assignment ID matches its filename without .md; entries without a source file remain unlinked. The homepage, lecture index, and assignment catalog share this schedule.
+The schedule has broad modules and compact weekly rows. Edit `site/schedule.json`: `modules` groups lesson numbers by subject, and each week's `meetings` assigns one lesson or event to each actual class date. The week's `lessons` list must agree with those meetings. A week may cross a module boundary. The builder displays each meeting date, including midterms and the combined project workshop/work session. The checker requires exactly one event on every available Monday or Wednesday, with holidays and spring break excluded. There are 27 meetings and ten problem sets.
+
+Set `assignment` to null for a week without a release. An assignment entry has an ID, label, and due date; Canvas controls submission details. The ID matches its filename without `.md`; entries without a released source remain unlinked. The homepage, lecture index, and assignment catalog share this schedule. The final Monday, April 26, is a regular class meeting.
 
 ## Markdown and mathematics
 
 Use ordinary headings, links, lists, tables, and dollar-delimited LaTeX. Citations remain [@needleman1970], with entries in course_notes/references.bib.
+
+For general source credit, put actually consulted sources in front-matter `nocite` (for example `nocite: "@durbin1998, @compeau2015"`) and finish the page with a `#refs` div containing **References**. The bibliography appears in small type below the exercises without a further-reading section. Keep citations beside historical or empirical claims that need attribution.
 
 Numbered blocks and references retain the existing syntax:
 

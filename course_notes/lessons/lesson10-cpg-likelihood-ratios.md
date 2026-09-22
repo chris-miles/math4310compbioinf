@@ -1,7 +1,9 @@
 ---
 published: true
-title: "CpG Islands as Likelihood Ratios"
-subtitle: "Lesson 10 · Week 6"
+title: "Finding CpG-Rich Regions"
+subtitle: "Lesson 10 · 2027-02-22 · Week 7"
+nocite: |
+  @durbin1998
 ---
 
 ## Core question
@@ -16,6 +18,10 @@ import math
 ```
 
 ## CpG islands
+
+A genome sequence supplies letters, while an annotation supplies intervals with biological labels. One useful sequence feature is a CpG-rich region, often associated with a gene's promoter. Locating candidates can help prioritize regions for further study, but sequence composition alone does not establish that a promoter is active.
+
+Today we classify a supplied DNA window as island-like or background. The output is a score and a decision at a stated threshold, not the exact boundaries of an island. We will compare two fitted sequence models and check how both class prevalence and the choice of evaluation data affect that decision.
 
 ::: {.biology}
 In vertebrate genomes, cytosine in a `CG` dinucleotide is often methylated. Methylated cytosine can deaminate to thymine, so mutation depletes `CG` over evolutionary time. Regions near many promoters often remain unmethylated and retain more `CG` dinucleotides. These regions are called CpG islands; "p" denotes the phosphate joining adjacent bases on one strand [@durbin1998].
@@ -177,6 +183,14 @@ For two first-order Markov chains with positive parameters, the log-likelihood r
 Divide the two Markov factorizations. Products in the numerator and denominator pair term by term. Taking a logarithm changes the resulting product of ratios into a sum.
 :::
 
+A prior probability describes the class frequency before examining the window. A posterior probability describes it after using the observed sequence. Bayes' rule gives
+$
+\frac{P(M_+\mid x)}{P(M_-\mid x)}
+=\frac{P(x\mid M_+)}{P(x\mid M_-)}
+\frac{P(M_+)}{P(M_-)}.
+$
+The common factor $P(x)$ cancels. The prior therefore matters even when we can compute both likelihoods exactly.
+
 A threshold also allows unequal class prevalence. Under equal costs for the two kinds of classification error, choosing the more probable class by Bayes' rule favors the island class when
 $$
 S(x)>\log_2\frac{P(M_-)}{P(M_+)}.
@@ -206,6 +220,8 @@ $$
 Raising the threshold can remove false positives, but it can also turn true positives into false negatives. There is no threshold-free statement that the classifier has 90% accuracy in every application: performance also changes with window length, genome, and the frequency of islands in the evaluated set.
 :::
 
+For example, if the prior island probability is 0.1, the prior odds are $1/9$. The likelihood ratio $4/3$ for `CGTA` changes the odds to $4/27$, giving posterior probability $4/31\approx0.129$. Evidence in favor of the island model has raised its probability, but background remains the more probable class.
+
 A useful comparison shuffles each window many times while preserving its base counts. This changes dinucleotide order while keeping GC content fixed. Comparing original scores with the shuffled score distribution measures how much the ordering contributes beyond composition. Similar classification accuracy alone is inconclusive: a threshold can conceal substantial changes in individual scores.
 
 ## Limitations
@@ -234,6 +250,6 @@ Suppose $P(M_+)=0.1$ and $P(M_-)=0.9$. Derive the Bayes threshold in bits and cl
 A 500-base region is converted to all overlapping 100-base windows and the windows are randomly split. Explain why this is data leakage and propose a valid split.
 :::
 
-## Further reading
-
-Durbin et al. use two Markov chains to motivate CpG island classification and hidden states in Section 3.1 [@durbin1998].
+::: {#refs}
+**References**
+:::

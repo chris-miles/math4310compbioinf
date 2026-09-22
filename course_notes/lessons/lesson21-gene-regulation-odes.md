@@ -1,7 +1,7 @@
 ---
 published: false
-title: "ODEs for Gene Regulation"
-subtitle: "Lesson 21 · Week 13"
+title: "Modeling How Gene Activity Changes"
+subtitle: "Lesson 21 · 2027-04-12 · Week 14"
 ---
 
 ## Core question

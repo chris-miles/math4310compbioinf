@@ -1,7 +1,7 @@
 ---
 published: false
-title: "Distances, Clustering, and Neighborhood Graphs"
-subtitle: "Lesson 19 · Week 12"
+title: "Grouping Similar Samples and Cells"
+subtitle: "Lesson 19 · 2027-04-05 · Week 13"
 ---
 
 ## Core question
