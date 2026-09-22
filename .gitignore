@@ -40,3 +40,6 @@ venv/
 /quarto/
 /course_notes/quarto/
 /.playwright-mcp/
+
+# Static course website
+/_site/

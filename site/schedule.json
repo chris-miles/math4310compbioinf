@@ -1,0 +1,145 @@
+[
+  {
+    "id": "foundations",
+    "title": "Foundations",
+    "weeks": [
+      1
+    ],
+    "lessons": [
+      1,
+      2
+    ],
+    "assignment": {
+      "id": "ps01-scoring-kmers",
+      "label": "Problem set"
+    }
+  },
+  {
+    "id": "sequence-alignment",
+    "title": "Sequence Alignment",
+    "weeks": [
+      2,
+      3
+    ],
+    "lessons": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "assignment": {
+      "id": "ps02-global-alignment",
+      "label": "Problem set"
+    }
+  },
+  {
+    "id": "genome-assembly",
+    "title": "Genome Assembly",
+    "weeks": [
+      4
+    ],
+    "lessons": [
+      7,
+      8
+    ],
+    "assignment": {
+      "id": "ps-genome-assembly",
+      "label": "Problem set"
+    }
+  },
+  {
+    "id": "probabilistic-models",
+    "title": "Probabilistic Models",
+    "weeks": [
+      5,
+      6,
+      7
+    ],
+    "lessons": [
+      9,
+      10,
+      11,
+      12,
+      13
+    ],
+    "assignment": {
+      "id": "ps-probabilistic-models",
+      "label": "Problem set"
+    }
+  },
+  {
+    "id": "phylogenetics",
+    "title": "Phylogenetics",
+    "weeks": [
+      8
+    ],
+    "lessons": [
+      14,
+      15
+    ],
+    "assignment": {
+      "id": "ps-phylogenetics",
+      "label": "Problem set"
+    }
+  },
+  {
+    "id": "spring-break",
+    "title": "Spring break",
+    "weeks": [
+      9
+    ],
+    "lessons": [],
+    "assignment": null
+  },
+  {
+    "id": "omics",
+    "title": "Omics",
+    "weeks": [
+      10,
+      11,
+      12
+    ],
+    "lessons": [
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "assignment": {
+      "id": "ps-omics",
+      "label": "Problem set"
+    }
+  },
+  {
+    "id": "mechanistic-models",
+    "title": "Mechanistic Models",
+    "weeks": [
+      13
+    ],
+    "lessons": [
+      21,
+      22
+    ],
+    "assignment": {
+      "id": "ps-mechanistic-models",
+      "label": "Problem set"
+    }
+  },
+  {
+    "id": "synthesis",
+    "title": "Synthesis",
+    "weeks": [
+      14,
+      15
+    ],
+    "lessons": [
+      23,
+      24
+    ],
+    "assignment": {
+      "id": "ps-synthesis",
+      "label": "Problem set"
+    }
+  }
+]

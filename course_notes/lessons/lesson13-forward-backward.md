@@ -1,0 +1,52 @@
+---
+published: false
+title: "Forward--Backward and Posterior Decoding"
+subtitle: "Lesson 13 · Week 7"
+---
+
+## Core question
+
+How likely is each state at each position?
+
+::: {.callout-note title="Draft status"}
+This lesson is a scaffold. The headings below follow the order every lesson uses; the bullets are what the finished lesson will cover.
+:::
+
+## Motivation
+
+- The best path answers one question; 'is position $i$ in an island' is a different one.
+
+## The data as a mathematical object
+
+- Same HMM and sequence; two tables instead of one.
+
+## The question
+
+- $P(x)$, and $P(\pi_i = k \mid x)$ for each $i$ and $k$.
+
+## The model
+
+- Unchanged. Same model, different question, different algorithm.
+
+## The technique
+
+- Forward recurrence (sum-product); backward recurrence; posterior from their product; log-sum-exp.
+- Baum--Welch in ten minutes: expected counts, then re-estimate.
+
+## Worked example
+
+- The same instance as the previous lesson, now with an instance where the posterior path differs from the Viterbi path.
+
+## Why it works, and what it costs
+
+- Same $\mathcal{O}(nK^2)$; correctness from the same decomposition with sum in place of max.
+
+## Where the model breaks
+
+- The posterior path may be impossible under the transition matrix.
+- EM finds local optima and depends on initialization.
+
+## Exercises
+
+- Compute $P(x)$ two ways and check they agree.
+- Construct an instance where Viterbi and posterior decoding disagree.

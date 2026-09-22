@@ -1,0 +1,2 @@
+-r ../course_notes/requirements.txt
+PyYAML==6.0.2

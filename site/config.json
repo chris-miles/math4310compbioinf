@@ -1,0 +1,23 @@
+{
+  "course": "MATH 4310",
+  "title": "Computational Bioinformatics",
+  "term": "Spring 2027",
+  "institution": "University of Utah",
+  "instructor": "Chris Miles",
+  "email": "chris.miles@utah.edu",
+  "room": "PCEB 2035",
+  "canvas": "https://utah.instructure.com/",
+  "repository": "https://github.com/chris-miles/math4310compbioinf",
+  "site_url": "https://chris-miles.github.io/math4310compbioinf/",
+  "figure": {
+    "width": 6,
+    "height": 4,
+    "dpi": 150
+  },
+  "section": "001",
+  "class_number": "8408",
+  "credits": "3",
+  "meeting_days": "Monday & Wednesday",
+  "meeting_time": "3:00–4:20 PM",
+  "format": "In person"
+}
