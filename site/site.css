@@ -60,4 +60,5 @@ h3{margin:24px 0 10px}
 @media(max-width:760px){.header-inner{padding:12px 18px}.page-shell{padding:20px 18px 40px}.page-layout{display:flex;gap:18px}.home .page-heading{padding:12px 14px;min-height:0}.home .page-heading::after{display:none}.home h1{font-size:28px}.course-facts{font-size:14px}}
 @media print{body{font-size:11pt}.page-shell{padding:0;max-width:none}.page-layout{display:block}.home .page-heading{padding:0;min-height:0;background:transparent;border-left:0}}
 
+@media (prefers-reduced-motion: reduce){.home .page-heading::after{background-image:url("sequence-grid.svg#static")}}
 @media print{.home .page-heading::after{display:none}}
