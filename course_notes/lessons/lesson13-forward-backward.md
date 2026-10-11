@@ -38,6 +38,8 @@ I&0.8&0.2
 \end{array}.
 $$
 
+$Q=\{B,I\}$ is the state set. Write $p_k$ for the initial-state probability, $a_{k\ell}$ for the probability of moving from state $k$ to state $\ell$, and $e_k(b)$ for the probability that state $k$ emits symbol $b$. Rows of $A$ are source states; rows of $E$ are emitting states. The hidden states form a first-order Markov chain. Given a hidden path, emissions are independent and each emission depends only on its state. These are the assumptions that let us combine evidence on either side of a position.
+
 ::: {#def-posterior-state}
 ## Posterior state probability
 For observations $x=x_1\ldots x_n$ with $P(x)>0$, define
@@ -60,12 +62,14 @@ $$
 sums over every hidden prefix ending at state $k$.
 :::
 
-It includes the emission of $x_i$. The recurrence has the Viterbi table's shape, with a sum replacing its maximum:
+It includes the emission of $x_i$. To compute the entry for state $k$, partition the possible hidden prefixes by their state $\ell$ at position $i-1$. Those alternatives are mutually exclusive. Their masses therefore add, even though many different paths can belong to each alternative.
+
+A prefix ending in $\ell$ has total mass $f_\ell(i-1)$. The transition to $k$ multiplies it by $a_{\ell k}$, and the destination state emits $x_i$ with probability $e_k(x_i)$. That emission factor is common to every predecessor. Thus
 $$
 f_k(1)=p_ke_k(x_1),\qquad
 f_k(i)=e_k(x_i)\sum_{\ell\in Q}f_\ell(i-1)a_{\ell k}.
 $$
-Finally, $P(x)=\sum_k f_k(n)$, because every full path ends in exactly one state.
+For $i=1$, there is no predecessor: the initial state emits the first symbol. Finally, $P(x)=\sum_k f_k(n)$, because every full path ends in exactly one state. Viterbi keeps a single best path in each entry, while forward retains the combined mass of all prefixes; changing the operation changes what the entry means [@durbin1998].
 
 ::: {#exm-forward-ssws}
 ## Summing paths for SSWS
@@ -98,11 +102,13 @@ $$
 is the probability of the remaining observations, given the state at $i$.
 :::
 
-This quantity excludes $x_i$, which the forward factor already contains. At $i=n$ there are no remaining observations, so $b_k(n)=1$. For earlier positions,
+This quantity excludes $x_i$, which the forward factor already contains. At $i=n$ there are no remaining observations, so $b_k(n)=1$ under our fixed-length model.
+
+For an earlier position, condition on the next hidden state $\pi_{i+1}=\ell$. Its probability given the current state is $a_{k\ell}$. Once $\ell$ is fixed, the next emission has probability $e_\ell(x_{i+1})$, and the later observations have probability $b_\ell(i+1)$. The model makes that emission independent of the later observations conditional on the next state. It also makes that remaining suffix independent of the earlier state $k$ once $\ell$ is known. Therefore
 $$
 b_k(i)=\sum_{\ell\in Q}a_{k\ell}e_\ell(x_{i+1})b_\ell(i+1).
 $$
-The next emission belongs to the *destination* state $\ell$, and the loop runs from right to left.
+The terms sum over mutually exclusive choices of the next state. The next emission belongs to the *destination* state $\ell$; using $e_k(x_i)$ would include the current observation again. The loop runs from right to left so each required suffix probability has already been computed [@durbin1998].
 
 ::: {#exm-backward-ssws}
 ## Using the suffix
@@ -116,6 +122,13 @@ $$
 |---|---:|---:|---:|---:|
 | $B$ | 0.08896 | 0.248 | 0.40 | 1 |
 | $I$ | 0.11808 | 0.184 | 0.60 | 1 |
+
+At position 2, the suffix contains both W and S. Starting from B, it can first stay in B or switch to I:
+$$
+b_B(2)=\underbrace{0.8(0.7)(0.40)}_{\text{next state B}}+
+\underbrace{0.2(0.2)(0.60)}_{\text{next state I}}=0.248.
+$$
+Each product has a transition, the W emission from the next state, and that state's probability of the final S. The factors $0.40$ and $0.60$ already sum over both choices for the final hidden state; the recurrence does not select a single suffix path.
 
 The suffix is more likely starting from $I$ at position 3, although the symbol at position 3 is $W$. That symbol is absent from the backward probability; its evidence enters through the forward factor.
 :::
@@ -157,7 +170,7 @@ A 0.516 posterior is weak support for that last island label. Reporting the prob
 Posterior decoding chooses $\widehat\pi_i=\arg\max_k\gamma_k(i)$ separately at each position.
 :::
 
-For any proposed labels $z_1,\ldots,z_n$, the expected number correct, conditional on $x$, is $\sum_i\gamma_{z_i}(i)$. Choosing a largest probability in each column maximizes that sum. Viterbi instead maximizes the probability that the entire path is correct. Posterior decoding can violate path constraints when transitions are forbidden.
+For any proposed labels $z_1,\ldots,z_n$, the expected number correct, conditional on $x$, is $\sum_i\gamma_{z_i}(i)$. Without constraints tying the reported labels together, choosing a largest probability in each column maximizes that expected number of correct labels. Viterbi instead maximizes the probability that the entire path is correct. Posterior decoding can violate path constraints when transitions are forbidden.
 
 ### Expected island positions and boundary support
 
@@ -265,7 +278,7 @@ for i in range(4):
 print("Enumeration agrees with the likelihood and all four posteriors.")
 ```
 
-Each table has $nK$ entries and each entry sums $K$ terms. Time is $\mathcal O(nK^2)$ and storage is $\mathcal O(nK)$. A likelihood alone needs only a rolling forward column and $\mathcal O(K)$ storage.
+With $K=|Q|$ states, each table has $nK$ entries and each entry sums $K$ terms. Time is $\mathcal O(nK^2)$ and storage is $\mathcal O(nK)$. A likelihood alone needs only a rolling forward column and $\mathcal O(K)$ storage.
 
 ### Stable sums in log space
 
@@ -279,7 +292,7 @@ $$
 \operatorname{LSE}(z)=\ln\sum_j e^{z_j}
 =m+\ln\sum_j e^{z_j-m}.
 $$
-Subtracting $m$ makes the largest exponent zero. If all entries are $-\infty$, the result is $-\infty$. The same identity stabilizes backward sums. Log posteriors are $F_k(i)+\ln b_k(i)-\ln P(x)$.
+Factor $e^m$ out of the sum and then take its logarithm to obtain the second expression. Subtracting $m$ makes the largest exponent zero. If all entries are $-\infty$, the result is $-\infty$. The same identity stabilizes backward sums. Log posteriors are $F_k(i)+\ln b_k(i)-\ln P(x)$.
 
 For $z=(-1000,-1000)$, direct exponentiation underflows; the stable answer is $-1000+\ln2$. Adding the two logs would give $-2000$, the log of a product, which answers the wrong question.
 

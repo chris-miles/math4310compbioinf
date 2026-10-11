@@ -2,6 +2,8 @@
 published: true
 title: "Sequences, Distances, and Alignments"
 subtitle: "Lesson 1 · 2027-01-11 · Week 1"
+nocite: |
+  @compeau2015, @durbin1998
 ---
 
 ## Core question
@@ -24,9 +26,9 @@ cf.use_style()
 
 ## Why compare sequences
 
-In 1983 Russell Doolittle compared the protein sequence of *v-sis*, the cancer-causing gene of a monkey virus, against every protein sequence then known. It matched platelet-derived growth factor, a normal human protein that signals cells to divide [@doolittle1983; @waterfield1983]. The viral gene caused tumors because it was a growth signal that never switched off. No experiment had connected the two; the connection came from sequence similarity alone.
+In 1983, sequence comparisons revealed a close relationship between platelet-derived growth factor, a human protein that stimulates cell growth, and the protein encoded by *v-sis*, an oncogene of simian sarcoma virus [@doolittle1983; @waterfield1983]. The observed data were amino-acid sequences. Their similarity suggested a biological hypothesis: a viral protein might promote cell growth through a mechanism related to a normal growth signal. Sequence comparison supplied a connection to investigate; it did not by itself establish the mechanism of cancer.
 
-This is the daily routine of the field. A newly sequenced gene of unknown function is compared against databases of known sequences, and a strong match is taken as evidence of a shared ancestor and, usually, a shared function. The same comparison finds the mutation that separates a patient from a reference, locates a gene in a genome, and, in the phylogenetics lessons, reconstructs which species are related. All of it depends on two things: a precise definition of "similar," and a way to compute it fast enough to search a database. Today is about the first; Lessons 3 to 6 are about the second.
+A newly obtained sequence can likewise be compared with sequences whose functions have been studied. The desired output is a correspondence between their letters and a measure of how well they agree. That correspondence matters: insertions and deletions can place related residues at different positions. A convincing match can support common ancestry and suggest a function to test, but unrelated sequences can also match by chance [@durbin1998]. Before interpreting a match, we need to specify which changes our comparison allows and how it counts them. Today develops those choices on short DNA strings; Lessons 2 to 6 develop scoring and algorithms for longer comparisons.
 
 ## Sequences as strings
 
@@ -56,7 +58,7 @@ y = "ACGCT"
 z = "CGTTA"
 ```
 
-Is $y$ or $z$ closer to $x$? The question has no answer until "closer" is defined. The simplest definition counts disagreeing positions.
+Suppose $x$ is a read and $y$ and $z$ are candidate reference segments in the same orientation. Which segment is closer to the read? The answer depends on the allowed differences. If the bases are already known to correspond position by position, counting disagreeing positions gives a useful first comparison.
 
 ::: {#def-hamming-distance}
 ## Hamming distance
@@ -67,6 +69,11 @@ $$
 :::
 
 $d_H(x, y)$ is the number of substitutions that turn $x$ into $y$ when substitution is the only allowed change.
+
+::: {.algorithm}
+**Algorithm: count fixed-position mismatches.**
+Require equal-length strings $x$ and $y$. Start a counter at zero. For each position $i$, add one if $x_i\ne y_i$. Return the counter.
+:::
 
 ```{.python .execute}
 #| label: code-first-problem-hamming
@@ -96,14 +103,18 @@ $$
 $d_H(x, y) = 1$ and $d_H(x, z) = 4$.
 :::
 
-$z$ is $x$ with the first letter deleted and one letter appended: two mutation events. Hamming distance reports four because it assumes position $i$ of one string corresponds to position $i$ of the other; one deletion shifts every later position and breaks the assumption. The 4 is a fact about the assumption, not about the DNA.
+$z$ can be obtained from $x$ by deleting the first letter and appending one letter. Hamming distance reports four because it pairs position $i$ of one string with position $i$ of the other; the deletion shifts the surviving letters. Thus the count describes this fixed correspondence. It does not establish that four mutations occurred.
 
 ## Edit distance
+
+To compare strings whose corresponding bases may have shifted, we allow insertions and deletions as well as substitutions. We then minimize over possible transformations, because the observed strings do not tell us which changes produced their differences.
 
 ::: {#def-edit-distance}
 ## Edit distance
 An *edit* is a substitution of one symbol for another, an insertion of a symbol at any position, or a deletion of a symbol. The *edit distance* $d_E(x, y)$ is the minimum number of edits that transforms $x$ into $y$.
 :::
+
+Every allowed edit costs one in this definition. The minimum does not distinguish a likely substitution from an unlikely one, or a sequencing error from a true variant. Lesson 2 derives letter-pair scores by comparing related-sequence and background models; Lesson 6 treats gap runs separately.
 
 ::: {#exm-edit-distance}
 ## Edit distance on $x$, $y$, $z$
@@ -125,7 +136,7 @@ For sequences of equal length, $d_E(x, y) \le d_H(x, y)$, and the inequality can
 Sketch. Every substitution is an edit, so the $d_H(x, y)$ substitutions form a valid edit sequence and the minimum is no larger. For strictness take $x = ACGTT$, $z = CGTTA$: $d_H = 4$ and two edits suffice. Two are necessary: zero edits would mean $x = z$; a single substitution changes one position, but $d_H = 4$; a single insertion or deletion changes the length.
 :::
 
-The proof has the two-part shape used for every optimization claim in the course: exhibit a solution (upper bound), then rule out anything smaller (lower bound).
+The proof uses a useful two-part pattern for establishing a minimum: exhibit a solution (upper bound), then rule out anything smaller (lower bound).
 
 ### Bounds before computation
 
@@ -141,14 +152,14 @@ The direct optimum can improve on that route, but cannot cost more. For @exm-edi
 
 ## Counting alignments
 
-$d_H$ costs one pass, $n$ comparisons. $d_E$ by the definition means a search over edit sequences, and the size of that search is the number of alignments.
+$d_H$ uses $n$ comparisons because it fixes the correspondence in advance. Edit distance allows many correspondences. An alignment records one of them and makes its cost visible: count the mismatched letter pairs and the gap columns. We first count the possible alignments to see why searching each separately is impractical.
 
 ::: {#def-alignment}
 ## Alignment
 An *alignment* of $x$ and $y$ writes the two strings one above the other with gap symbols $-$ inserted so that every column is a letter over a letter, a letter over a gap, or a gap over a letter, and reading each row without its gaps gives back the original string.
 :::
 
-Each edit sequence is an alignment: a match or substitution is a letter over a letter, a deletion is a letter over a gap, an insertion is a gap over a letter. The alignments realizing $d_E(x, z) = 2$ and $d_E(x, y) = 1$:
+Reading an alignment from left to right gives a transformation: preserve a matching letter, substitute a mismatched letter, delete a letter opposite a gap, or insert a letter opposite a gap. A shortest edit sequence can be represented this way, so minimizing this alignment cost gives edit distance. Arbitrary edit sequences may contain redundant changes, such as inserting a letter and then deleting it, which an alignment need not record. Here are alignments realizing $d_E(x, z) = 2$ and $d_E(x, y) = 1$:
 $$
 \begin{array}{c}
 \texttt{A C G T T -} \\
@@ -161,10 +172,19 @@ $$
 \end{array}
 $$
 
-Let $A(n, m)$ be the number of alignments of a length-$n$ string with a length-$m$ string. The last column is one of the three kinds, so
+Let $A(n, m)$ count alignments of strings of lengths $n$ and $m$, with $n,m\geq0$. This counts gap placements, regardless of whether the letters match. For $n,m\geq1$, partition the alignments by their last column. A letter pair consumes one letter from each string; a letter over a gap consumes only a letter from $x$; a gap over a letter consumes only a letter from $y$. Removing the last column leaves an alignment of the corresponding shorter prefixes. Conversely, appending that column extends every such shorter alignment in exactly one way. The three cases are disjoint and exhaustive, giving
 $$
 A(n, m) = A(n-1, m-1) + A(n-1, m) + A(n, m-1), \qquad A(n, 0) = A(0, m) = 1 .
 $$
+
+If one string is empty, there is exactly one alignment: every letter of the other string is paired with a gap. In particular, $A(0,0)=1$ counts the empty alignment. For two one-letter strings, the recurrence gives $A(1,1)=1+1+1=3$: pair the letters, put the $x$ letter before the $y$ letter in separate gap columns, or reverse that order. At the shaded cell in @fig-first-problem-count-table, $A(2,2)=3+5+5=13$.
+
+::: {.algorithm}
+**Algorithm: count alignments by prefix lengths.**
+Create a table indexed by $i=0,\ldots,n$ and $j=0,\ldots,m$. Set its boundary row and column to one. Fill the remaining entries row by row, adding the entries above, to the left, and diagonally above-left. Return $A(n,m)$.
+:::
+
+The three required entries have already been filled in this order. Storing their counts avoids reconstructing all the alignments they represent.
 
 ```{.python .execute}
 #| label: code-first-problem-count-alignments
@@ -196,22 +216,31 @@ cf.dp_table(ax, ["$x_1$", "$x_2$", "$x_3$"], ["$y_1$", "$y_2$", "$y_3$"], table,
 plt.show()
 ```
 
-Two five-letter strings have $1{,}683$ alignments; two of length 20 have more than $10^{14}$; two genes of ordinary length have more than there are atoms in the observable universe. Enumeration is not an option. Lesson 3 computes $d_E$ in $nm$ steps with the same recurrence, a minimum in place of the sum.
+The first output is 3, agreeing with our one-letter enumeration. Two five-letter strings already have $1{,}683$ alignments; two of length 20 have more than $10^{14}$. Computing a count does not enumerate those objects: the table has only $(n+1)(m+1)$ entries and uses three previous counts per interior entry. Lesson 3 uses the same prefix decomposition to compute a minimum cost, with a cost for each final column instead of counting each extension. That gives edit distance in $\mathcal{O}(nm)$ time under a unit-cost arithmetic assumption.
 
 ## k-mer composition
 
-A third definition of similarity ignores positions entirely and compares the short words two strings contain.
+Suppose a long reference contains many possible places for a read. Before computing an alignment at each place, we can ask which segments contain short words also present in the read. A preserved word can move to a new position after an insertion or deletion, so comparing words offers a different notion of similarity. This comparison is useful for selecting candidates; it does not yet identify which individual bases correspond.
 
 ::: {#def-kmer}
 ## $k$-mer and $k$-mer spectrum
-A *$k$-mer* of $x$ is a substring $x_i x_{i+1} \ldots x_{i+k-1}$ of length $k$. The *$k$-mer spectrum* of $x$ is the multiset of its $n - k + 1$ $k$-mers, usually stored as a table of counts.
+For an integer $1\leq k\leq n$, a *$k$-mer* of $x$ is a substring $x_i x_{i+1} \ldots x_{i+k-1}$ of length $k$. The *$k$-mer spectrum* of $x$ is the multiset of its $n - k + 1$ $k$-mers, usually stored as a table of counts.
+:::
+
+For $k=3$, the windows of $x=\texttt{ACGTT}$ start at positions 1, 2, and 3: ACG, CGT, and GTT. They overlap because advancing a window by one preserves its last two letters. The code stores multiplicities, then compares only the distinct words present in both strings.
+
+::: {.algorithm}
+**Algorithm: count and compare short words.**
+For a chosen positive $k$, slide a length-$k$ window along each string and increment the count of each word encountered. Return the number of distinct words with a positive count in both strings. A string shorter than $k$ contributes no words.
 :::
 
 ```{.python .execute}
 #| label: code-first-problem-kmers
 def count_kmers(sequence: str, k: int) -> dict[str, int]:
     """Count the length-k substrings of a sequence."""
-    counts: dict[str, int] = {}
+    if k < 1:
+        raise ValueError("k must be positive.")
+    counts = {}
     for start in range(len(sequence) - k + 1):
         kmer = sequence[start:start + k]
         counts[kmer] = counts.get(kmer, 0) + 1
@@ -238,16 +267,11 @@ shared_kmers(x, y, 3), shared_kmers(x, z, 3)
 By shared 3-mers, $z$ is closer to $x$ than $y$ is. Hamming distance and edit distance said the opposite.
 :::
 
-The three definitions disagree because they measure different things: $d_H$ counts substitutions at fixed positions, $d_E$ counts events of any kind, and shared $k$-mers count preserved words wherever they sit. A single substitution destroys up to $k$ $k$-mers, so $k$-mer similarity is sensitive to substitutions and blind to shifts, the reverse of Hamming distance.
+The three definitions disagree because they measure different things: $d_H$ counts mismatched positions, $d_E$ minimizes the number of allowed edits, and shared $k$-mers count preserved words wherever they sit. In $y$, changing position 4 destroys CGT and GTT, leaving only ACG shared with $x$. In $z$, the shift preserves CGT and GTT, although ACG is lost and TTA is gained at the boundaries. Thus a shift can preserve most words without preserving their positions. A substitution affects up to $k$ windows, depending on its position; choosing $k$ changes how much local agreement a shared word demands.
 
-The cost is one pass over each string with a dictionary, $\mathcal{O}(n + m)$, against $\mathcal{O}(nm)$ for edit distance in Lesson 3. That gap is why $k$-mers are the first step of database search (Lesson 6) and the whole basis of genome assembly (Lesson 7).
+For fixed $k$ and expected constant-time dictionary operations, this comparison costs $\mathcal{O}(n+m)$. If $k$ varies, copying and hashing each Python substring costs $\mathcal{O}(k)$, giving $\mathcal{O}(k(n+m))$. Short-word matches can narrow a search before alignment (Lesson 6), and overlapping words can constrain sequence reconstruction (Lesson 7). Neither use makes a shared word proof of common ancestry or a unique placement in a genome.
 
-## Limitations
-
-1. **Hamming distance assumes no shifts.** One insertion or deletion makes $d_H$ large between strings that differ by a single event. It is the right distance only when positions are known to correspond, as for reads already placed at the same reference position.
-2. **Edit distance assumes every edit costs one.** In real genomes an $A \leftrightarrow G$ substitution is more common than $A \leftrightarrow T$, and insertions and deletions are rarer than substitutions. Lesson 2 replaces the count with scores derived from how often each event occurs.
-3. **$k$-mer composition ignores order.** Two different strings can have identical $k$-mer spectra (@exr-first-problem-kmers), and comparing only distinct shared words discards their multiplicities. Both facts are exactly what makes assembly hard (Lesson 8).
-4. **All three ignore the other strand.** $GAG$ and $CTC$ are the same molecule. Any comparison of DNA strings has to decide whether to compare against the reverse complement as well (Lesson 7).
+The spectrum discards the order of its words, so distinct strings can have identical spectra (@exr-first-problem-kmers). Counting only distinct shared words also discards multiplicities. These losses matter when reconstructing a sequence from its pieces: the available words need not specify one unique reconstruction (Lesson 8).
 
 ## Exercises
 

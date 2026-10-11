@@ -19,19 +19,19 @@ import math
 
 ## CpG islands
 
-A genome sequence supplies letters, while an annotation supplies intervals with biological labels. One useful sequence feature is a CpG-rich region, often associated with a gene's promoter. Locating candidates can help prioritize regions for further study, but sequence composition alone does not establish that a promoter is active.
+Sequencing measurements are converted to A, C, G, T base calls and assembled into genomic sequence. Our input is a contiguous interval of that DNA string, called a *window*, with its position in the genome. We want to identify windows whose sequence resembles a CpG island, a region retaining many adjacent CG pairs. Many such regions lie near *promoters*, DNA regions where transcription can begin [@durbin1998]. Candidate locations can guide further study of gene regulation.
 
-Today we classify a supplied DNA window as island-like or background. The output is a score and a decision at a stated threshold, not the exact boundaries of an island. We will compare two fitted sequence models and check how both class prevalence and the choice of evaluation data affect that decision.
+CpG denotes C followed by G on the same strand; it is a *dinucleotide*, or pair of neighboring bases. The p denotes their phosphate connection, distinguishing this pair from C paired with G across the two strands. In vertebrate DNA, cytosine in a CpG is often *methylated*, meaning that a methyl group is chemically attached to it. Methylated cytosine can undergo deamination, a chemical change that converts it to thymine, contributing to CpG depletion over evolutionary time. Regions around many promoters are less depleted and often remain unmethylated [@durbin1998].
 
-::: {.biology}
-In vertebrate genomes, cytosine in a `CG` dinucleotide is often methylated. Methylated cytosine can deaminate to thymine, so mutation depletes `CG` over evolutionary time. Regions near many promoters often remain unmethylated and retain more `CG` dinucleotides. These regions are called CpG islands; "p" denotes the phosphate joining adjacent bases on one strand [@durbin1998].
-:::
+An ordinary DNA letter string does not record attached methyl groups or gene activity. We predict a sequence feature, rather than measure methylation or establish that a promoter is active. Today's output is a window score and a threshold decision. It does not locate an island's exact boundaries.
 
 A CpG island is not simply a GC-rich string. The order matters: `GCTA` and `CGTA` have the same base composition, but only the second contains `CG`. A first-order chain is the smallest model that can assign different probabilities to these two strings.
 
 ## Two models and one window
 
-The data are a DNA window $x=x_1\ldots x_n$. We compare an island model $M_+$ with a background model $M_-$. Each is a first-order Markov chain trained from labeled sequence.
+For training, suppose a separate annotation lists genomic intervals labeled island or background. Extracting their DNA strings gives two collections of labeled sequence. We fit a first-order Markov chain to each collection, then compare the island model $M_+$ and background model $M_-$ on a new window $x=x_1\ldots x_n$. The annotation defines the target we learn; it is not a methylation measurement supplied by the DNA letters.
+
+As in Lesson 9, each chain has an initial distribution $q^\pm$ and a transition matrix $A^\pm$. Initial probabilities sum to one, and each transition row sums to one. We assume every parameter is strictly positive so both window likelihoods and their logarithms are defined.
 
 ::: {#def-cpg-classification-problem}
 ## CpG window classification
@@ -52,14 +52,21 @@ $$
 Positive scores favor $M_+$; negative scores favor $M_-$; a score of $r$ bits means a likelihood ratio of $2^r$.
 :::
 
-For a Markov chain, the score separates into local terms:
+::: {#prp-markov-ratio-adds}
+## Markov log ratios are additive
+For two first-order Markov chains with positive parameters, the score is the initial-base log ratio plus one fixed score for each adjacent pair:
 $$
 S(x)=\log_2\frac{q^+_{x_1}}{q^-_{x_1}}
 +\sum_{i=2}^{n}\log_2
 \frac{a^+_{x_{i-1}x_i}}{a^-_{x_{i-1}x_i}}.
 $$
+:::
 
-This is the same reason alignment scores add in Lesson 2. Each adjacent pair contributes one log-odds score.
+::: {.proof}
+Each likelihood factors as $P(x\mid M_\pm)=q^\pm_{x_1}\prod_{i=2}^n a^\pm_{x_{i-1}x_i}$. Dividing gives one initial ratio and a product of transition ratios. Taking the logarithm turns that product into the displayed sum.
+:::
+
+This uses the same product-to-sum rule as Lesson 2, but adjacent pairs now overlap. We do not assume the pairs themselves are independent; the Markov assumption supplies the factorization. A CG pair contributes evidence according to how often G follows C in the two fitted classes.
 
 ## A synthetic CpG classifier
 
@@ -85,7 +92,7 @@ T&.3&.2&.2&.3
 \end{array}.
 $$
 
-We take equal initial distributions so the initial term cancels. The resulting pair-score table is
+We take $q_a^+=q_a^-=1/4$ for every base, so the initial term cancels. Write $\beta(a,b)=\log_2(a^+_{ab}/a^-_{ab})$ for a pair contribution. The resulting table is
 
 | pair begins with | $A$ | $C$ | $G$ | $T$ |
 |---|---:|---:|---:|---:|
@@ -109,7 +116,7 @@ For `CGTA`, the pairs are `CG`, `GT`, and `TA`:
 $$
 S(\texttt{CGTA})=1.585-0.585-0.585=0.415.
 $$
-At threshold zero, the first window is background and the second is island. Base composition alone cannot make this distinction.
+At threshold zero, the first window is background-like and the second island-like under these models. Base composition alone cannot make this distinction. Neither four-base decision identifies a real CpG island or reports whether these cytosines are methylated.
 :::
 
 ::: {#exm-cpg-threshold}
@@ -170,25 +177,45 @@ initial_minus = initial_plus.copy()
 ]
 ```
 
-One length-$w$ window costs $\mathcal{O}(w)$ time. Scoring every overlapping window separately costs $\mathcal{O}(Nw)$ on a genome of length $N$. Because the score is a sum of pair contributions, when the two models have the same initial distribution, a rolling implementation can subtract the pair leaving the window and add the pair entering it, reducing the scan to $\mathcal{O}(N)$. With unequal initial distributions, it must also update the initial-base term.
+One length-$w$ window costs $\mathcal{O}(w)$ time. For a genome of length $N$ and $1\leq w\leq N$, separately scoring its $N-w+1$ windows costs $\mathcal{O}(Nw)$. A rolling calculation can reuse the contributions from overlapping pairs.
+
+On the string `GCTAA`, shift the four-base window from `GCTA` to `CTAA`. Its pairs change from GC, CT, TA to CT, TA, AA. With equal initial distributions, only GC leaves and AA enters:
+$$
+S(\texttt{CTAA})=S(\texttt{GCTA})-\beta(G,C)+\beta(A,A)
+\approx-0.585-0.585-0.585=-1.755.
+$$
+The shift removes a pair favoring the island model and adds one favoring background, lowering the evidence for an island-like region.
+
+::: {.algorithm}
+**Algorithm: update an overlapping window score.**
+For $w\geq2$, subtract the outgoing pair's score and add the incoming pair's score. Retain the shared pair contributions. If the initial distributions differ, also replace the old initial-base log ratio by the new one.
+:::
+
+```{.python .execute}
+#| label: code-cpg-rolling-check
+old_score = markov_log_ratio(
+    "GCTA", initial_plus, initial_minus, transition_plus, transition_minus
+)
+outgoing = math.log2(transition_plus["G"]["C"] / transition_minus["G"]["C"])
+incoming = math.log2(transition_plus["A"]["A"] / transition_minus["A"]["A"])
+rolling_score = old_score - outgoing + incoming
+direct_score = markov_log_ratio(
+    "CTAA", initial_plus, initial_minus, transition_plus, transition_minus
+)
+assert math.isclose(rolling_score, direct_score)
+round(rolling_score, 6), round(direct_score, 6)
+```
+
+After scoring the first window, each shift requires constant work, giving $\mathcal{O}(N)$ total time under constant-time arithmetic and lookups. Width-one windows have no pairs and use only the initial-base score.
 
 ## Likelihood ratios and prior odds
 
-::: {#prp-markov-ratio-adds}
-## Markov log ratios are additive
-For two first-order Markov chains with positive parameters, the log-likelihood ratio is the initial-base log ratio plus one fixed score for each adjacent pair.
-:::
-
-::: {.proof}
-Divide the two Markov factorizations. Products in the numerator and denominator pair term by term. Taking a logarithm changes the resulting product of ratios into a sum.
-:::
-
 A prior probability describes the class frequency before examining the window. A posterior probability describes it after using the observed sequence. Bayes' rule gives
-$
+$$
 \frac{P(M_+\mid x)}{P(M_-\mid x)}
 =\frac{P(x\mid M_+)}{P(x\mid M_-)}
 \frac{P(M_+)}{P(M_-)}.
-$
+$$
 The common factor $P(x)$ cancels. The prior therefore matters even when we can compute both likelihoods exactly.
 
 A threshold also allows unequal class prevalence. Under equal costs for the two kinds of classification error, choosing the more probable class by Bayes' rule favors the island class when
@@ -196,6 +223,8 @@ $$
 S(x)>\log_2\frac{P(M_-)}{P(M_+)}.
 $$
 If islands are rare, the right side is positive. A window needs stronger sequence evidence to overcome the prior odds. In practice, the threshold can instead be selected on validation data to meet a desired false-positive rate.
+
+For example, if the prior island probability is 0.1, the prior odds are $1/9$. The likelihood ratio $4/3$ for `CGTA` changes the odds to $4/27$, giving posterior probability $4/31\approx0.129$. Evidence in favor of the island model has raised its probability, but background remains the more probable class.
 
 ## Estimation and evaluation
 
@@ -205,7 +234,7 @@ $$
 =\frac{n^{+}_{ab}+\alpha}
 {\sum_c n^{+}_{ac}+4\alpha},
 $$
-and similarly for the background. Pseudocounts keep every score finite.
+and similarly for the background. Here $n^+_{ab}$ counts occurrences of adjacent pair $ab$ in island-labeled training fragments; the denominator counts all departures from $a$. Do not count pairs across separate fragments, where adjacency is unknown. Pseudocounts give unseen transitions positive probability; initial distributions likewise need positive estimates to keep the full score finite.
 
 Evaluate the full procedure on held-out chromosomes or long held-out genomic regions. Randomly splitting overlapping windows leaks nearly identical sequence into training and test sets and makes accuracy look better than it is. A confusion matrix counts true positives, false positives, true negatives, and false negatives. Sensitivity is the fraction of labeled islands detected, $TP/(TP+FN)$; specificity is the fraction of labeled background windows rejected, $TN/(TN+FP)$. Report both at the chosen threshold. If the threshold was selected on the test set, the test set is no longer an independent evaluation.
 
@@ -220,11 +249,9 @@ $$
 Raising the threshold can remove false positives, but it can also turn true positives into false negatives. There is no threshold-free statement that the classifier has 90% accuracy in every application: performance also changes with window length, genome, and the frequency of islands in the evaluated set.
 :::
 
-For example, if the prior island probability is 0.1, the prior odds are $1/9$. The likelihood ratio $4/3$ for `CGTA` changes the odds to $4/27$, giving posterior probability $4/31\approx0.129$. Evidence in favor of the island model has raised its probability, but background remains the more probable class.
-
 A useful comparison shuffles each window many times while preserving its base counts. This changes dinucleotide order while keeping GC content fixed. Comparing original scores with the shuffled score distribution measures how much the ordering contributes beyond composition. Similar classification accuracy alone is inconclusive: a threshold can conceal substantial changes in individual scores.
 
-### Precision and class prevalence
+::: {.callout-note collapse="true" title="Going deeper: precision and class prevalence"}
 
 Sensitivity and specificity condition on the true class. A user examining a list of predicted islands asks a different question: what fraction of that list is correct? This fraction is called *precision*, $TP/(TP+FP)$ when at least one positive prediction is made.
 
@@ -236,6 +263,7 @@ P(\text{island}\mid\text{positive prediction})
 =\frac{sp}{sp+(1-t)(1-p)}.
 $$
 This calculation assumes the class-conditional performance transfers to the new population. It explains why evaluating on a balanced sample can misrepresent the usefulness of a genome-wide candidate list. To interpret that list, we need the class frequency as well as performance within each class. Raising the threshold may improve precision, but its new sensitivity and specificity must be measured rather than assumed.
+:::
 
 ## Limitations
 

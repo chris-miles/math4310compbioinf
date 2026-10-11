@@ -88,9 +88,10 @@ cf.state_diagram(ax, ["B", "I"], transitions, emissions)
 plt.show()
 ```
 
-If a state remains with probability $r$, its expected run length is
+Let $L$ be the length of a completed run in a state that remains with probability $r<1$. The run reaches its $j$th position only if its first $j-1$ transitions stay in that state, so $P(L\ge j)=r^{j-1}$. A run of length $L$ contributes one unit for each position it reaches: $L=\sum_{j\ge1}\mathbf{1}\{L\ge j\}$, where the indicator is one when the event holds and zero otherwise. Averaging these contributions gives
 $$
-1+r+r^2+\cdots=\frac{1}{1-r}.
+\mathbb E[L]=\sum_{j\ge1}P(L\ge j)
+=1+r+r^2+\cdots=\frac{1}{1-r}.
 $$
 The illustrative island state therefore has mean length $1/(1-0.6)=2.5$ symbols. Real CpG islands are much longer, so real base-level parameters would use an island self-loop close to one.
 
@@ -101,7 +102,7 @@ Let $L$ be the length of a completed run in a state with self-transition probabi
 $$
 P(L=\ell)=r^{\ell-1}(1-r),\qquad \ell=1,2,\ldots.
 $$
-For the island state, the probabilities of lengths 1, 2, and 3 are $0.4$, $0.24$, and $0.144$. The long tail makes the mean 2.5 even though length 1 is most probable. This is the geometric duration assumption. A run reaching the end of a recorded sequence may continue beyond the observation, so its observed length need not be its completed duration.
+For the island state, the probabilities of lengths 1, 2, and 3 are $0.4$, $0.24$, and $0.144$. The long tail makes the mean 2.5 even though length 1 is most probable. This is the geometric duration assumption: after any number of positions in a region, the chance of leaving on the next transition is still $1-r$. The model therefore has no notion that a region has reached a typical biological length; increasing $r$ changes the mean but keeps this constant exit chance. A run reaching the end of a recorded sequence may continue beyond the observation, so its observed length need not be its completed duration.
 
 ## Joint probability of sequence and path
 
@@ -128,6 +129,7 @@ For $x=\texttt{SSW}$ and $\pi=\texttt{IIB}$,
 $$
 P(x,\pi)=0.5(0.8)(0.6)(0.8)(0.4)(0.7)=0.05376.
 $$
+These factors are $p_I$, $e_I(S)$, $a_{II}$, $e_I(S)$, $a_{IB}$, and $e_B(W)$ in sequence order. The path starts in an island, stays there for the second symbol, then switches to background for W.
 Two constant-state paths have probabilities
 $$
 P(\texttt{SSW},\texttt{BBB})
@@ -240,7 +242,8 @@ free parameters. The B/I model has six free parameters. With labeled paths, esti
 
 ::: {#exm-hmm-supervised-counts}
 ## Estimating emissions from a labeled path
-Suppose a short labeled training pair is
+Suppose the assembled DNA fragment is `CGATC`, and an annotation marks its first two positions as island and the remaining three as background. Converting C/G to S and A/T to W gives the observations below; expanding the annotated interval into one label per base gives the path. This supplied annotation is training information, not a path inferred from these five bases:
+
 $$
 x=\texttt{SSWWS},\qquad \pi=\texttt{IIBBB}.
 $$
@@ -250,6 +253,8 @@ $$
 \qquad
 \widehat e_B(S)=1/3,\quad \widehat e_B(W)=2/3.
 $$
+The annotation source defines what the model learns to call an island. Labels based on a sequence-composition rule teach that rule; they do not by themselves establish a gene-regulatory function.
+
 The path contains transitions $II,IB,BB,BB$, giving $\widehat a_{II}=\widehat a_{IB}=1/2$ and $\widehat a_{BB}=1$. These exact zeros and ones reflect a tiny sample, not biological certainty. Pseudocounts prevent these small-sample estimates from ruling out unobserved events, as in Lesson 9.
 :::
 

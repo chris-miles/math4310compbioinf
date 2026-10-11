@@ -12,7 +12,7 @@
 | Layout and visual presentation | site/template.html, site/site.css |
 | Browser interactions | site/site.js |
 
-The prose, code, figure, and schematic style guides in course_notes/style/ still govern the notes. Their historical references to Quarto describe the source conventions retained below; the website is now built with Pandoc and Python. The palette, plot typography, helper functions, and per-chunk figure dimensions are unchanged.
+The prose, code, figure, and schematic style guides in course_notes/style/ govern the notes. Pandoc and Python build the website from Markdown. The builder supports the cross-reference labels and chunk options described below.
 
 ## Release a lecture or assignment
 
@@ -28,7 +28,7 @@ published: false
 
 Change **published: false** to **published: true** to make the title clickable in the schedule and catalog. Released pages enter search and lecture navigation. Draft text is excluded from the generated website: old URLs show a short availability notice. **The repository is public, so draft sources are still public.** Keep instructor-only material outside tracked files.
 
-Only set this flag after reviewing the page. Lessons 1 to 13 and Problem Set 1 are available. Lessons 14 to 23 and the other assignment drafts remain unlinked until developed.
+Only set this flag after reviewing the page. Each source file's `published` field controls its release status; the generated lecture and assignment catalogs show what is available.
 
 The schedule has broad modules and compact weekly rows. Edit `site/schedule.json`: `modules` groups lesson numbers by subject, and each week's `meetings` assigns one lesson or event to each actual class date. The week's `lessons` list must agree with those meetings. A week may cross a module boundary. The builder displays each meeting date, including midterms and two project presentation days. The checker requires exactly one event on every available Monday or Wednesday, with holidays and spring break excluded. There are 27 meetings and ten problem sets.
 
@@ -91,6 +91,8 @@ Install Pandoc separately. The build replaces only the ignored _site/ output dir
 
 Commit only intended public changes and push to main to deploy. The shared HTML template uses relative URLs, including when the site is hosted under the repository's GitHub Pages path. Existing lecture .html URLs remain valid.
 
-## Legacy Quarto files
+## Source files and generated output
 
-The original .qmd files and Quarto configuration are retained for reference. They are not used by the new build and do not update automatically. Make future content edits in the .md files; edit the course homepage in site/pages/index.md.
+Edit the Markdown sources listed above. Earlier Quarto sources and configuration are available in Git history. The current build does not use `.qmd` files, assignment mirrors, or Quarto output.
+
+`_site/` is generated and ignored. Older local checkouts may also contain ignored `course_notes/_book*/`, `course_notes/_freeze/`, `course_notes/.quarto/`, and `course_notes/assignments/` directories from Quarto builds. These are not active sources. Keep local backups and reference materials in ignored locations; do not add generated output to Git.

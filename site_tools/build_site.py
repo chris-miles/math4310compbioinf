@@ -18,6 +18,7 @@ import re
 import shutil
 import subprocess
 import sys
+from unittest.mock import patch
 
 import yaml
 import matplotlib
@@ -93,7 +94,12 @@ def execute_chunks(body: str, path: Path, route: str) -> str:
         if options.get("eval", True):
             tree = ast.parse(code, filename=str(path))
             final = tree.body.pop() if tree.body and isinstance(tree.body[-1], ast.Expr) else None
-            with redirect_stdout(output), redirect_stderr(output):
+            # The builder saves open figures below; interactive display has no target.
+            with (
+                redirect_stdout(output),
+                redirect_stderr(output),
+                patch.object(plt, "show", new=lambda *args, **kwargs: None),
+            ):
                 exec(compile(tree, str(path), "exec"), namespace)
                 if final:
                     value = eval(compile(ast.Expression(final.value), str(path), "eval"), namespace)

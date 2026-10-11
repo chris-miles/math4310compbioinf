@@ -42,6 +42,21 @@ Symbols are defined when they first appear in a lesson. Some letters have differ
 | $\gamma_k(i)$ | Posterior state probability $P(\pi_i=k\mid x)$ |
 | $\xi_{k\ell}(i)$ | Posterior probability of transition $k\to\ell$ from $i$ to $i+1$ |
 | $\operatorname{LSE}(z)$ | Log-sum-exp, $\log\sum_j e^{z_j}$ |
+| $f_{ij}$ | Fraction of mismatches between aligned sequences $i,j$ on retained columns |
+| $D=(d_{ij})$ | Matrix of estimated pairwise evolutionary distances |
+| $d_T(i,j)$ | Sum of branch lengths along the path between tips $i,j$ in tree $T$ |
+| $\ell_e$, $h_u$ | Branch length of edge $e$ and height of node $u$ above descendant tips in a clock tree |
+| $d(C,D)$ | Mean original distance over all tip pairs from clusters $C,D$ |
+| $x_{\ell j}$, $z_v$ | Observed character at leaf $\ell$, site $j$, and an assigned ancestral character at node $v$ |
+| $c_j(T)$, $c(T)$ | Minimum equal-cost change count at site $j$ on tree $T$, and its sum over sites |
+| $S_v$, $c_v$ | Fitch set of minimum-cost characters at subtree root $v$, and its subtree change count |
+| $X\in\mathbb R^{n\times p}$, $Z$ | Transformed sample-by-gene measurements and their gene-column-centered matrix |
+| $S=Z^\top Z/(n-1)$ | Sample covariance matrix of gene measurements |
+| $v_k$, $t_k=Zv_k$ | PCA loading direction in gene space and its sample-score vector |
+| $Z=UDV^\top$ | Singular value decomposition, with $D=\operatorname{diag}(d_k)$ in this context |
+| $T=ZV=UD$, $\lambda_k=d_k^2/(n-1)$ | PCA score matrix and component variances |
+| $C_{ij}$, $L_i$, $R_{ij}$ | Assigned RNA-seq read count, sample's total assigned count, and counts per million |
+| $\sigma_j$, $W=ZG^{-1}$ | Gene's sample standard deviation and standardized matrix, with $G=\operatorname{diag}(\sigma_j)$ |
 
 In the toy HMM, state $B$ denotes background and state $I$ denotes an island-like region. Observation $S$ groups C/G and observation $W$ groups A/T. These observation symbols are distinct from the window score $S(x)$.
 

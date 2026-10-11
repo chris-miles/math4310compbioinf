@@ -35,14 +35,18 @@ For $\texttt{ACGT}$ aligned to $\texttt{AGGT}$, the pairs are $AA,CG,GG,TT$. The
 
 ## Two probability models
 
+To measure evidence, we need to predict the observed letter pairs under two possible origins: related sequences whose corresponding positions descend from an ancestor, and unrelated sequences drawn from a background population. Each model assigns a probability to every possible pair. We compare those probabilities for the pairs actually observed.
+
 ::: {#def-pair-models}
 ## Background and related-pair models
-The background model $R$ draws the two letters independently with base probabilities $q_a>0$, so $r_{ab}=q_aq_b$. The related-pair model $M$ assigns each ordered pair a probability $p_{ab}>0$, with $\sum_{a,b}p_{ab}=1$.
+The background model $R$ draws the two letters independently with base probabilities $q_a>0$, where $\sum_aq_a=1$, so $r_{ab}=q_aq_b$. The related-pair model $M$ assigns each ordered pair a probability $p_{ab}>0$, with $\sum_{a,b}p_{ab}=1$.
 
 Both models assume that distinct alignment columns are independent and use the same pair distribution at every column.
 :::
 
 For this biological question, $p_{ab}$ describes pairs in corresponding positions of related sequences. These are joint probabilities, not probabilities of the second letter conditional on the first: the entire table sums to one. Later, a Markov transition table will instead have rows that sum to one.
+
+One way to estimate $p_{ab}$ is to count aligned pairs in representative sequences already known to be related and normalize the counts. Unobserved pairs need a small positive allowance to satisfy our strictly positive model. Background letter frequencies provide $q_a$. In this lesson, we treat the probabilities as calibrated separately and supplied as inputs, rather than estimating them from the candidate pair we want to judge. The choice of related sequences matters: close relatives generally preserve more identities than distant relatives [@durbin1998]. With the probabilities fixed, we can examine the scoring rule without first solving an estimation problem.
 
 A read-mapping model would need to account for sequencing errors as well as sample-to-reference variation; the same mathematical score need not use the same probabilities in both applications.
 
@@ -54,6 +58,8 @@ Consider a synthetic DNA model with $q_a=1/4$ for every base. In the related mod
 | Mismatch | 12 | $1/24$ | $1/16$ |
 
 Both tables are normalized. Under $M$, the total probability of a match is $4/8=1/2$. Under $R$, it is $4/16=1/4$. These values are chosen for arithmetic, not fitted to genomic data.
+
+For example, the pair AA has probability $1/8$ under $M$ and $1/16$ under $R$. Its ratio is 2, favoring $M$ by a factor of two. A CG pair instead has ratio $2/3$, favoring $R$. Multiplying ratios accumulates evidence across independent columns. Taking logarithms turns this multiplication into addition, which lets us score one column at a time.
 
 ::: {#def-pair-log-odds}
 ## Log-odds score
@@ -77,10 +83,23 @@ $$
 :::
 
 ::: {.proof}
-Independence gives $P(x,y\mid M)=\prod_i p_{x_i y_i}$ and $P(x,y\mid R)=\prod_i q_{x_i}q_{y_i}$. Divide the products, then use $\log_2(uv)=\log_2u+\log_2v$.
+Independence across columns gives $P(x,y\mid M)=\prod_{i=1}^n p_{x_i y_i}$ and $P(x,y\mid R)=\prod_{i=1}^n q_{x_i}q_{y_i}$. Therefore
+$$
+\log_2\frac{P(x,y\mid M)}{P(x,y\mid R)}
+=\log_2\prod_{i=1}^n\frac{p_{x_i y_i}}{q_{x_i}q_{y_i}}
+=\sum_{i=1}^n\log_2\frac{p_{x_i y_i}}{q_{x_i}q_{y_i}}
+=S(x,y).
+$$
+The second equality uses the logarithm-of-a-product rule. Each observed pair contributes exactly its column score.
 :::
 
-A score of 3 bits means the observed alignment is eight times as likely under $M$. It does not mean an 87.5% probability of relatedness: converting evidence to a probability also requires how common related pairs were before seeing these data.
+A score of 3 bits means the observed alignment is eight times as likely under $M$ as under $R$. It does not give a probability that $M$ is true. For illustration, suppose $M$ and $R$ are the only possibilities, with prior probabilities $1/100$ and $99/100$. Bayes' rule gives
+$$
+\frac{P(M\mid x,y)}{P(R\mid x,y)}
+=\frac{P(x,y\mid M)P(M)}{P(x,y\mid R)P(R)}
+=8\times\frac{1}{99}=\frac{8}{99}.
+$$
+The common normalizing probability of the data cancels in this ratio. The posterior probability of $M$ is then $8/(8+99)\approx0.075$. Positive evidence has increased its probability, but a rare starting hypothesis can remain unlikely.
 
 ::: {#exm-pair-log-odds}
 ## Three matches and one mismatch
@@ -96,6 +115,8 @@ $$
 :::
 
 The product calculation and score calculation are independent ways to check the same result. A score of $+1$ for a match and $-1$ for a mismatch is a convenient teaching convention, but it is not the exact log-odds table derived from these probabilities.
+
+Because the model treats columns identically and independently, the count table from @def-aligned-pair-data also suffices: $S=\sum_{a,b}N_{ab}s(a,b)$. Rearranging the columns leaves this score unchanged. A model that uses neighboring bases would need their order as well.
 
 ::: {.algorithm}
 **Algorithm: score a fixed ungapped alignment.**
@@ -136,6 +157,8 @@ There are $n$ pair lookups and additions. With a fixed DNA alphabet, scoring tak
 
 ## Expected scores and chance matches
 
+Our four-column example favors $M$, but a chance background alignment could produce the same letters. To understand what scores are typical before selecting any candidate, we calculate the average score under $R$. A sensible background-calibrated score should not reward unrelated sequence merely for being long.
+
 ::: {#def-background-expected-score}
 ## Expected background score
 For pair probabilities $r_{ab}$ and scores $s(a,b)$, the expected score of one background column is
@@ -173,10 +196,12 @@ with equality only when $p=r$.
 :::
 
 ::: {.proof}
-Sketch. The inequality $\ln u\leq u-1$ follows because $u-1-\ln u$ has its minimum at $u=1$. Apply it to $u=p_{ab}/r_{ab}$, multiply by $r_{ab}$, and sum. The upper bound is $\sum p_{ab}-\sum r_{ab}=0$. Dividing by $\ln2$ converts to bits.
+Sketch. For $u>0$, the derivative of $u-1-\ln u$ is $1-1/u$, negative below 1 and positive above 1. Its minimum is therefore zero at $u=1$, proving $\ln u\leq u-1$. Apply this inequality to $u=p_{ab}/r_{ab}$, multiply by $r_{ab}$, and sum. The upper bound is $\sum p_{ab}-\sum r_{ab}=0$. Dividing by $\ln2$ converts to bits. Equality requires $p_{ab}/r_{ab}=1$ for every pair, since every weight $r_{ab}$ is positive.
 :::
 
-### Match fraction and accumulated evidence
+Thus a properly calibrated log-odds table has negative background expectation unless its two models coincide. This is an average statement for unselected columns. It does not prevent the best candidate in a large search from receiving a positive score.
+
+::: {.callout-note collapse="true" title="Going deeper: match fraction and accumulated evidence"}
 
 For the synthetic pair model, let $m$ be the number of matches in $n$ fixed columns. The remaining $n-m$ columns are mismatches, so
 $$
@@ -195,6 +220,7 @@ $$
 \mathbb E_M[s]=\tfrac12(1)+\tfrac12\log_2(2/3)\approx0.208.
 $$
 Together with the negative background expectation, this explains the direction of the score: under repeated independent sampling, related-model columns accumulate positive evidence on average and background columns accumulate negative evidence. Individual alignments can still favor the wrong model.
+:::
 
 ## Score scales and gap costs
 
@@ -211,12 +237,7 @@ Add 6 to every column score, including gaps. The first alignment now scores 7 an
 
 Gap-gap columns are never allowed. The two gap columns in this example are valid under Lesson 1's alignment definition, though some later scoring conventions forbid an immediate switch between opposite gap types.
 
-## Limitations
-
-1. **Independent columns miss context.** Neighboring bases and interacting protein residues can carry information that a pair table discards.
-2. **The background matters.** An unrelated-sequence model with the wrong composition can make common patterns look convincing.
-3. **A likelihood ratio is not a posterior probability.** Class prevalence and the search procedure affect the interpretation.
-4. **The alignment is supplied.** Choosing the highest score among many alignments introduces a search step. Lessons 3 to 6 address optimization and database search.
+The likelihood-ratio derivation applies to a supplied ungapped alignment under our two column models. Adding chosen gap costs gives an optimization objective, but does not by itself supply a normalized probability model for gapped strings. Lesson 3 finds the alignment maximizing that objective. Interpreting a score after such a search still requires accounting for how the alignment was selected.
 
 ## Exercises
 

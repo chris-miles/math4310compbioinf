@@ -2,7 +2,7 @@
 
 Most figures in these notes are not data plots. They are dynamic-programming tables, HMM trellises and state diagrams, k-mer and neighborhood graphs, trees, printed alignments, and phase planes. `STYLE_FIGURES.md` covers data plots. This file covers everything else, and it is strict: every schematic is drawn in Python through `style/coursefigs.py`, from the same instance the prose uses, and nothing is drawn by hand or in an external editor.
 
-The reason is consistency at scale. Twenty-four lessons will draw something like sixty schematics. If each one is composed ad hoc, fonts, arrow styles, and the meaning of red drift within a week, and students lose the visual vocabulary that lets them read a Viterbi trellis as the alignment table it is.
+The reason is consistency at scale. The lessons reuse the same kinds of schematics across topics. If each one is composed ad hoc, fonts, arrow styles, and the meaning of red drift within a week, and students lose the visual vocabulary that lets them read a Viterbi trellis as the alignment table it is.
 
 ## The one rule
 

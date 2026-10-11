@@ -1,6 +1,8 @@
 # Planning Documents
 
-These files are instructor-facing planning notes for MATH 4310 Computational Bioinformatics.
+These files describe the course design and schedule for MATH 4310 Computational Bioinformatics. They are public in the repository, although the website does not publish them. Keep instructor-only drafts, answer keys, and source digests in ignored locations.
+
+The website reads `../../site/schedule.json`; keep `lesson_calendar.md` consistent with it when changing meeting dates or assignment deadlines.
 
 - `course_design_memo.md`: audience, prerequisites, topic balance, and major design choices.
 - `lesson_calendar.md`: 23 lessons on actual Monday/Wednesday dates, accounting for holidays, two midterms, and two project presentation days.

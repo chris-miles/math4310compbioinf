@@ -26,7 +26,7 @@ Introduce every algorithm with pseudocode first in a `.algorithm` div, then give
 Apply `figstyle.mplstyle` once at lesson top (see `STYLE_FIGURES.md`). **Never** set `figsize`, `dpi`, or other figure-size rcParams in chunk code — The site builder controls those via `site/config.json` and chunk options.
 
 ## Executable Markdown chunks
-- Active lesson sources are `.md` files. Use a fenced block marked `{.python .execute}` for code the website runs, and a plain `python` fence for nonexecuting examples such as deliberate assignment bugs. The builder retains `#|` options; `.qmd` files are legacy.
+- Active lesson sources are `.md` files. Use a fenced block marked `{.python .execute}` for code the website runs, and a plain `python` fence for nonexecuting examples such as deliberate assignment bugs. The builder supports `#|` options. Earlier `.qmd` sources are available in Git history.
 - Chunk labels: `code-{chapter}-{shortname}` for code, `fig-{chapter}-{shortname}` when the chunk produces a figure.
 - Figure-producing chunks set `fig-cap`, `fig-alt`, and `label`.
 - `echo: true` by default — students see the code.

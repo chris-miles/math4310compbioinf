@@ -10,7 +10,7 @@ The course notes and assignments should be original public-facing materials, eve
 - Borrow problem types freely, but rewrite prompts in the course's own voice and use new toy data unless the source license clearly permits direct reuse.
 - Cite sources when a problem or exposition is inspired by a specific exercise, section, dataset, or open course resource.
 - For open-license sources, follow the stated attribution, noncommercial, and share-alike requirements.
-- For copyrighted books, citation does not by itself permit copying substantial prose, figures, tables, datasets, or distinctive problem statements into the public Quarto book.
+- For copyrighted books, citation does not by itself permit copying substantial prose, figures, tables, datasets, or distinctive problem statements into the public course notes.
 - Keep private reference PDFs and solution materials out of any public course site or public repository.
 
 ## Primary Course Spine

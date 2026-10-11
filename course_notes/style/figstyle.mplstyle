@@ -1,7 +1,7 @@
 # Shared matplotlib style for MATH 4310 course notes.
 # Apply with: plt.style.use("course_notes/style/figstyle.mplstyle")
-# Do NOT set figure.figsize, figure.dpi, or savefig.dpi here — Quarto
-# controls those via _quarto.yml and per-chunk fig-width/fig-height.
+# Do NOT set figure.figsize, figure.dpi, or savefig.dpi here. The site builder
+# controls those via site/config.json and per-chunk fig-width/fig-height.
 
 # --- Layout ---
 savefig.bbox:          tight

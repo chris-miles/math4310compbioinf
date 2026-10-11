@@ -38,6 +38,16 @@ The score table gives an optimum value. A path of backpointers gives an alignmen
 
 ## Correctness of the recurrence
 
+To prove the table correct, keep its defining rule in view. Let $s(a,b)$ be the supplied score for a paired-letter column and $g<0$ the score per gap character. For $i,j>0$,
+$$
+F(i,j)=\max\begin{cases}
+F(i-1,j-1)+s(x_i,y_j), & \text{paired letters},\\
+F(i-1,j)+g, & \text{letter of }x\text{ against a gap},\\
+F(i,j-1)+g, & \text{gap against a letter of }y.
+\end{cases}
+$$
+The boundaries are $F(0,0)=0$, $F(i,0)=ig$, and $F(0,j)=jg$. The claim is that these locally chosen maxima equal the best scores over all complete prefix alignments. The proof must establish both that no alignment beats the table value and that some alignment attains it.
+
 ::: {#thm-global-correctness}
 ## Correctness of the global-alignment recurrence
 For every $0\le i\le n$ and $0\le j\le m$, $F(i,j)$ equals the maximum score among all global alignments of $x_1\cdots x_i$ and $y_1\cdots y_j$.
@@ -46,9 +56,9 @@ For every $0\le i\le n$ and $0\le j\le m$, $F(i,j)$ equals the maximum score amo
 ::: {.proof}
 We use induction on $i+j$. The claim holds on the boundaries because there is only one alignment of a nonempty prefix with an empty string: every letter is paired with a gap.
 
-For $i,j>0$, take an optimal alignment $A$. Its final column is $x_i/y_j$, $x_i/-$, or $-/y_j$. Removing that column leaves a valid alignment for the corresponding predecessor cell. It must be optimal for those prefixes. Otherwise, replacing it with a better prefix alignment would improve $A$, a contradiction. Thus $A$ has the score of one candidate in the recurrence.
+For $i,j>0$, take an optimal alignment $A$. Its final column is $x_i/y_j$, $x_i/-$, or $-/y_j$. Removing that column leaves a valid alignment for the corresponding predecessor cell. It must be optimal for those prefixes. Otherwise, replacing it with a better prefix alignment would improve $A$, a contradiction. Thus $A$ has the score of one candidate in the recurrence, so the optimum is no larger than the table maximum.
 
-Conversely, append the appropriate final column to an optimal alignment from each predecessor. Each candidate is attained by a valid alignment. Their maximum is therefore attainable and cannot be smaller than the optimum.
+Conversely, append the appropriate final column to an optimal alignment from each predecessor. Each candidate is attained by a valid alignment. Their maximum is therefore attainable and cannot be larger than the optimum. Together with the preceding inequality, this proves equality.
 :::
 
 The proof uses two facts: the final-column cases are exhaustive, and an optimal solution cannot contain a suboptimal prefix. The second fact is called *optimal substructure*.
@@ -213,9 +223,11 @@ def score_alignment(top: str, bottom: str, match: int = 1,
 
 reported, top, bottom = global_alignment("ACGT", "AGT")
 assert score_alignment(top, bottom) == reported
+assert top.replace("-", "") == "ACGT"
+assert bottom.replace("-", "") == "AGT"
 ```
 
-This check is independent of the table recurrence. It catches a traceback that emits the wrong letter, forgets a leading gap, or reverses only one row. We also remove gaps from each row and confirm that the original strings are recovered.
+Rescoring is independent of the table recurrence and can detect an omitted gap or a misplaced column. Agreement alone is insufficient: `ATGT/A-GT` also scores 1, but it does not align the input `ACGT`. The two gap-removal checks detect that wrong letter even though its score agrees. Score agreement and input reconstruction check different requirements.
 
 ### Boundary and traceback tests
 
@@ -242,9 +254,42 @@ Stopping when $i=0$ *or* $j=0$ drops the unconsumed prefix. Initializing the bor
 
 ### Counting optimal alignments
 
-If biological ambiguity matters, storing one pointer is insufficient. A second table can count optimal paths. Set $C(0,0)=1$. At each cell, sum $C$ over every predecessor whose candidate equals the optimal score. Boundary cells have count 1.
+If biological ambiguity matters, storing one pointer is insufficient. A second table $C(i,j)$ counts optimal paths to $(i,j)$. For an interior cell, let $\operatorname{Pred}^*(i,j)$ contain those of its three predecessors whose candidate equals $F(i,j)$. Writing $w(p\to(i,j))$ for the corresponding substitution or gap score,
+$$
+\operatorname{Pred}^*(i,j)=\{p\in\{(i-1,j-1),(i-1,j),(i,j-1)\}:
+F(p)+w(p\to(i,j))=F(i,j)\},
+$$
+where $F(p)=F(i',j')$ for $p=(i',j')$. Then
+$$
+C(i,j)=\sum_{(i',j')\in\operatorname{Pred}^*(i,j)}C(i',j'),\qquad
+C(i,0)=C(0,j)=1.
+$$
+The boundary rule includes $C(0,0)=1$, counting the empty alignment. Each optimal path has one final predecessor, so the sum counts tied paths without double counting.
 
 For AA against A with match $+1$ and gap $-2$, the score is $-1$ and the count is 2: AA/A- and AA/-A. The count tells us how many optimal paths exist, while the pointer graph shows where they diverge.
+
+At $(2,1)$ in this example, the diagonal candidate is $F(1,0)+1=-1$ and the vertical candidate is $F(1,1)-2=-1$. The horizontal candidate is $F(2,0)-2=-6$ and does not contribute to the optimal count. Both maximizing predecessors have count 1, so
+$$
+C(2,1)=C(1,0)+C(1,1)=1+1=2.
+$$
+
+```{.python .execute}
+#| label: fig-traceback-optimal-counts
+#| fig-cap: "Optimal-path counts for AA against A. The two arrowed predecessors attain the final score, so their counts add instead of selecting one pointer."
+#| fig-alt: "A three-by-two table of path counts. The final cell contains 2, with arrows entering from the cell above and the cell diagonally above-left; all other counts are 1."
+#| fig-width: 3.5
+#| fig-height: 3
+optimal_counts = [[1, 1], [1, 1], [1, 2]]
+fig, ax = plt.subplots()
+cf.dp_table(
+    ax, list("AA"), list("A"), optimal_counts,
+    highlight=[(2, 1)],
+    arrows=[((1, 0), (2, 1)), ((1, 1), (2, 1))],
+)
+plt.show()
+```
+
+These two alignments disagree about which A in the longer string corresponds to the A in the shorter one. Their tie does not establish equally probable evolutionary histories; it says the supplied scores do not distinguish those correspondences.
 
 ::: {#prp-count-optima}
 ## Counting optimal paths

@@ -8,4 +8,4 @@ Lecture notes are written in Markdown and published as HTML on the [course websi
 - **style/**: the prose, code, figure, and schematic conventions and shared plotting helpers.
 - **references.bib**: citations used in the notes.
 
-The homepage and weekly schedule live in site/. See [authoring and publishing](../site/AUTHORING.md) for the build commands and markup conventions. Existing mathematical content and plotting conventions are unchanged by the switch from Quarto to HTML templates.
+The homepage and weekly schedule live in site/. See [authoring and publishing](../site/AUTHORING.md) for the build commands and markup conventions. The build executes marked Python chunks and checks cross-references. Earlier Quarto sources are available in Git history.

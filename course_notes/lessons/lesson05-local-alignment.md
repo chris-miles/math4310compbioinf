@@ -37,7 +37,7 @@ Which letters must appear in the answer depends on the biological task:
 
 : Biological tasks determine alignment boundaries. {#tbl-alignment-biological-tasks}
 
-The fitting model assumes the whole read belongs in one reference interval. A read with an adapter or an unreliable end may need trimming or an alignment that leaves those bases unaligned. We will keep the simpler whole-read requirement when deriving the fitting recurrence.
+The fitting model assumes the whole read belongs in one reference interval. A read with an adapter (a laboratory-added sequence used during sequencing) or an unreliable end may need trimming or an alignment that leaves those bases unaligned. We will keep the simpler whole-read requirement when deriving the fitting recurrence.
 
 ::: {#def-local-alignment}
 ## Local alignment problem
@@ -46,13 +46,13 @@ Given strings $x$ and $y$ and additive column scores, find substrings of $x$ and
 
 Allowing the empty alignment means the answer is never negative. More importantly, it lets a poor prefix be discarded before a promising region begins.
 
-Let $H(i,j)$ be the best score of an alignment of suffixes ending at positions $i$ and $j$, with zero available for an empty alignment. The last column can be a letter pair or a gap column.
+At grid coordinate $(i,j)$, we have consumed the prefixes $x_1\cdots x_i$ and $y_1\cdots y_j$. Let $H(i,j)$ be the best alignment score among suffixes of those prefixes, allowing a suffix to be empty. A selected region may therefore begin after any earlier coordinate, but must end at $(i,j)$. Zero is always available by choosing both suffixes empty. As before, a nonempty alignment ends in a letter pair or a gap column.
 
 ## The Smith-Waterman recurrence
 
 ::: {#def-local-recurrence}
 ## Local alignment recurrence
-With substitution score $s$ and linear gap score $g<0$,
+For $i,j\geq1$, with substitution score $s$ and linear gap score $g<0$,
 $$
 H(i,j)=\max\begin{cases}
 0,\\
@@ -64,17 +64,18 @@ $$
 with $H(i,0)=H(0,j)=0$.
 :::
 
-The global and local algorithms differ in three places:
+The global and local algorithms differ in four connected rules:
 
 | Rule | Global | Local |
 |---|---|---|
+| Interior recurrence | three predecessor extensions | those extensions plus zero |
 | Border | cumulative gap scores | zero |
 | Answer | bottom-right cell | largest cell anywhere |
 | Traceback stop | $(0,0)$ | first zero |
 
-: Three changes from global to local alignment. {#tbl-global-local}
+: Four changes from global to local alignment. {#tbl-global-local}
 
-The zero is a fourth case: discard the current prefix and start a new alignment later.
+The zero candidate places an empty alignment at the current coordinate. If every extension loses score, starting there costs less than retaining the poor region. Later cells can extend this restart by pairing letters, without paying for the discarded prefixes. The largest cell selects the other endpoint.
 
 ::: {.algorithm}
 **Algorithm: find one optimal local alignment.**
@@ -102,7 +103,7 @@ The best local alignment is
 $$
 \begin{array}{c}\texttt{ACG}\\\texttt{ACG}\end{array}
 $$
-with score 3. A global alignment must also account for the leading T in $x$ and trailing T in $y$; its best score is $-1$.
+with score 3. This is an independent check on the expected output: ACG supplies three matches, and there cannot be four matches in order because the terminal T symbols lie on opposite sides of ACG. Any mismatch or gap decreases the score, so 3 is an upper bound as well as an attained score. A global alignment must also account for the leading T in $x$ and trailing T in $y$; its best score is $-1$.
 
 ```{.python .execute}
 #| label: fig-local-traceback
@@ -123,11 +124,14 @@ cf.dp_table(ax, list("TACG"), list("ACGT"), local_scores,
 plt.show()
 ```
 
+The function returns the score, the two gapped strings, and the start and end grid coordinates of the selected region. If the latter are $(i_0,j_0)$ and $(i_1,j_1)$, the ungapped strings must equal Python slices `x[i_0:i_1]` and `y[j_0:j_1]`. These are zero-based half-open intervals: the start is included and the end excluded. In our one-based mathematical notation, the first selected letters are $x_{i_0+1}$ and $y_{j_0+1}$. An empty result uses start and end $(0,0)$.
+
 ```{.python .execute}
 #| label: code-local-alignment
 def local_alignment(x: str, y: str, match: int = 1,
-                    mismatch: int = -1, gap: int = -2) -> tuple[int, str, str]:
-    """Return a local-alignment score and one optimal alignment."""
+                    mismatch: int = -1, gap: int = -2
+                    ) -> tuple[int, str, str, tuple[int, int], tuple[int, int]]:
+    """Return an optimal local score, alignment, and region boundary coordinates."""
     table = [[0] * (len(y) + 1) for _ in range(len(x) + 1)]
     pointer = [["stop"] * (len(y) + 1) for _ in range(len(x) + 1)]
     best_score, best_cell = 0, (0, 0)
@@ -162,10 +166,19 @@ def local_alignment(x: str, y: str, match: int = 1,
             top.append("-")
             bottom.append(y[j - 1])
             j -= 1
-    return best_score, "".join(reversed(top)), "".join(reversed(bottom))
+    aligned_x = "".join(reversed(top))
+    aligned_y = "".join(reversed(bottom))
+    return best_score, aligned_x, aligned_y, (i, j), best_cell
 
-local_alignment("TACG", "ACGT")
+x, y = "TACG", "ACGT"
+result = local_alignment(x, y)
+score, aligned_x, aligned_y, start, end = result
+assert aligned_x.replace("-", "") == x[start[0]:end[0]]
+assert aligned_y.replace("-", "") == y[start[1]:end[1]]
+result
 ```
+
+The output score 3 agrees with the hand bound. Python's `max` keeps the first candidate in a tie, so placing `stop` first discards a zero-score prefix. Updating `best_cell` only for a strictly larger score keeps the first maximizing endpoint in row-major order. These conventions choose one optimum; they do not enumerate every tied region.
 
 ::: {#exm-local-no-match}
 ## No positive region
@@ -176,11 +189,15 @@ For $x=\texttt{AAA}$ and $y=\texttt{CCC}$ with these scores, every nonzero candi
 
 Traceback identifies more than the aligned letters. If it starts at a maximum cell $(i_1,j_1)$ and stops at a zero cell $(i_0,j_0)$, then the selected substrings begin just after the stop coordinates and end at the start coordinates, respectively. For the TACG/ACGT example, traceback starts at $(4,3)$ and stops at $(1,0)$. It therefore selects $x_2\cdots x_4=\texttt{ACG}$ and $y_1\cdots y_3=\texttt{ACG}$.
 
-This coordinate information matters in applications. A local protein alignment reports where a shared domain lies in each protein. A mapped read reports where its alignment begins and ends on the reference. Returning only the aligned text discards those locations.
+This coordinate information matters in applications. A local protein alignment proposes where a shared domain lies in each protein, and a read alignment identifies a reference interval. The returned boundaries let us verify the selected substrings as well as the score.
 
 ::: {#exm-local-two-islands}
 ## Two separated matches
-Compare $x=\texttt{AAACCCAAA}$ with $y=\texttt{AAAGGGAAA}$ using match $+1$, mismatch $-1$, and gap $-2$. Each AAA block scores 3. Joining the blocks requires crossing three mismatches, so the combined ungapped score is also 3. The table therefore has multiple optima: either block alone and the full nine-column alignment all tie. Making the mismatch score $-2$ prevents joining the blocks in an optimum. Each of the two AAA blocks in $x$ can match either AAA block in $y$, giving four tied pairs of locations.
+Compare $x=\texttt{AAACCCAAA}$ with $y=\texttt{AAAGGGAAA}$ using match $+1$, mismatch $-1$, and gap $-2$. Each AAA block scores 3. Joining the corresponding blocks crosses three mismatches, so the full ungapped score is $3-3+3=3$ as well. All four pairs of AAA locations and the full nine-column alignment attain the same optimum.
+
+Along the diagonal, scores rise to $H(3,3)=3$, fall to $H(6,6)=0$, and rise again to $H(9,9)=3$. Tracing from $(9,9)$ and stopping at its first zero returns the final block, removing the neutral prefix AAACCC/AAAGGG. The full nine-column alignment is optimal under the problem's definition, but this stop convention does not report it. Our function instead chooses the first maximum, $(3,3)$, and returns the first block.
+
+Making the mismatch score $-2$ prevents the full alignment from tying. Now the diagonal score reaches zero before the mismatches finish, and the final block begins from a fresh restart. Each AAA block can still match either block in the other string, giving four tied location pairs.
 :::
 
 This example shows that "the best local region" need not have a unique location or length. A reporting program needs a tie rule, just as global traceback does.
@@ -189,20 +206,22 @@ This example shows that "the best local region" need not have a unique location 
 
 ::: {#thm-local-correctness}
 ## Correctness of local alignment
-$H(i,j)$ is the maximum score among the empty alignment and all alignments of a suffix of $x_1\cdots x_i$ with a suffix of $y_1\cdots y_j$ that end at position $(i,j)$. Therefore the largest table entry is the best score over every pair of substrings.
+$H(i,j)$ is the maximum score among all alignments of suffixes of $x_1\cdots x_i$ and $y_1\cdots y_j$, including empty suffixes. Therefore the largest table entry is the best score over every pair of substrings.
 :::
 
 ::: {.proof}
-Use induction on $i+j$. A nonempty alignment ending at $(i,j)$ has one of the same three final columns as a global alignment. Removing it leaves an alignment ending at the matching predecessor, so the three recurrence candidates exhaust the nonempty cases. The zero candidate represents choosing an empty alignment after the current prefixes. Every pair of substrings has some endpoint $(i,j)$, so maximizing over all cells considers them all.
+Use induction on $i+j$. On a boundary, any nonempty alignment consists only of negative-score gap columns, so the empty alignment attains the maximum zero.
+
+For an interior cell, a nonempty optimal alignment has one of the three final columns. Removing it leaves suffixes at the corresponding predecessor. Their alignment must be optimal there: replacing it with a better one and appending the same final column would improve the original. Thus its score is bounded by one predecessor candidate. The empty case has score zero. Conversely, each candidate is attained by extending an optimal predecessor alignment, or by choosing the empty alignment. Their maximum is therefore exactly $H(i,j)$.
+
+Every pair of substrings has an endpoint $(i,j)$, so the largest cell considers them all. A negative-score initial stretch can be removed to increase an alignment's score; a zero-score initial stretch can be removed without changing it. Consequently some optimum starts at a zero cell, and stopping traceback at the first zero recovers one optimum even when it omits a tied neutral prefix.
 :::
 
-The algorithm still fills $(n+1)(m+1)$ cells and traces at most $n+m$ moves. Its time and memory costs are $\mathcal O(nm)$.
+The algorithm fills $(n+1)(m+1)$ cells with constant work per cell and traces at most $n+m$ moves. For positive $n,m$ and constant-time arithmetic, its time and memory costs are $\mathcal O(nm)$.
 
 ### Free-end alignment variants
 
 The recurrence, borders, answer cell, and stopping rule act together. Start from the three-way global recurrence, without a zero candidate in interior cells. Zero borders and a required bottom-right answer allow free leading ends but charge trailing ends. Global borders and an answer taken from the last row or last column instead charge leading ends and allow free trailing ends. These are free-end variants; neither permits the arbitrary internal restart used by local alignment.
-
-A program that reports coordinates should check them as well as the score. The teaching function returns only the score and aligned strings; it could also return the traceback's start and stop cells. On TACG/ACGT, an answer of 3 must select ACG/ACG. A program that reports the same score while including a terminal mismatch has inconsistent traceback.
 
 ### Fitting an entire read inside a reference
 

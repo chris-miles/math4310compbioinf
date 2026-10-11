@@ -10,9 +10,23 @@ nocite: |
 
 How do we model gaps as events, then search a database without filling every table?
 
+```{.python .execute}
+#| label: setup
+#| code-fold: true
+#| code-summary: "Setup: imports and figure style"
+import sys
+
+sys.path.insert(0, "../style")
+import matplotlib.pyplot as plt
+
+import coursefigs as cf
+
+cf.use_style()
+```
+
 ## Gap opening and extension
 
-Suppose sequencing and gene prediction produce a candidate protein whose function is unknown. A database search compares its amino-acid sequence with known records and returns regions worth investigating. Unlike the two-sequence problems so far, we do not know in advance which record contains the useful match. Filling a complete local-alignment table against every record repeats expensive work; seeds first select promising locations.
+Suppose sequencing and gene prediction—identifying DNA regions likely to encode proteins—produce a candidate protein whose function is unknown. A database search compares its amino-acid sequence with known records and returns regions worth investigating. Unlike the two-sequence problems so far, we do not know in advance which record contains the useful match. Filling a complete local-alignment table against every record repeats expensive work; seeds first select promising locations.
 
 Within a candidate alignment, a stretch of missing residues may reflect one insertion or deletion event. An affine gap score distinguishes that event from several isolated gaps. These are separate choices: the gap model ranks the alignments we examine, while the seed rule determines which locations we examine at all.
 
@@ -29,7 +43,7 @@ Here $d$ is the gap-open penalty and $e$ is the gap-extension penalty. Usually $
 
 With $d=2$ and $e=1$, gaps of lengths 1, 2, and 3 cost 2, 3, and 4. Two separate one-letter gaps cost 4. The model treats opening a second gap as a second event.
 
-The recurrence must remember whether its last column is already inside a gap. One table entry can no longer summarize all relevant history.
+The cost of the next column now depends on the preceding column. Appending `C/-` after a paired-letter column costs $d$, while appending it after another letter/gap column costs only $e$. Two prefix alignments can therefore have different continuation costs even when they end at the same $(i,j)$. Keeping only their overall maximum can discard a lower-scoring prefix whose next extension is cheaper. We retain a best score for each possible ending type [@durbin1998].
 
 ## Three alignment states
 
@@ -51,7 +65,32 @@ I_y(i,j)&=\max\{M(i,j-1)-d,\ I_y(i,j-1)-e\}.
 \end{aligned}
 $$ {#eq-affine-recurrence}
 
-The first candidate in a gap state opens a gap; the second extends one. This version forbids immediate switches between $I_x$ and $I_y$ in either direction. Other formulations allow them; the scoring convention determines which alignments are admissible.
+The first candidate in a gap state opens a gap; the second extends one. Entering $I_x$ consumes the next letter of $x$ but none of $y$, so its predecessors lie at $(i-1,j)$. Entering $I_y$ consumes only a letter of $y$, and entering $M$ consumes one from each. These index changes are the vertical, horizontal, and diagonal moves from Lesson 3, with the ending type now recorded as well.
+
+This version forbids immediate switches between $I_x$ and $I_y$ in either direction. Other formulations allow them; the transition convention determines which alignments are admissible. The name $M$ denotes a paired-letter column, which can be either a match or a mismatch.
+
+```{.python .execute}
+#| label: fig-affine-state-transitions
+#| fig-cap: "Allowed ending-state transitions for affine alignment. The highlighted loop continues a gap for cost e rather than opening another for cost d."
+#| fig-alt: "Three states M, I sub x, and I sub y, each with a self-loop. M connects in both directions to each gap state; there is no edge between the gap states."
+#| fig-width: 6
+#| fig-height: 4
+paired_state, x_gap_state, y_gap_state = "$M$", "$I_x$", "$I_y$"
+state_edges = [
+    (paired_state, paired_state),
+    (paired_state, x_gap_state), (x_gap_state, paired_state),
+    (paired_state, y_gap_state), (y_gap_state, paired_state),
+    (x_gap_state, x_gap_state), (y_gap_state, y_gap_state),
+]
+fig, ax = plt.subplots()
+cf.digraph(
+    ax, state_edges,
+    pos={paired_state: (0, 0), x_gap_state: (-1.5, 1.5),
+         y_gap_state: (1.5, 1.5)},
+    highlight_edges=[(x_gap_state, x_gap_state)],
+)
+plt.show()
+```
 
 For global alignment, set $M(0,0)=0$,
 $$
@@ -65,16 +104,18 @@ Take $x=\texttt{ACGT}$, $y=\texttt{AT}$, match $+1$, mismatch $-1$, $d=2$, and $
 $$
 I_x(2,1)=M(1,1)-2=-1.
 $$
-At the next letter,
+At $(2,1)$, a paired-letter ending must align A to a gap and then C to A, so $M(2,1)=-2-1=-3$. At the next letter,
 $$
-I_x(3,1)=\max\{M(2,1)-2, I_x(2,1)-1\}=-2.
+I_x(3,1)=\max\{-3-2,\ -1-1\}=\max\{-5,-2\}=-2.
 $$
-The extension candidate wins. The alignment
+The extension candidate wins. Closing the gap with T/T gives $M(4,2)=-2+1=-1$. The alignment
 $$
 \begin{array}{c}\texttt{ACGT}\\\texttt{A--T}\end{array}
 $$
 scores $1-3+1=-1$. A linear penalty of 2 per gap character gives $1-4+1=-2$. In the DNA interpretation, removing the contiguous segment CG is one possible event behind the two gap characters. The affine model gives that explanation one opening cost; the two sequences alone do not prove its evolutionary history.
 :::
+
+The hand alignment is optimal in this example: at most two paired columns can contribute matches, and the length difference requires at least two gap characters. Their affine cost is at least 3, giving score at most $2-3=-1$; a linear cost of 2 per character gives at most $2-4=-2$. The displayed alignment attains both bounds.
 
 ::: {#prp-affine-correctness}
 ## Correctness of the three-state recurrence
@@ -82,10 +123,63 @@ For every state and cell, the recurrence in @eq-affine-recurrence gives the best
 :::
 
 ::: {.proof}
-Induct on $i+j$. An alignment ending in $M$ removes a paired-letter column and may come from any state. An alignment ending in $I_x$ either opens that gap after an $M$ column or extends an existing $I_x$ gap; the $I_y$ case is symmetric. These cases are exhaustive under the stated transition convention, and appending the indicated column realizes each candidate.
+Induct on $i+j$. An alignment ending in $M$ removes a paired-letter column and may come from any state. An alignment ending in $I_x$ either opens that gap after an $M$ column or extends an existing $I_x$ gap; the $I_y$ case is symmetric. Replacing the remaining prefix by a better prefix ending in the same state preserves the next opening or extension cost and would improve the whole alignment. Thus an optimal alignment uses an optimal same-state prefix. These cases are exhaustive under the stated transition convention, and appending the indicated column realizes each candidate.
 :::
 
-Three tables multiply the constant amount of work, but the asymptotic cost remains $\mathcal O(nm)$ time and memory.
+Each of the three tables has $(n+1)(m+1)$ entries. An interior entry compares at most three predecessors, so the time and memory costs remain $\mathcal O(nm)$. Keeping gap states avoids trying every possible gap length anew at each cell [@durbin1998; @compeau2015].
+
+::: {.algorithm}
+**Algorithm: score a global alignment with affine gaps.**
+
+1. Create three tables for paired-letter, letter/gap, and gap/letter endings; initialize impossible states to $-\infty$.
+2. Set the origin and gap-only borders using the stated global boundary rules.
+3. In row order, fill all three states at each interior cell using @eq-affine-recurrence.
+4. Return the largest state score at $(n,m)$.
+:::
+
+Here `gap_in_y` implements $I_x$, because a letter of $x$ faces a gap in $y$; `gap_in_x` implements $I_y$.
+
+```{.python .execute}
+#| label: code-affine-global-score
+def affine_global_score(
+    x: str, y: str, match: int = 1, mismatch: int = -1,
+    gap_open: int = 2, gap_extend: int = 1,
+) -> float:
+    """Return a global score with no direct switches between opposite gaps."""
+    n, m = len(x), len(y)
+    paired = [[float("-inf")] * (m + 1) for _ in range(n + 1)]
+    gap_in_y = [[float("-inf")] * (m + 1) for _ in range(n + 1)]
+    gap_in_x = [[float("-inf")] * (m + 1) for _ in range(n + 1)]
+    paired[0][0] = 0
+    for i in range(1, n + 1):
+        gap_in_y[i][0] = -gap_open - (i - 1) * gap_extend
+    for j in range(1, m + 1):
+        gap_in_x[0][j] = -gap_open - (j - 1) * gap_extend
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            substitution = match if x[i - 1] == y[j - 1] else mismatch
+            paired[i][j] = substitution + max(
+                paired[i - 1][j - 1],
+                gap_in_y[i - 1][j - 1],
+                gap_in_x[i - 1][j - 1],
+            )
+            gap_in_y[i][j] = max(
+                paired[i - 1][j] - gap_open,
+                gap_in_y[i - 1][j] - gap_extend,
+            )
+            gap_in_x[i][j] = max(
+                paired[i][j - 1] - gap_open,
+                gap_in_x[i][j - 1] - gap_extend,
+            )
+    return max(paired[n][m], gap_in_y[n][m], gap_in_x[n][m])
+
+
+affine_global_score("ACGT", "AT"), affine_global_score("ACGT", "AT", gap_extend=2)
+```
+
+The outputs are `(-1, -2)`, agreeing with the affine and linear costs calculated in @exm-affine-gap. Impossible border states remain $-\infty$ so they cannot win a maximum. The same initialization gives score 0 for two empty strings and $-d-(k-1)e$ for a length-$k$ string against an empty one.
+
+The function returns a score. Recovering the alignment would require traceback that records both a predecessor cell and its state. A pointer to $(i-1,j)$ alone cannot tell whether that step opened a gap from $M$ or extended it from $I_x$.
 
 ## Database search and seeds
 
@@ -105,7 +199,7 @@ A *seed* is a short pattern from the query used to find candidate positions in a
 4. Report high-scoring alignments and their search-calibrated significance.
 :::
 
-Index lookup avoids considering most query-target position pairs.
+Index lookup avoids considering most query-target position pairs. For query `ACGTAC` and target `AGGTTC`, the 3-mer call should return no hits. The 2-mer call should return one hit, `[(2, 2)]`, because GT begins at zero-based position 2 in both strings.
 
 ```{.python .execute}
 #| label: code-exact-seeds
@@ -127,7 +221,9 @@ def exact_seed_hits(query: str, target: str, k: int) -> list[tuple[int, int]]:
 exact_seed_hits("ACGTAC", "AGGTTC", 3), exact_seed_hits("ACGTAC", "AGGTTC", 2)
 ```
 
-The original BLAST algorithm follows this architecture, using short word hits followed by local extension [@altschul1990].
+The function returns pairs of zero-based start positions `(query_start, target_start)`, not alignments. The difference `target_start - query_start` identifies a candidate ungapped offset. An insertion or deletion can change that offset after the seed, so verification at one fixed offset would miss gapped extensions.
+
+This example uses DNA exact words to make the search rule inspectable. The original BLAST algorithm also admits high-scoring protein words that need not match exactly, then extends its word hits [@altschul1990; @durbin1998]. Exact seeding is a simpler member of the same search architecture.
 
 ## Seed sensitivity
 
@@ -203,7 +299,7 @@ For the ACGT/AT example, compute $M(4,2)$ from its three predecessor-state value
 :::
 
 ::: {#exr-affine-linear}
-Set $d=e$. Explain why the score of every gap becomes linear in its length, even though the algorithm still uses three tables.
+Set $d=e$. Explain why the score of every gap becomes linear in its length, even though the algorithm still uses three tables. Does changing the penalties also remove the restriction on immediate switches between opposite gap states?
 :::
 
 ::: {#exr-seed-counterexample}

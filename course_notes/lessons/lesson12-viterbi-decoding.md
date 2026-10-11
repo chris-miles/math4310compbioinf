@@ -28,9 +28,20 @@ cf.use_style()
 
 A hidden-region model assigns a probability to every possible annotation, but a genome browser needs a concrete set of intervals. We therefore want one complete path of labels through the sequence. Deciding each label from its base alone would ignore the model's preference for regions that continue across neighboring positions.
 
-We retain the B/I model and observed S/W string from Lesson 11. Viterbi decoding chooses the most probable complete path, balancing emissions against the cost of switching states. The output is an annotation under this model; it will not tell us how confidently each individual base should receive its label.
+We retain the model from Lesson 11. Observations are $S$ for C or G and $W$ for A or T; hidden labels are background $B$ and island $I$, so $Q=\{B,I\}$ and the number of states is $K=2$. This simplified alphabet records GC enrichment, not the dinucleotide dependence used in the earlier CpG classifier. Viterbi decoding chooses the most probable complete path, balancing emissions against state transitions. Its output is an annotation under this model, rather than a confidence value for each base.
 
-Lesson 11 assigned a joint probability $P(x,\pi)$ to every observation and hidden path. Given only $x$, decoding chooses the path with the largest joint probability.
+Recall the fixed illustrative parameters:
+$$
+p_B=p_I=0.5,\qquad
+A=\begin{array}{c|cc}&B&I\\\hline B&0.8&0.2\\I&0.4&0.6\end{array},\qquad
+E=\begin{array}{c|cc}&S&W\\\hline B&0.3&0.7\\I&0.8&0.2\end{array}.
+$$
+Here $p_k$ is the initial state probability, $a_{\ell k}$ is the probability of moving from $\ell$ to $k$, and $e_k(b)$ is the probability of observing $b$ in state $k$. Rows of $A$ are departure states; rows of $E$ are emitting states. The joint probability of observations and a proposed path is
+$$
+P(x,\pi)=p_{\pi_1}e_{\pi_1}(x_1)
+\prod_{i=2}^n a_{\pi_{i-1}\pi_i}e_{\pi_i}(x_i).
+$$
+Given only $x$, decoding chooses the path with the largest such product.
 
 ::: {#def-viterbi-decoding}
 ## Viterbi decoding
@@ -44,7 +55,7 @@ Because $P(x)$ is fixed once $x$ is observed, this also maximizes $P(\pi\mid x)=
 
 ## Best prefixes
 
-Many complete paths share a prefix. Once two paths reach the same state at the same position, the better prefix stays better after either is extended by the same transition and emission. We therefore keep only one score per state and position.
+Different histories can reach the same state at the same position. Once there, the HMM assigns either history the same probability factors for any specified continuation: future transitions depend on the current state, and emissions depend on the states that produce them. Multiplying by these same nonnegative factors preserves which prefix is better. We therefore keep only one best score per state and position.
 
 ::: {#def-viterbi-score}
 ## Viterbi score
@@ -66,6 +77,8 @@ $$
 v_k(i)=e_k(x_i)\max_{\ell\in Q}
 \left[v_\ell(i-1)a_{\ell k}\right].
 $$
+For each previous state, multiply its best prefix probability by the transition into $k$. The current symbol is emitted from the destination state $k$, so $e_k(x_i)$ is common to every predecessor candidate and can sit outside the maximum. This step keeps the best history ending at $k$; it does not choose one best state for the whole column.
+
 A backpointer records which $\ell$ attained the maximum. The final maximum gives the best score, and following pointers backward reconstructs the path.
 
 ::: {.algorithm}
@@ -95,21 +108,32 @@ $$
 $$
 v_I(2)=0.8\max\{0.15(0.2),0.4(0.6)\}=0.192.
 $$
-Continuing gives
+At the W observation, the best route into background is
+$$
+v_B(3)=0.7\max\{0.048(0.8),0.192(0.4)\}=0.05376.
+$$
+The winning predecessor is I: its stronger earlier prefix outweighs the smaller I-to-B transition probability. Continuing gives
 
 | state | $S$, $i=1$ | $S$, $i=2$ | $W$, $i=3$ | $S$, $i=4$ |
 |---|---:|---:|---:|---:|
 | $B$ | 0.150 | 0.048 | 0.053760 | **0.0129024** |
 | $I$ | 0.400 | 0.192 | 0.023040 | 0.0110592 |
 
-The final maximum is in $B$. Its backpointers give
+For the last S, the two destination scores compare different best histories:
+$$
+v_B(4)=0.3\max\{0.05376(0.8),0.02304(0.4)\}=0.0129024,
+$$
+$$
+v_I(4)=0.8\max\{0.05376(0.2),0.02304(0.6)\}=0.0110592.
+$$
+The best route into B stays in B; the best route into I stays in I, giving the competing path IIII. The final maximum is in B. Its backpointers give
 $$
 B_4\leftarrow B_3\leftarrow I_2\leftarrow I_1,
 $$
 so $\pi^*=\texttt{IIBB}$. Direct multiplication gives $P(\texttt{SSWS},\texttt{IIBB})=0.0129024$.
 :::
 
-The last $S$ is assigned to background. Switching from $B$ back to $I$ costs a factor of $0.2$, and one island-favored emission does not compensate.
+The last S is assigned to background even though $e_I(S)>e_B(S)$. Comparing the complete histories favors IIBB over IIII. The next example isolates why changing only the last label of IIBB also loses.
 
 ```{.python .execute}
 #| label: fig-viterbi-trellis
@@ -148,7 +172,7 @@ which is smaller than $0.0129024$ for $\texttt{IIBB}$. The emission-only choice 
 
 Viterbi keeps a best prefix for each possible ending state because the next transition depends on that state. It cannot replace the whole column with a single winning prefix: a prefix that loses now may have a much better transition to a state needed later. The proof identifies exactly which histories can be merged safely.
 
-### Evidence needed to introduce a region
+::: {.callout-note collapse="true" title="Going deeper: evidence needed to introduce a region"}
 
 Consider a run of $r\geq1$ observed S symbols between two positions whose hidden labels are fixed to B. Compare two candidate paths inside this interval: keeping all $r$ positions in B, or changing them all to I and returning to B afterward. Factors outside the interval, including the flanking emissions, cancel in the probability ratio.
 
@@ -162,15 +186,16 @@ $$
 For run lengths 1, 2, and 3, the ratios are $1/3$, $2/3$, and $4/3$. Three consecutive S emissions make this island candidate preferable; one or two do not compensate for introducing and ending the region.
 
 This is a comparison of two paths with fixed flanking states, not a minimum-length rule for every Viterbi island. At a sequence boundary the initial probability replaces one transition, and uncertain flanking labels can change the comparison. The calculation shows explicitly how evidence from several emissions can pay for a state change. Viterbi performs all such compatible comparisons together.
+:::
 
 ## Log-space implementation
 
-Long products underflow. For example, $0.25^{1000}$ is smaller than the representable positive range of a standard Python float. Define $V_k(i)=\log v_k(i)$. The recurrence becomes
+Long products underflow. For example, $0.25^{1000}$ is smaller than the representable positive range of a standard Python float. Use natural logarithms and define $V_k(i)=\ln v_k(i)$. The recurrence becomes
 $$
-V_k(i)=\log e_k(x_i)+
-\max_{\ell\in Q}\left[V_\ell(i-1)+\log a_{\ell k}\right].
+V_k(i)=\ln e_k(x_i)+
+\max_{\ell\in Q}\left[V_\ell(i-1)+\ln a_{\ell k}\right].
 $$
-Products become sums, and the maximizing path is unchanged.
+Products become sums, and the maximizing path is unchanged because the logarithm is increasing. Initialization is $V_k(1)=\ln p_k+\ln e_k(x_1)$. The code stores the current scores and the previous-state choices needed for traceback.
 
 ```{.python .execute}
 #| label: code-viterbi-decoding
@@ -243,7 +268,7 @@ path, math.exp(log_probability)
 
 The trellis above shows ordinary probabilities for the hand calculation. In code, a zero probability becomes $-\infty$: adding it makes that candidate impossible, and a finite candidate always beats it. If every final score is $-\infty$, the model gives the observed sequence probability zero; returning an arbitrary path would conceal this failure.
 
-For example, change the emissions so $B$ can emit only $W$ and $I$ can emit only $S$, leaving the positive transitions unchanged. The observation $\texttt{SSWS}$ then forces $\texttt{IIBI}$. If we also forbid the transition $B\to I$, the same observation becomes impossible because its last symbol requires that transition. These two cases test different behavior: one must return the unique compatible path, and the other must report that no path exists.
+For example, change the emissions so $B$ can emit only $W$ and $I$ can emit only $S$, leaving the positive transitions unchanged. The observation $\texttt{SSWS}$ then forces $\texttt{IIBI}$. If we also set $a_{BI}=0$ and $a_{BB}=1$, the same observation becomes impossible because its last symbol requires the forbidden transition. These two cases test different behavior: one must return the unique compatible path, and the other must report that no path exists.
 
 ## Correctness and cost
 
@@ -272,7 +297,32 @@ P(x,\texttt{IIBB})=0.0129024,\quad
 P(x,\texttt{IIII})=0.0110592,\quad
 P(x,\texttt{IIBI})=0.0086016.
 $$
-The dynamic program agrees with brute force. Two additional checks catch boundary errors: a length-one sequence must return $\arg\max_k p_ke_k(x_1)$, and deterministic emissions must force the only compatible path.
+We can check these probabilities without using the recurrence.
+
+::: {.algorithm}
+**Algorithm: check decoding by exhaustive paths.**
+Enumerate all length-$n$ state sequences. For each, multiply its initial, transition, and emission factors directly. Sort the resulting joint probabilities and compare their maximum with the dynamic-programming output.
+:::
+
+```{.python .execute}
+#| label: code-viterbi-enumeration
+observations = "SSWS"
+ranked_paths = []
+for labels in itertools.product(states, repeat=len(observations)):
+    candidate = "".join(labels)
+    probability = initial[labels[0]] * emission[labels[0]][observations[0]]
+    for i in range(1, len(observations)):
+        probability *= transition[labels[i - 1]][labels[i]]
+        probability *= emission[labels[i]][observations[i]]
+    ranked_paths.append((candidate, probability))
+ranked_paths.sort(key=lambda item: item[1], reverse=True)
+assert ranked_paths[0][0] == path
+assert math.isclose(ranked_paths[0][1], math.exp(log_probability))
+for candidate, probability in ranked_paths[:3]:
+    print(candidate, round(probability, 10))
+```
+
+The dynamic program agrees with direct enumeration on this instance. Two additional checks catch boundary errors: a length-one sequence must return $\arg\max_k p_ke_k(x_1)$, and deterministic emissions must force the only compatible path.
 
 ### Ties and alternate optimal paths
 
@@ -290,7 +340,7 @@ A decoded path becomes a set of intervals by merging consecutive positions with 
 ## Limitations
 
 1. **The best path can carry little total probability.** For this observation, $P(x)=0.060576$, so the Viterbi path contains about $21.3\%$ of the probability mass. Lesson 13 sums across paths.
-2. **A hard path hides uncertainty.** Positions with nearly tied state probabilities receive one label. Posterior decoding asks how likely each state is at each position.
+2. **A hard path hides uncertainty.** Near-tied complete paths can disagree about a position while the decoder still returns one label. The values $v_k(i)$ score best prefixes, rather than probabilities that position $i$ is in state $k$. Lesson 13 sums over paths to obtain those state probabilities.
 3. **The answer is conditional on the model.** Incorrect emission, transition, or state definitions can produce a precisely computed but biologically poor path.
 4. **Ties need a convention.** The code returns the first maximizing state. Tests should accept any optimal path unless a tie rule is part of the specification.
 

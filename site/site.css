@@ -49,15 +49,16 @@ h3{margin:24px 0 10px}
 .page-heading{margin-bottom:22px}
 .eyebrow{color:#be0000}
 .subtitle{font-size:18px}
-.home .page-heading{position:relative;padding:14px 190px 14px 18px;min-height:106px;margin-bottom:12px;background:#f3f3f3;border-left:4px solid #be0000}
+.home main{position:relative}
+.home .page-heading{position:relative;padding:22px 274px 22px 18px;min-height:154px;margin-bottom:12px;background:#f3f3f3;border-left:4px solid #be0000}
 .home h1{font-size:36px;margin:8px 0 0;max-width:850px}
-.home .page-heading::after{content:"";background:url("sequence-grid.svg") center / contain no-repeat;display:block;position:absolute;right:12px;top:4px;width:165px;height:98px;pointer-events:none}
+.home-alignment{display:block;position:absolute;right:12px;top:12px;width:250px;height:auto}
 .course-facts{font-size:15px;line-height:1.4;padding:12px 0;margin-bottom:18px}
 .home h2{font-size:22px;margin:21px 0 10px}
 .course-table .week-row:hover{background:#f7f7f7}
 .numbered-block{border-left-color:#be0000}
 @media(max-width:1050px){.page-layout{grid-template-columns:minmax(0,1fr) 170px;gap:24px}}
-@media(max-width:760px){.header-inner{padding:12px 18px}.page-shell{padding:20px 18px 40px}.page-layout{display:flex;gap:18px}.home .page-heading{padding:12px 14px;min-height:0}.home .page-heading::after{display:none}.home h1{font-size:28px}.course-facts{font-size:14px}}
+@media(max-width:760px){.header-inner{padding:12px 18px}.page-shell{padding:20px 18px 40px}.page-layout{display:flex;gap:18px}.home .page-heading{padding:12px 14px;min-height:0}.home-alignment{position:static;width:280px;max-width:100%;margin:4px auto 18px}.home h1{font-size:28px}.course-facts{font-size:14px}}
 @media print{body{font-size:11pt}.page-shell{padding:0;max-width:none}.page-layout{display:block}.home .page-heading{padding:0;min-height:0;background:transparent;border-left:0}}
 
-@media print{.home .page-heading::after{display:none}}
+@media print{.home-alignment{display:none}}

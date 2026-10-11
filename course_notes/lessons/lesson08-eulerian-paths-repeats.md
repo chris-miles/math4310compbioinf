@@ -24,7 +24,11 @@ cf.use_style()
 
 The graph from Lesson 7 records which short words can follow one another. To reconstruct a genome, we must choose an order that uses the observed word occurrences. An algorithm can find such an order and still have no way to tell whether it is the true genome.
 
-Our input is an ideal genomic k-mer multiset and its directed graph. We seek a walk that uses every edge occurrence once, then ask a separate question: could another complete walk spell a different sequence? The repeated-region example will distinguish an algorithmic failure from information missing in the data.
+Our input is an ideal genomic k-mer multiset and its directed graph. Here "ideal" means that each valid k-mer start position in the genome contributes exactly one occurrence. We seek a walk that uses every edge occurrence once, then ask a separate question: could another complete walk spell a different sequence? The repeated-region example will distinguish an algorithmic failure from information missing in the data.
+
+Recall that $\operatorname{Comp}_k(x)$ lists the length-$k$ substrings of $x$, including repeated occurrences. In $D(K)$, each word in the multiset $K$ supplies an edge from its length-$(k-1)$ prefix to its length-$(k-1)$ suffix. Identical words supply parallel edges. Following an edge appends its last base to the sequence spelled so far.
+
+In a sequencing experiment, many reads can cover the same position. Those repeated observations provide evidence about an edge; they are not additional positions that the genome must contain. We first solve the exact reconstruction problem, then return to the different task of deciding which graph the measured reads support [@compeau2015].
 
 ::: {#def-eulerian-trail}
 ## Eulerian path and cycle
@@ -42,7 +46,9 @@ A string $x$ with $\operatorname{Comp}_k(x)=K$ determines an Eulerian path in $D
 Sketch. Consecutive genomic $k$-mers overlap in $k-1$ symbols, so their edges meet in order. Conversely, traversing an edge appends its final symbol. Using every edge occurrence once gives exactly $K$.
 :::
 
-This equivalence assumes an ideal spectrum. It does not guarantee existence for noisy data or uniqueness.
+For example, at $k=3$, two independently sampled copies of read `ACGT` supply two `ACG` observations and two `CGT` observations. If the genome is `ACGT`, its ideal spectrum contains each word only once. Treating all four observed occurrences as genomic edges gives degree differences $+2$ at `AC` and $-2$ at `GT`; it cannot have an Eulerian path, despite the reads being correct. This is a mismatch between the data representation and the reconstruction model.
+
+The equivalence in @prp-assembly-eulerian assumes an ideal spectrum. It does not guarantee existence for raw read counts or uniqueness even with perfect data.
 
 ## Degree conditions
 
@@ -226,31 +232,65 @@ At $k=4$, the two strings in @exm-repeat-ambiguity no longer have the same compo
 
 ## Errors, tips, and bubbles
 
-Changing read `ACGTC` to `ACTTC` replaces 3-mers
-$$\{\!\{\texttt{ACG},\texttt{CGT},\texttt{GTC}\}\!\}$$
-with
-$$\{\!\{\texttt{ACT},\texttt{CTT},\texttt{TTC}\}\!\}.$$
+A wrong measured base changes several overlapping k-mers at once. The resulting edges may look like a second route through a region, so an assembler must decide whether that route is a measurement artifact or a sequence actually present in the sample.
 
 ::: {#def-tip-bubble}
 ## Tips and bubbles
-A *tip* is a short dead-end path. A *bubble* is a pair of paths that diverge from one node and later rejoin.
+A *tip* is a short dead-end path. A *bubble* consists of two distinct paths that diverge from one node and later rejoin, with no shared internal nodes.
 :::
 
-An end error often makes a tip; an internal substitution can make a low-count bubble. Biological variation can also make a bubble, so lower count alone does not prove error. Assemblers combine depth, path length, base quality, and long-range support. They simplify supported artifacts and emit maximal unbranched sequences called *contigs* when branches remain [@pevzner2001].
+::: {#exm-euler-error-bubble}
+## One substitution creates a bubble
+Suppose some reads report `ACGTC` and one reports `ACTTC`. The third base differs. At $k=3$, their k-mer lists and node paths are
 
+| Read | 3-mers | Node path |
+|---|---|---|
+| `ACGTC` | `ACG, CGT, GTC` | `AC → CG → GT → TC` |
+| `ACTTC` | `ACT, CTT, TTC` | `AC → CT → TT → TC` |
+
+All three words in the second read contain the changed base. Both paths begin at `AC` and end at `TC`, but their internal nodes differ. The unchanged two-base flanks are enough for the paths to rejoin. If the changed base were at a read's end, the erroneous path could instead terminate before finding a shared flank.
+:::
+
+```{.python .execute}
+#| label: fig-euler-error-bubble
+#| fig-cap: "The reads ACGTC and ACTTC give two paths from AC to TC at k = 3; the ACTTC route is highlighted. A bubble locates conflicting sequence evidence but does not identify its cause."
+#| fig-alt: "Two directed paths from AC at the left to TC at the right. The upper path passes through CG and GT; the lower highlighted path passes through CT and TT."
+#| fig-width: 6
+#| fig-height: 3
+first_edges = [("AC", "CG"), ("CG", "GT"), ("GT", "TC")]
+alternative_edges = [("AC", "CT"), ("CT", "TT"), ("TT", "TC")]
+bubble_positions = {
+    "AC": (0, 0), "CG": (1, 0.65), "GT": (2, 0.65),
+    "TC": (3, 0), "CT": (1, -0.65), "TT": (2, -0.65),
+}
+fig, ax = plt.subplots()
+cf.digraph(
+    ax, first_edges + alternative_edges,
+    pos=bubble_positions, highlight_edges=alternative_edges,
+)
+plt.show()
+```
+
+Suppose twenty independently sampled reads spanning these flanks support `ACGTC`, and one supports `ACTTC`. Under a model with rare, independent sequencing errors, this imbalance supports keeping the first route. But the same graph could come from two biological versions of the region, or from similar repeat copies sampled at different depths. Read counts alone cannot distinguish those explanations. Base quality and reads spanning additional flanking sequence can supply evidence beyond this local graph [@compeau2015].
+
+Removing a route changes the set of sequences the graph represents. Bubble detection therefore solves only the structural question, "where do paths disagree?" Choosing a route requires assumptions about the sample and the measurement process. When the evidence remains ambiguous, reporting separate contiguous sequences avoids an unsupported join.
 
 ### From a graph to contigs
 
-After filtering and graph simplification, real data still contain branches supported by substantial evidence. An assembler can report every maximal path whose internal nodes have in-degree and out-degree one. Such a path has no local choice, so it spells a contig. The contig ends when the graph reaches a branch, a coverage gap, or a chromosome end.
+After filtering and graph simplification, real data still contain branches supported by substantial evidence. To identify routes rather than count observations, aggregate repeated observations of the same k-mer into one edge with a count attached. In this topology graph, a maximal path whose internal nodes each have one incoming edge and one outgoing edge has no local choice. Its spelled sequence is a *contig*. Keep the counts as evidence about support; they do not create additional branches merely because a region was sequenced many times.
+
+For the two copies of `ACGT` considered earlier, this graph has just `AC → CG → GT`, with count two on each edge. Its contig is `ACGT`. In @fig-euler-error-bubble, the two outgoing neighbors of `AC` are genuinely different, so abundance aggregation leaves the bubble intact. A contig ends where a route encounters branching, a coverage gap, or a chromosome end. An isolated component that forms a directed cycle needs separate treatment: choose a starting node and report the circular sequence rather than wait for a branch [@compeau2015].
 
 This output separates what the reads determine from what they leave ambiguous. A contig is not necessarily a chromosome, and an assembly with fewer contigs is not automatically more accurate. Joining across an unresolved repeat can produce a longer but false sequence. Paired reads and long reads help because they connect graph regions farther apart than one k-mer overlap.
 
 A simplified short-read workflow therefore has several distinct steps:
 
 1. Count read-derived k-mers and remove counts poorly supported under an error model.
-2. Build a de Bruijn graph while preserving multiplicity.
+2. Build a de Bruijn graph with one edge per retained distinct k-mer and keep observation counts as edge attributes.
 3. Simplify tips and bubbles when the evidence supports one path.
 4. Emit unbranched contigs and use longer-range data to order or connect them.
+
+This workflow uses observed abundance to assess support, whereas the Eulerian theorem uses genomic occurrence multiplicity to specify an exact reconstruction. Aggregating observations is appropriate for finding unbranched routes, but it does not estimate how many times a repeated region occurs in the genome. Inferring genomic multiplicity from coverage is a further modeling task [@compeau2015].
 
 The traversal guarantee applies to the supplied graph. Filtering and simplification make additional claims about sequencing noise and biological variation.
 
@@ -277,7 +317,7 @@ Verify the two strings in @exm-repeat-ambiguity have the same 3-mer multiset. Co
 :::
 
 ::: {#exr-euler-error}
-Draw the 3-mer paths for `ACGTC` and `ACTTC` together. Mark divergence and rejoining.
+Change the last base of `ACGTC` to make `ACGTA`. Draw its 3-mer path together with that of `ACGTC`. Which edges survive, and why does this example produce two terminal alternatives rather than the rejoining bubble in @exm-euler-error-bubble?
 :::
 
 ::: {#exr-euler-code}

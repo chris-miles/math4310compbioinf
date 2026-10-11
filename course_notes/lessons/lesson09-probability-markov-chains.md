@@ -20,7 +20,9 @@ import random
 
 ## Sequences as random variables
 
-A stretch of DNA contains several CG pairs. Is that unusual, or just what we should expect from a region rich in C and G? Sequence alone does not define surprise: we need a background model that says which strings are common and which are rare.
+Sequencing measures DNA bases; assembly puts overlapping reads into longer strings. An assembled record might contain `ACGCGT`: each letter names one base along one strand, and `CG` means a C immediately followed by a G, not bases paired across the two strands. In many vertebrate genomic regions CG neighbors are depleted, partly because chemical modification of C makes its conversion to T more likely over evolutionary time. Some regions near gene starts retain more CG neighbors [@durbin1998, pp. 48–49].
+
+Does a region have unusual neighboring-base structure, or merely many C and G bases? To distinguish those explanations, we need a background model that assigns probabilities to strings. Today we compare independent-base and neighboring-base models; a later lesson uses such models to classify regions.
 
 The input today is a contiguous region of assembled DNA, together with probabilities estimated from representative sequence. Its adjacent letters represent neighboring genomic bases; joining separate raw reads would invent neighbors the experiment did not observe. We will compute its probability under two models, first treating bases independently and then allowing the previous base to affect the next. Simulation gives another way to examine what each model assumes. These calculations prepare a classifier for island-like regions in Lesson 10.
 
@@ -91,7 +93,7 @@ Probability and likelihood use the same number with different quantities held fi
 
 ## First-order Markov chains
 
-The iid model cannot distinguish strings with the same base counts. A first-order chain remembers the current base when generating the next one.
+The iid model cannot distinguish strings with the same base counts. In particular, it cannot represent a preference for G specifically after C. A first-order chain remembers the current base when generating the next one. This represents neighboring-base dependence without claiming that a genome is literally generated one base at a time.
 
 ::: {#def-first-order-markov-chain}
 ## First-order Markov chain
@@ -195,7 +197,12 @@ $$
 :::
 
 ::: {.proof}
-Sketch. Consider one transition row, and let $r_b=n_{ab}/N$ be its observed proportions, where $N=\sum_b n_{ab}>0$. For a proposed row $u$, moving probability to an unobserved category cannot improve the fit. On observed categories, the change in log-likelihood relative to $r$ is $N\sum_b r_b\ln(u_b/r_b)$. The inequality $\ln t\le t-1$ from Lesson 2 bounds this above by $N(\sum_b u_b-1)=0$. A zero proposed probability for an observed category gives likelihood zero. Thus the observed proportions maximize the row likelihood. A row with no observations is undetermined.
+Sketch. Consider one transition row, with $N=\sum_b n_{ab}>0$ and observed proportions $r_b=n_{ab}/N$. Let $S=\{b:n_{ab}>0\}$ be the bases actually observed after $a$. For a proposed probability row $u$ positive on $S$, the change in log-likelihood relative to $r$ is
+$$
+N\sum_{b\in S}r_b\ln(u_b/r_b)
+\le N\left(\sum_{b\in S}u_b-1\right)\le 0.
+$$
+The first inequality uses $\ln t\le t-1$ from Lesson 2; the second uses that $u$ has total probability one, possibly with some mass outside $S$. A zero proposed probability for an observed category gives likelihood zero. Thus the observed proportions maximize the row likelihood. A row with no observations is undetermined.
 :::
 
 For `ACGCGT`, the transitions are `AC`, `CG`, `GC`, `CG`, `GT`. Both transitions out of $C$ go to $G$, so the raw estimate has $\widehat a_{CG}=1$ and zeros elsewhere in that row. A new `CA` would have probability zero. Adding one pseudocount to every cell gives $\widehat a_{CG}=(2+1)/(2+4)=0.5$ and reserves probability for unobserved transitions.
@@ -258,16 +265,60 @@ Scoring and simulation take $\mathcal{O}(n)$ time. A DNA chain stores four initi
 
 A likelihood comparison is meaningful only when both models score the same observed object. A longer sequence usually has a smaller raw probability than a shorter one, even when both fit equally well per base. Compare two models on the same held-out strings. When summarizing predictive performance across strings of different lengths, an average log-likelihood per base can be useful, but it is not a posterior model probability. Modeling variable sequence length requires an additional length distribution.
 
-The number of fitted parameters also matters. A first-order DNA chain fits four conditional distributions, whereas an iid model fits one base distribution. On the training sequence, the more flexible model cannot fit worse: it includes the iid model as the special case with identical rows. That does not prove it predicts new sequence better. Fit parameters on one region and compare log-likelihoods on a separate region. A chain that learns a short training string perfectly can assign zero or poor probability to new transitions.
+The number of fitted parameters also matters. A first-order DNA chain fits four conditional distributions, whereas an iid model fits one base distribution. When parameters are chosen by unrestricted maximum likelihood, the more flexible chain cannot fit the training sequence worse: it includes the iid model as the special case with identical rows. Separate smoothing rules need not preserve that guarantee. That does not prove it predicts new sequence better. Fit parameters on one region and compare log-likelihoods on a separate region. A chain that learns a short training string perfectly can assign zero or poor probability to new transitions.
 
 ::: {#exm-markov-held-out}
-## Training fit and prediction
-The raw estimate from $\texttt{ACGCGT}$ gives $\widehat a_{CG}=1$. It fits both observed $CG$ transitions perfectly. It also assigns probability zero to a held-out $CA$ transition. With one pseudocount per cell, $\widehat a_{CG}=0.5$ and $\widehat a_{CA}=1/6$. The smoothed model gives up some training likelihood to make a finite prediction for an event absent from six training bases.
+## Fit both models, then predict
+Use the synthetic training string `ACGCGT` and set aside `AGCCGA` before fitting. Add one pseudocount to each base count for the iid model and to each transition count for the chain. The base counts are $(1,2,2,1)$ in A, C, G, T order, giving $\widehat q=(0.2,0.3,0.3,0.2)$. The smoothed transition rows are:
+
+| current | $A$ | $C$ | $G$ | $T$ |
+|---|---:|---:|---:|---:|
+| $A$ | $1/5$ | $2/5$ | $1/5$ | $1/5$ |
+| $C$ | $1/6$ | $1/6$ | $3/6$ | $1/6$ |
+| $G$ | $1/6$ | $2/6$ | $1/6$ | $2/6$ |
+| $T$ | $1/4$ | $1/4$ | $1/4$ | $1/4$ |
+
+No departure from T was observed, so its row is determined entirely by the pseudocounts. Use $\widehat q$ as the initial distribution for both models to isolate the effect of transition probabilities. For example, the held-out chain probability is
+$$
+P_{\mathrm{MC}}(\texttt{AGCCGA})
+=\frac15\frac15\frac26\frac16\frac36\frac16
+=\frac1{5400}.
+$$
+An iid model can use the same scoring function by repeating $\widehat q$ in every transition row.
+
+```{.python .execute}
+#| label: code-markov-held-out
+fitted_initial = {"A": 0.2, "C": 0.3, "G": 0.3, "T": 0.2}
+fitted_transition = {
+    "A": {"A": 1/5, "C": 2/5, "G": 1/5, "T": 1/5},
+    "C": {"A": 1/6, "C": 1/6, "G": 3/6, "T": 1/6},
+    "G": {"A": 1/6, "C": 2/6, "G": 1/6, "T": 2/6},
+    "T": {"A": 1/4, "C": 1/4, "G": 1/4, "T": 1/4},
+}
+iid_transition = {}
+for base in fitted_initial:
+    iid_transition[base] = fitted_initial.copy()
+
+for label, sequence in [("training", "ACGCGT"), ("held-out", "AGCCGA")]:
+    iid_score = markov_log_likelihood(sequence, fitted_initial, iid_transition)
+    chain_score = markov_log_likelihood(sequence, fitted_initial, fitted_transition)
+    print(label, round(iid_score / len(sequence), 3),
+          round(chain_score / len(sequence), 3))
+```
+
+The columns report natural-log likelihood per base for iid and chain models:
+
+| sequence | iid | chain |
+|---|---:|---:|
+| training `ACGCGT` | −1.339 | −1.018 |
+| held-out `AGCCGA` | −1.339 | −1.432 |
+
+Larger means more probability assigned to the observed string. The chain favors the CG-rich training pattern but predicts this held-out string less well than iid. This six-base teaching example does not establish which model works better for a genome. For that biological question, fit representative regions and evaluate separate regions from the population of interest. A region unlike the training data may reflect a different biological regime as well as a poorly estimated model.
 :::
 
 ## Limitations
 
-1. **One base of memory misses longer structure.** Codon periodicity depends on position modulo three, and regulatory elements can join bases separated by many positions.
+1. **One base of memory misses longer structure.** Protein-coding DNA is read in three-base units called codons, so its base preferences can depend on position modulo three. DNA sites affecting gene expression can also involve bases separated by many positions.
 2. **The same chain applies everywhere.** One matrix cannot represent alternating regions such as CpG islands and background. Lessons 10 and 11 introduce region-specific models.
 3. **Zero counts create impossible events.** Pseudocounts encode how much probability to reserve for transitions absent from finite training data.
 4. **Likelihood does not include class prevalence.** A model can fit a string well and still describe a rare class. Prior probabilities enter posterior comparisons through Bayes' rule.

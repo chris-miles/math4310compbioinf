@@ -1,55 +1,263 @@
 ---
-published: false
+published: true
 title: "Parsimony and Fitch's Algorithm"
 subtitle: "Lesson 15 · 2027-03-17 · Week 10"
+nocite: |
+  @durbin1998, @compeau2015, @felsenstein1978
 ---
 
 ## Core question
 
-Can we infer a tree by minimizing the number of changes?
+Given aligned DNA sequences and a candidate tree, what is the fewest substitutions needed to explain the observed bases?
 
-::: {.callout-note title="Draft status"}
-This lesson is a scaffold. The headings below follow the order every lesson uses; the bullets are what the finished lesson will cover.
+```{.python .execute}
+#| label: setup
+#| code-fold: true
+#| code-summary: "Setup: imports and figure style"
+import sys
+
+sys.path.insert(0, "../style")
+import matplotlib.pyplot as plt
+import coursefigs as cf
+cf.use_style()
+```
+
+## From sequences to ancestral changes
+
+Sequencing gives present-day DNA strings. To compare a gene across organisms, we align corresponding sequences: each row belongs to a sampled organism and each column represents a proposed corresponding position. A column is also called a *site*, and its base is a *character state*. The alignment is an input today; inferring the alignment and checking whether positions really correspond are separate tasks.
+
+Lesson 14 reduced sequence differences to pairwise distances. Here we retain the bases at each site. Suppose two organisms carry A and two carry G at a corresponding position. One evolutionary explanation puts the A-bearing organisms together and needs one change between A and G. Another arrangement may need two changes. The question concerns both relationships and the changes that could have occurred along them [@compeau2015, ch. 7, pp. 35–38].
+
+We observe the leaf sequences, not the sequences at ancestral branching points. For a candidate tree, we will assign bases to its internal nodes to minimize the number of changes across edges. This is the *fixed-tree* or *small parsimony* problem. Comparing the best scores across different trees is a second problem. Keeping them separate lets us understand what the algorithm guarantees [@durbin1998, pp. 174–176].
+
+## The data and the objective
+
+Use this synthetic two-site alignment throughout:
+
+| sampled taxon | site 1 | site 2 | sequence |
+|---|---|---|---|
+| a | A | C | AC |
+| b | A | C | AC |
+| c | G | C | GC |
+| d | G | T | GT |
+
+A *taxon* here is simply one named sampled organism or group. The short rows are teaching data, not a claim about particular species. We assume every entry is an unambiguous DNA base; gaps and uncertain bases are excluded from this example.
+
+The candidate tree pairs a with b and c with d. Write it as $ ((a,b),(c,d)) $. Let u join a and b, v join c and d, and r join u and v. This specifies the *topology*, or branching pattern. No numerical evolutionary branch lengths are supplied.
+
+::: {#def-parsimony-score}
+## Equal-cost parsimony
+Let $T$ be the supplied tree and $E(T)$ its edge set. At one site, let $z_w\in\Sigma=\{A,C,G,T\}$ be the state assigned to node w, fixing each leaf to its observed base. The cost is
+$$
+C(z;T)=\sum_{\{v,w\}\in E(T)}\mathbf 1\{z_v\ne z_w\}.
+$$
+Write $x_{\ell j}$ for the observed base at leaf $\ell$ and site $j$, and let $m$ be the number of sites. The site and alignment scores are
+$$
+c_j(T)=\min_{z:\,z_\ell=x_{\ell j}\text{ for every leaf }\ell} C(z;T),
+\qquad
+c(T)=\sum_{j=1}^{m}c_j(T).
+$$
 :::
 
-## Motivation
+The indicator contributes zero for equal bases and one for different bases. Every substitution has the same cost, regardless of its type or direction. Sites can be optimized separately because their assigned states have no cross-site constraints and the objective adds their edge costs.
 
-- Distances discard the characters; parsimony keeps them.
+Fewer changes is a modeling preference, not a universal law of evolution. The minimum counts changes sufficient to explain the observed endpoints; it cannot recover repeated substitutions hidden on the same edge. An inferred ancestral base is an optimal explanation under this objective, not a sequenced ancestor or a posterior probability.
 
-## The data as a mathematical object
+The node r gives the algorithm a direction in which to process the tree. Under this symmetric cost, inserting a root on any edge leaves the minimum score unchanged: for edge endpoints a and b, minimizing $\mathbf1\{a\ne t\}+\mathbf1\{t\ne b\}$ over an inserted state t gives $\mathbf1\{a\ne b\}$. Thus this objective alone cannot identify the biological root or date a divergence.
 
-- A character matrix (species $\times$ sites) and a candidate tree.
+## Fitch's recurrence
 
-## The question
+Enumerating every ancestral assignment would try four states at every internal node. The tree structure lets us summarize a solved subtree instead.
 
-- Minimum number of character changes on a fixed tree; then, over all trees.
+For each node v, store its subtree minimum $c_v$ and a set $S_v$ of states attaining that minimum *at the root of that subtree*. At a leaf with observed base b, set $S_v=\{b\}$ and $c_v=0$. For an internal node with children u and w, use
+$$
+(S_v,c_v)=
+\begin{cases}
+(S_u\cap S_w,\;c_u+c_w),&S_u\cap S_w\ne\varnothing,\\
+(S_u\cup S_w,\;c_u+c_w+1),&S_u\cap S_w=\varnothing.
+\end{cases}
+$$
+An intersection means both children can use the same state without adding a change. Disjoint sets require a change; their union records the parent choices that attain the new minimum. Process children before their parent, a *postorder* traversal. The final answer is $c_r$.
 
-## The model
+::: {#thm-fitch-correctness}
+## Correctness of Fitch's algorithm
+For a binary tree and the equal-cost objective, the recurrence returns the minimum number of changes at each site.
+:::
 
-- Each change is equally costly; fewer changes is more plausible.
+::: {.proof}
+Induct on subtrees. The leaf initialization fixes the observed state. Assume each child has its true minimum and exactly the states attaining that minimum in its set. For a parent state t, the best cost from a child subtree plus its connecting edge is the child minimum if t belongs to the child set, and the child minimum plus one otherwise. In the latter case, using a minimizing child state pays one edge change; any assignment rooted at t costs at least one more within the child subtree. No choice can do better.
 
-## The technique
+The two child contributions add, since their assignments can be chosen independently after fixing t. If the sets intersect, choosing t in the intersection pays no extra change; every other t pays at least one. If they are disjoint, no t can avoid both penalties. Choosing t in their union pays exactly one, while choosing outside pays two. This establishes both the minimum and its minimizing root states, completing the induction.
+:::
 
-- Fitch's set-union recurrence on a fixed tree, one site at a time.
+## Two sites by hand
 
-## Worked example
+At site 1, a and b both have A, so $S_u=\{A\}$ and $c_u=0$. Similarly $S_v=\{G\}$ and $c_v=0$. Their sets are disjoint: $S_r=\{A,G\}$ and $c_r=1$. Assigning A to r and u, and G to v, places the one change on r–v. At least one change is necessary because the leaves are not all the same, so the score is independently confirmed.
 
-- Four leaves, one site, scored by hand; then a second site to show additivity.
+At site 2, $S_u=\{C\}$ with cost zero. The C/T pair under v gives $S_v=\{C,T\}$ with cost one. The root intersection is $\{C\}$, so the total remains one. Assign C to all three internal nodes; only the edge to d changes. Again, two observed bases require at least one change. Adding sites gives alignment score two.
 
-## Why it works, and what it costs
+```{.python .execute}
+#| label: fig-fitch-two-sites
+#| fig-cap: "Fitch sets on the same candidate tree for two alignment sites. Each panel needs one change; branch extents are drawing coordinates, not evolutionary lengths. Internal labels show the locally minimizing sets."
+#| fig-alt: "Two rooted four-leaf trees pairing a with b and c with d. Site 1 has A/A and G/G pairs and root set A,G. Site 2 has C/C and C/T pairs and root set C."
+#| fig-width: 7
+#| fig-height: 3.5
+site_trees = [
+    {"name": "r: {A,G}", "length": 0.6, "children": [
+        {"name": "u: {A}", "length": 1, "children": [
+            {"name": "a: A", "length": 1}, {"name": "b: A", "length": 1}]},
+        {"name": "v: {G}", "length": 1, "children": [
+            {"name": "c: G", "length": 1}, {"name": "d: G", "length": 1}]},
+    ]},
+    {"name": "r: {C}", "length": 0.6, "children": [
+        {"name": "u: {C}", "length": 1, "children": [
+            {"name": "a: C", "length": 1}, {"name": "b: C", "length": 1}]},
+        {"name": "v: {C,T}", "length": 1, "children": [
+            {"name": "c: C", "length": 1}, {"name": "d: T", "length": 1}]},
+    ]},
+]
+fig, axes = plt.subplots(1, 2)
+for ax, tree, title in zip(axes, site_trees, ["site 1: score 1", "site 2: score 1"]):
+    cf.tree(ax, tree)
+    ax.set_title(title)
+plt.show()
+```
 
-- Fitch is linear in tree size per site; the number of trees is super-exponential, so tree search is heuristic.
+### Reconstructing one ancestral assignment
 
-## Where the model breaks
+Choose any state in the root set. Move from parent to child: if the parent's chosen state belongs to the child set, reuse it; otherwise choose any state from that set and pay one edge change. Continue to the leaves. The proof's child contributions show that this procedure attains the score.
 
-- Long-branch attraction.
-- Equal-cost changes ignore transition/transversion bias.
+This returns one optimum. The sets describe minima for isolated subtrees; they do **not** list all states a node can take in every globally optimal assignment. A locally more expensive assignment can sometimes save a change on the edge above it. Enumerating every optimal reconstruction requires richer state-conditioned costs and back-pointers [@durbin1998, p. 176].
+
+## A runnable scorer and reconstruction
+
+::: {.algorithm}
+**Algorithm: Fitch scoring and one reconstruction.**
+
+1. In postorder, initialize each leaf set to its observed base. At each internal node, use a nonempty child intersection; otherwise use the union and add one change. Sum child scores.
+2. Choose a state from the root set.
+3. In preorder, reuse the parent state when it belongs to the child set; otherwise choose a child-set state. Return the root score and assigned states.
+:::
+
+Represent the binary tree by a dictionary mapping each internal node to its two children; nodes absent from that dictionary are leaves. A separate dictionary supplies one observed base per leaf. The function returns a score, the Fitch sets, and one assignment. Sorting a set before choosing a state makes ties reproducible; alphabetical order has no biological meaning.
+
+```{.python .execute}
+#| label: code-fitch-site
+def fitch_site(
+    children: dict[str, tuple[str, str]],
+    root: str,
+    leaf_states: dict[str, str],
+) -> tuple[int, dict[str, set[str]], dict[str, str]]:
+    """Score one site on a binary tree and return one optimal assignment."""
+    sets = {}
+
+    def postorder(node: str) -> int:
+        if node not in children:
+            sets[node] = {leaf_states[node]}
+            return 0
+        left, right = children[node]
+        score = postorder(left) + postorder(right)
+        shared = sets[left] & sets[right]
+        if shared:
+            sets[node] = shared
+            return score
+        sets[node] = sets[left] | sets[right]
+        return score + 1
+
+    score = postorder(root)
+    assigned = {root: min(sets[root])}
+
+    def preorder(node: str) -> None:
+        if node not in children:
+            return
+        for child in children[node]:
+            if assigned[node] in sets[child]:
+                assigned[child] = assigned[node]
+            else:
+                assigned[child] = min(sets[child])
+            preorder(child)
+
+    preorder(root)
+    return score, sets, assigned
+
+
+children = {"r": ("u", "v"), "u": ("a", "b"), "v": ("c", "d")}
+alignment = {"a": "AC", "b": "AC", "c": "GC", "d": "GT"}
+site_scores = []
+for site in range(2):
+    leaf_states = {}
+    for taxon, sequence in alignment.items():
+        leaf_states[taxon] = sequence[site]
+    score, sets, assigned = fitch_site(children, "r", leaf_states)
+    site_scores.append(score)
+    edge_changes = 0
+    for parent, daughters in children.items():
+        for daughter in daughters:
+            edge_changes += assigned[parent] != assigned[daughter]
+    assert edge_changes == score
+    assert all(assigned[leaf] == base for leaf, base in leaf_states.items())
+print(site_scores, sum(site_scores))
+```
+
+The output $[1,1]$, total 2, agrees with both hand calculations. Checking the reconstructed edge costs and fixed leaf states tests different requirements: a low-cost assignment is not valid if it changes an observed leaf.
+
+For N leaves a binary tree has $2N-1$ nodes. With the fixed four-base alphabet, set operations take bounded time, so one site costs $\mathcal O(N)$ time and space. Scoring m sites costs $\mathcal O(mN)$ time. Processing one site at a time retains $\mathcal O(N)$ working storage; storing all ancestral sequences additionally needs $\mathcal O(mN)$ space.
+
+## Scoring trees versus searching for a tree
+
+Four named leaves have three unrooted binary topologies, described by their splits into pairs. Score the same alignment on each:
+
+| split | site 1 | site 2 | total |
+|---|---:|---:|---:|
+| ab \| cd | 1 | 1 | 2 |
+| ac \| bd | 2 | 1 | 3 |
+| ad \| bc | 2 | 1 | 3 |
+
+For ac \| bd, both child pairs contain A and G at site 1. Each pair costs one; their root sets intersect, so the total is two. Site 2 costs one on every topology because T occurs only at d: putting C at every internal node and changing the edge to d always works. This site contributes changes but no preference among these splits. Site 1 drives the preference for ab \| cd.
+
+```{.python .execute}
+#| label: code-fitch-three-trees
+splits = [("a", "b", "c", "d"), ("a", "c", "b", "d"), ("a", "d", "b", "c")]
+for a, b, c, d in splits:
+    candidate = {"r": ("u", "v"), "u": (a, b), "v": (c, d)}
+    total = 0
+    for site in range(2):
+        observed = {}
+        for taxon, sequence in alignment.items():
+            observed[taxon] = sequence[site]
+        score, _, _ = fitch_site(candidate, "r", observed)
+        total += score
+    print(f"{a}{b}|{c}{d}", total)
+```
+
+This exhaustive comparison is feasible for four taxa. For $N\ge3$ named taxa, the number of unrooted binary trees is $(2N-5)!!$, the product of odd integers from 1 through $2N-5$. Adding another leaf inserts it on any of the current tree's $2N-3$ edges, explaining the next multiplicative factor. Fast scoring of one tree therefore does not make exhaustive tree search practical. Larger searches often improve a starting tree by local rearrangements, which can stop before the global minimum. Fitch's guarantee concerns the supplied tree, not such a search strategy.
+
+## Biological limits of the answer
+
+A score of two means two changes suffice under our alignment and equal-cost assumptions. It does not mean exactly two substitutions happened historically. Repeated change can restore an earlier base; unrelated lineages can acquire the same base independently. In particular, rapidly evolving lineages can accumulate shared-looking states through repeated or convergent change and be grouped together incorrectly, a problem called *long-branch attraction* [@felsenstein1978].
+
+Real substitution types also have different frequencies: changes between A/G or between C/T need not behave like changes across those pairs. Weighted parsimony replaces the zero/one edge cost with an explicit cost table and keeps a minimum for each possible parent state. That changes the modeling assumptions as well as the calculation.
+
+Alignment mistakes, missing characters, and unrepresentative sites can change the preferred topology. Our toy assumes correspondence and excludes uncertainty. A real analysis must specify how such entries are treated and examine whether the answer persists across suitable sites. Agreement with the minimum-change objective is evidence conditional on those choices, rather than proof of the true genealogy.
 
 ## Exercises
 
-- Score a given tree with Fitch.
-- Find a second tree with the same parsimony score.
+::: {#exr-fitch-hand}
+Replace site 2 by A at a and c, G at b and d. Compute both site scores on all three splits above. Which splits minimize the combined score? Explain what the conflict between sites means for the answer.
+:::
 
-## Schedule
+::: {#exr-fitch-reconstruction}
+For the original site 1, start the root reconstruction with G instead of A. Give every internal state and locate the changed edge. Explain why this does not determine the direction or time of the historical substitution.
+:::
 
-Project starter list at the end of class; teams form over break.
+::: {#exr-fitch-validation}
+For a three-leaf tree, enumerate the four possible states at each of its two internal nodes. Compare that minimum with `fitch_site` for a site of your choice. Include an all-equal site as a boundary check.
+:::
+
+::: {#exr-fitch-costs}
+Give A↔G changes cost 1 and all other unequal changes cost 2. Explain why the ordinary intersection/union counter is no longer sufficient, and write the state-conditioned recurrence needed for one internal node.
+:::
+
+::: {#refs}
+**References**
+:::
