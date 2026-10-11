@@ -1,112 +1,125 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 170" role="img" aria-labelledby="title desc">
-  <title id="title">A scored DNA alignment</title>
-  <desc id="desc">ACGTTACG aligned with AC-TCACG: six matches, one mismatch, and one gap. A match scores plus two, a mismatch minus one, and a gap minus two, for a total of nine.</desc>
-  <g id="static"/>
-  <style>
-    /* One scoring pass, then a quiet static alignment. */
-    .score-column {
-      opacity: 0;
-      animation: score-column 0.55s ease-in-out 1;
-      animation-delay: var(--delay);
-    }
-    @keyframes score-column {
-      0%, 100% { opacity: 0; }
-      12%, 85% { opacity: 1; }
-    }
-    #static:target ~ .score-column { display: none; animation: none; }
-    @media (prefers-reduced-motion: reduce) {
-      .score-column { display: none; animation: none; }
-    }
-  </style>
-  <g font-family="Arial, Helvetica, sans-serif" fill="#202020">
-    <text x="12" y="21" font-size="16" font-weight="700">DNA alignment</text>
-    <rect x="220" y="3" width="68" height="26" rx="4" fill="#202020"/>
-    <text x="254" y="21" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">score 9</text>
-  </g>
-  <g font-family="Consolas, DejaVu Sans Mono, monospace" font-size="20" text-anchor="middle">
-    <rect x="15" y="40" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="30" y="62" fill="#FFFFFF">A</text>
-    <rect x="15" y="92" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="30" y="114" fill="#FFFFFF">A</text>
-    <path d="M 30 75 v 12" stroke="#707271" stroke-width="2"/>
-    <rect x="49" y="40" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="64" y="62" fill="#FFFFFF">C</text>
-    <rect x="49" y="92" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="64" y="114" fill="#FFFFFF">C</text>
-    <path d="M 64 75 v 12" stroke="#707271" stroke-width="2"/>
-    <rect x="83" y="40" width="30" height="30" rx="4" fill="#FFFFFF" stroke="#707271"/>
-    <text x="98" y="62" fill="#202020">G</text>
-    <rect x="83" y="92" width="30" height="30" rx="4" fill="#FFFFFF" stroke="#707271" stroke-dasharray="3 3"/>
-    <text x="98" y="114" fill="#202020">-</text>
-    <rect x="117" y="40" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="132" y="62" fill="#FFFFFF">T</text>
-    <rect x="117" y="92" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="132" y="114" fill="#FFFFFF">T</text>
-    <path d="M 132 75 v 12" stroke="#707271" stroke-width="2"/>
-    <rect x="151" y="40" width="30" height="30" rx="4" fill="#F8E1AC" stroke="#B57500"/>
-    <text x="166" y="62" fill="#202020">T</text>
-    <rect x="151" y="92" width="30" height="30" rx="4" fill="#F8E1AC" stroke="#B57500"/>
-    <text x="166" y="114" fill="#202020">C</text>
-    <circle cx="166" cy="81" r="3" fill="#BE0000"/>
-    <rect x="185" y="40" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="200" y="62" fill="#FFFFFF">A</text>
-    <rect x="185" y="92" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="200" y="114" fill="#FFFFFF">A</text>
-    <path d="M 200 75 v 12" stroke="#707271" stroke-width="2"/>
-    <rect x="219" y="40" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="234" y="62" fill="#FFFFFF">C</text>
-    <rect x="219" y="92" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="234" y="114" fill="#FFFFFF">C</text>
-    <path d="M 234 75 v 12" stroke="#707271" stroke-width="2"/>
-    <rect x="253" y="40" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="268" y="62" fill="#FFFFFF">G</text>
-    <rect x="253" y="92" width="30" height="30" rx="4" fill="#BE0000" stroke="#BE0000"/>
-    <text x="268" y="114" fill="#FFFFFF">G</text>
-    <path d="M 268 75 v 12" stroke="#707271" stroke-width="2"/>
-  </g>
-  <g font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#202020">
-    <text x="14" y="147">match +2</text>
-    <text x="111" y="147">mismatch −1</text>
-    <text x="239" y="147">gap −2</text>
-  </g>
-  <g class="score-column" style="--delay: 0.40s" aria-hidden="true">
-    <rect x="13" y="37" width="34" height="88" rx="5" fill="none" stroke="#202020" stroke-width="2"/>
-    <rect x="15" y="72" width="30" height="18" rx="3" fill="#FFFFFF"/>
-    <text x="30" y="86" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#202020">+2</text>
-  </g>
-  <g class="score-column" style="--delay: 0.95s" aria-hidden="true">
-    <rect x="47" y="37" width="34" height="88" rx="5" fill="none" stroke="#202020" stroke-width="2"/>
-    <rect x="49" y="72" width="30" height="18" rx="3" fill="#FFFFFF"/>
-    <text x="64" y="86" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#202020">+2</text>
-  </g>
-  <g class="score-column" style="--delay: 1.50s" aria-hidden="true">
-    <rect x="81" y="37" width="34" height="88" rx="5" fill="none" stroke="#707271" stroke-width="2"/>
-    <rect x="83" y="72" width="30" height="18" rx="3" fill="#FFFFFF"/>
-    <text x="98" y="86" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#202020">−2</text>
-  </g>
-  <g class="score-column" style="--delay: 2.05s" aria-hidden="true">
-    <rect x="115" y="37" width="34" height="88" rx="5" fill="none" stroke="#202020" stroke-width="2"/>
-    <rect x="117" y="72" width="30" height="18" rx="3" fill="#FFFFFF"/>
-    <text x="132" y="86" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#202020">+2</text>
-  </g>
-  <g class="score-column" style="--delay: 2.60s" aria-hidden="true">
-    <rect x="149" y="37" width="34" height="88" rx="5" fill="none" stroke="#B57500" stroke-width="2"/>
-    <rect x="151" y="72" width="30" height="18" rx="3" fill="#FFFFFF"/>
-    <text x="166" y="86" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#202020">−1</text>
-  </g>
-  <g class="score-column" style="--delay: 3.15s" aria-hidden="true">
-    <rect x="183" y="37" width="34" height="88" rx="5" fill="none" stroke="#202020" stroke-width="2"/>
-    <rect x="185" y="72" width="30" height="18" rx="3" fill="#FFFFFF"/>
-    <text x="200" y="86" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#202020">+2</text>
-  </g>
-  <g class="score-column" style="--delay: 3.70s" aria-hidden="true">
-    <rect x="217" y="37" width="34" height="88" rx="5" fill="none" stroke="#202020" stroke-width="2"/>
-    <rect x="219" y="72" width="30" height="18" rx="3" fill="#FFFFFF"/>
-    <text x="234" y="86" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#202020">+2</text>
-  </g>
-  <g class="score-column" style="--delay: 4.25s" aria-hidden="true">
-    <rect x="251" y="37" width="34" height="88" rx="5" fill="none" stroke="#202020" stroke-width="2"/>
-    <rect x="253" y="72" width="30" height="18" rx="3" fill="#FFFFFF"/>
-    <text x="268" y="86" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#202020">+2</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 125">
+  <title>Decorative nucleotide pattern</title>
+  <g font-family="Consolas, DejaVu Sans Mono, monospace" font-size="11" text-anchor="middle">
+    <rect x="6" y="9" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="13" y="22" fill="#398B91">A</text>
+    <rect x="22" y="9" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="29" y="22" fill="#7E9C72">C</text>
+    <rect x="38" y="9" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="45" y="22" fill="#B97D79">G</text>
+    <rect x="54" y="9" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="61" y="22" fill="#BF9955">T</text>
+    <rect x="70" y="9" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="77" y="22" fill="#BF9955">T</text>
+    <rect x="86" y="9" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="93" y="22" fill="#398B91">A</text>
+    <rect x="102" y="9" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="109" y="22" fill="#7E9C72">C</text>
+    <rect x="118" y="9" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="125" y="22" fill="#B97D79">G</text>
+    <rect x="134" y="9" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="141" y="22" fill="#398B91">A</text>
+    <rect x="150" y="9" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="157" y="22" fill="#BF9955">T</text>
+    <rect x="166" y="9" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="173" y="22" fill="#B97D79">G</text>
+    <rect x="182" y="9" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="189" y="22" fill="#7E9C72">C</text>
+    <rect x="6" y="30" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="13" y="43" fill="#398B91">A</text>
+    <rect x="22" y="30" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="29" y="43" fill="#7E9C72">C</text>
+    <rect x="38" y="30" width="14" height="18" rx="2" fill="#929B9B" opacity=".12"/>
+    <text x="45" y="43" fill="#929B9B">-</text>
+    <rect x="54" y="30" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="61" y="43" fill="#BF9955">T</text>
+    <rect x="70" y="30" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="77" y="43" fill="#BF9955">T</text>
+    <rect x="86" y="30" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="93" y="43" fill="#398B91">A</text>
+    <rect x="102" y="30" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="109" y="43" fill="#7E9C72">C</text>
+    <rect x="118" y="30" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="125" y="43" fill="#B97D79">G</text>
+    <rect x="134" y="30" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="141" y="43" fill="#398B91">A</text>
+    <rect x="150" y="30" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="157" y="43" fill="#BF9955">T</text>
+    <rect x="166" y="30" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="173" y="43" fill="#B97D79">G</text>
+    <rect x="182" y="30" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="189" y="43" fill="#7E9C72">C</text>
+    <rect x="6" y="51" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="13" y="64" fill="#398B91">A</text>
+    <rect x="22" y="51" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="29" y="64" fill="#7E9C72">C</text>
+    <rect x="38" y="51" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="45" y="64" fill="#B97D79">G</text>
+    <rect x="54" y="51" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="61" y="64" fill="#BF9955">T</text>
+    <rect x="70" y="51" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="77" y="64" fill="#7E9C72">C</text>
+    <rect x="86" y="51" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="93" y="64" fill="#398B91">A</text>
+    <rect x="102" y="51" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="109" y="64" fill="#7E9C72">C</text>
+    <rect x="118" y="51" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="125" y="64" fill="#B97D79">G</text>
+    <rect x="134" y="51" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="141" y="64" fill="#398B91">A</text>
+    <rect x="150" y="51" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="157" y="64" fill="#BF9955">T</text>
+    <rect x="166" y="51" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="173" y="64" fill="#B97D79">G</text>
+    <rect x="182" y="51" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="189" y="64" fill="#7E9C72">C</text>
+    <rect x="6" y="72" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="13" y="85" fill="#398B91">A</text>
+    <rect x="22" y="72" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="29" y="85" fill="#7E9C72">C</text>
+    <rect x="38" y="72" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="45" y="85" fill="#B97D79">G</text>
+    <rect x="54" y="72" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="61" y="85" fill="#BF9955">T</text>
+    <rect x="70" y="72" width="14" height="18" rx="2" fill="#929B9B" opacity=".12"/>
+    <text x="77" y="85" fill="#929B9B">-</text>
+    <rect x="86" y="72" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="93" y="85" fill="#398B91">A</text>
+    <rect x="102" y="72" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="109" y="85" fill="#7E9C72">C</text>
+    <rect x="118" y="72" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="125" y="85" fill="#B97D79">G</text>
+    <rect x="134" y="72" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="141" y="85" fill="#398B91">A</text>
+    <rect x="150" y="72" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="157" y="85" fill="#BF9955">T</text>
+    <rect x="166" y="72" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="173" y="85" fill="#B97D79">G</text>
+    <rect x="182" y="72" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="189" y="85" fill="#7E9C72">C</text>
+    <rect x="6" y="93" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="13" y="106" fill="#398B91">A</text>
+    <rect x="22" y="93" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="29" y="106" fill="#7E9C72">C</text>
+    <rect x="38" y="93" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="45" y="106" fill="#B97D79">G</text>
+    <rect x="54" y="93" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="61" y="106" fill="#BF9955">T</text>
+    <rect x="70" y="93" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="77" y="106" fill="#BF9955">T</text>
+    <rect x="86" y="93" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
+    <text x="93" y="106" fill="#398B91">A</text>
+    <rect x="102" y="93" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="109" y="106" fill="#7E9C72">C</text>
+    <rect x="118" y="93" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="125" y="106" fill="#B97D79">G</text>
+    <rect x="134" y="93" width="14" height="18" rx="2" fill="#929B9B" opacity=".12"/>
+    <text x="141" y="106" fill="#929B9B">-</text>
+    <rect x="150" y="93" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
+    <text x="157" y="106" fill="#BF9955">T</text>
+    <rect x="166" y="93" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
+    <text x="173" y="106" fill="#B97D79">G</text>
+    <rect x="182" y="93" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
+    <text x="189" y="106" fill="#7E9C72">C</text>
   </g>
 </svg>
