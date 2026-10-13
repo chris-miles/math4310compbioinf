@@ -27,9 +27,7 @@ cf.use_style()
 
 Sliding a window along a genome gives overlapping decisions, and neighboring windows may disagree about the same bases. Choosing a window size also fixes how sharply a boundary can be located. Instead, we can model the sequence as alternating hidden regions and let the labels persist or change from one position to the next.
 
-The input is the observed base sequence; a possible explanation is a sequence of region labels. Today we define a model that assigns probabilities to those explanations. Scoring one proposed path and summing over tiny examples will separate the questions that the next two lessons solve efficiently.
-
-The classifier in Lesson 10 decides whether an entire window came from an island or background model. Along a chromosome, the region can change. We observe bases, but the region label at each position is unknown.
+The input is a DNA sequence; the unknown output is a region label at each position. A single C or G could belong to either region, so a letter cannot reveal its state. Neighboring letters can supply evidence because regions tend to persist. We need a model that assigns probabilities to complete sequences of labels and observations.
 
 To keep the arithmetic short, collapse the DNA alphabet into $S$ for $C$ or $G$ and $W$ for $A$ or $T$. This collapse preserves GC enrichment but discards the distinction between CG and GC. The two-state example teaches hidden-region inference; it does not reproduce the dinucleotide classifier from Lesson 10.
 
@@ -66,7 +64,7 @@ I&0.8&0.2
 \end{array}.
 $$
 
-The emission table says that $S$ is more common in islands. The transition table says regions tend to persist, especially background. Every row is a probability distribution.
+The emission table says that $S$ is more common in islands. The transition table says regions tend to persist, especially background. Every row is a probability distribution. To generate a sequence, first draw a state from $p$ and emit a symbol from its emission row. Then draw the next state from the current state's transition row and emit again. Each position therefore involves two draws: a hidden region and an observed symbol.
 
 ```{.python .execute}
 #| label: fig-hidden-markov-model-diagram
@@ -88,25 +86,46 @@ cf.state_diagram(ax, ["B", "I"], transitions, emissions)
 plt.show()
 ```
 
-Let $L$ be the length of a completed run in a state that remains with probability $r<1$. The run reaches its $j$th position only if its first $j-1$ transitions stay in that state, so $P(L\ge j)=r^{j-1}$. A run of length $L$ contributes one unit for each position it reaches: $L=\sum_{j\ge1}\mathbf{1}\{L\ge j\}$, where the indicator is one when the event holds and zero otherwise. Averaging these contributions gives
+Independent emissions may seem to contradict the neighboring patterns we want to model. The condition matters. If the path is known, learning that $x_{i-1}=S$ does not change the emission distribution at position $i$ beyond what $\pi_i$ already tells us. Dependence can still appear after the path is hidden: two adjacent $S$ symbols are correlated because both are more likely to lie inside the same persistent $I$ run.
+
+### Why observations can be dependent
+
+We can quantify the dependence between observations using the same B/I model. The first observation is S with probability
+$$
+P(X_1=S)=0.5(0.3)+0.5(0.8)=0.55.
+$$
+Before observing anything, the second hidden state is B with probability $0.5(0.8)+0.5(0.4)=0.6$, and I with probability 0.4. Thus $P(X_2=S)=0.6(0.3)+0.4(0.8)=0.50$.
+
+Now sum the joint probability of SS over its four possible hidden paths:
+$$
+\begin{aligned}
+P(SS)&=0.5(0.3)[0.8(0.3)+0.2(0.8)]\\
+&\quad+0.5(0.8)[0.4(0.3)+0.6(0.8)]\\
+&=0.06+0.24=0.30.
+\end{aligned}
+$$
+Independence would instead give $0.55(0.50)=0.275$. Observing the first S raises the probability of a second S to $0.30/0.55\approx0.545$. The first observation supplies evidence for I; persistence of that hidden state carries some of the evidence to the next position.
+
+Conditional independence concerns observations after the hidden path is fixed. Hiding a persistent path mixes different emission distributions, which can create dependence among the observed letters.
+
+### How long does a region persist?
+
+Let $L$ be the length of a completed run in a state with self-transition probability $r<1$. A run of exactly $\ell$ positions requires $\ell-1$ self-transitions followed by an exit:
+$$
+P(L=\ell)=r^{\ell-1}(1-r),\qquad \ell=1,2,\ldots.
+$$
+For the island state, run lengths 1, 2, and 3 have probabilities $0.4$, $0.24$, and $0.144$. Length one is most probable, but longer runs contribute to the average. The run reaches position $j$ with probability $P(L\ge j)=r^{j-1}$. Counting one unit for every position reached gives
 $$
 \mathbb E[L]=\sum_{j\ge1}P(L\ge j)
 =1+r+r^2+\cdots=\frac{1}{1-r}.
 $$
-The illustrative island state therefore has mean length $1/(1-0.6)=2.5$ symbols. Real CpG islands are much longer, so real base-level parameters would use an island self-loop close to one.
+Thus the toy model has mean background length 5 and mean island length 2.5 symbols. These short runs keep hand calculations manageable; parameters for a base-level model of long regions would need self-transitions closer to one.
 
-
-### State durations
-
-Let $L$ be the length of a completed run in a state with self-transition probability $r<1$. A run of exactly $\ell$ positions requires $\ell-1$ self-transitions followed by one exit:
-$$
-P(L=\ell)=r^{\ell-1}(1-r),\qquad \ell=1,2,\ldots.
-$$
-For the island state, the probabilities of lengths 1, 2, and 3 are $0.4$, $0.24$, and $0.144$. The long tail makes the mean 2.5 even though length 1 is most probable. This is the geometric duration assumption: after any number of positions in a region, the chance of leaving on the next transition is still $1-r$. The model therefore has no notion that a region has reached a typical biological length; increasing $r$ changes the mean but keeps this constant exit chance. A run reaching the end of a recorded sequence may continue beyond the observation, so its observed length need not be its completed duration.
+This is the *geometric duration* assumption. The exit probability stays $1-r$ even after a long run, so the model has no preferred minimum biological length. Increasing $r$ lengthens the mean but preserves that constant exit chance. A run cut off by the end of our recorded sequence may continue beyond it and is not a completed duration.
 
 ## Joint probability of sequence and path
 
-The model assigns a joint probability to the observed symbols and the states that emitted them.
+We can now translate the two draws at each position into the probability of one proposed explanation. We condition on a fixed observed length $n$: the model has no extra factor for stopping. A length-$n$ path contains $n$ emissions and $n-1$ state transitions.
 
 ::: {#prp-hmm-joint-factorization}
 ## HMM joint probability
@@ -170,7 +189,6 @@ def joint_probability(
         probability *= emission[path[i]][observations[i]]
     return probability
 
-
 initial = {"B": 0.5, "I": 0.5}
 transition = {
     "B": {"B": 0.8, "I": 0.2},
@@ -186,26 +204,27 @@ joint_probability("SSW", "IIB", initial, transition, emission)
 
 ## Summing over hidden paths
 
-A path of length $n$ through $K$ states has $K^n$ possibilities. To obtain the probability of the observations, we sum over them:
+Scoring one supplied path takes only $\mathcal O(n)$ multiplications. The inference problem is that no path is supplied. With $K=|Q|$ states, every one of the $n$ positions has $K$ choices, giving $K^n$ candidate paths.
+
+When we observe only $x$, every possible hidden path is an alternative way to produce it. These alternatives are mutually exclusive, so their joint probabilities add:
 $$
 P(x)=\sum_{\pi\in Q^n}P(x,\pi).
 $$
 For $x=\texttt{SSW}$, all eight paths sum to $P(x)=0.1368$. The best path, $\texttt{IIB}$, contains only $0.05376/0.1368\approx39.3\%$ of that probability. A best explanation and the total evidence are different quantities.
 
 ::: {.algorithm}
-**Algorithm: validate by enumerating paths.**
+**Algorithm: sum over a tiny hidden-path space.**
 
 1. Generate all $K^n$ paths.
 2. Compute each path joint probability.
-3. Sum the probabilities for $P(x)$ or retain the largest for a best-path check.
+3. Sum the probabilities to obtain $P(x)$ and compare each path with this total.
 :::
 
 ```{.python .execute}
 #| label: code-hidden-markov-model-enumerate
 def enumerate_paths(states: str, n: int) -> list[str]:
-    """List state paths for a tiny validation example."""
+    """List all state paths of a specified length."""
     return ["".join(path) for path in itertools.product(states, repeat=n)]
-
 
 paths = enumerate_paths("BI", 3)
 probabilities = [
@@ -215,30 +234,35 @@ probabilities = [
 sum(probabilities), paths[probabilities.index(max(probabilities))]
 ```
 
-Enumeration is useful as a test for short sequences, but its $\mathcal{O}(nK^n)$ cost is unusable on genomic data. Lesson 12 finds the most likely path in $\mathcal{O}(nK^2)$ time. Lesson 13 computes the sum and position-wise probabilities at the same cost.
-
-
-::: {#prp-hmm-normalization}
-## Normalization at a fixed length
-If the initial probabilities and every transition and emission row sum to one, then
+The total converts path scores into probabilities after seeing SSW:
 $$
-\sum_{x\in\Sigma^n}\sum_{\pi\in Q^n}P(x,\pi)=1.
+P(\pi\mid\texttt{SSW})=\frac{P(\texttt{SSW},\pi)}{P(\texttt{SSW})}.
 $$
-:::
+The denominator is shared by every path, so the most probable joint path is also the most probable path conditional on the observations. But choosing it still discards the alternatives visible in the figure.
 
-::: {.proof}
-Sketch. Sum over the last observation first; its emission probabilities sum to one for every state. Then sum over the last state; the transition row sums to one. Repeat backward until only the initial-state sum remains, which is also one.
-:::
+```{.python .execute}
+#| label: fig-hidden-markov-model-path-mass
+#| fig-cap: "Probabilities of all eight hidden paths after observing SSW, sorted from largest to smallest. IIB is the best explanation, but the remaining paths together hold most of the probability."
+#| fig-alt: "Eight bars labeled by length-three B/I paths; IIB is the tallest and is highlighted, with height about 0.393."
+#| code-fold: true
+ranked = sorted(zip(paths, probabilities), key=lambda item: item[1], reverse=True)
+path_names = [path for path, probability in ranked]
+path_mass = [probability / sum(probabilities) for path, probability in ranked]
+fig, ax = plt.subplots()
+bars = ax.bar(path_names, path_mass)
+bars[0].set_color(cf.EMPHASIS)
+ax.set_xlabel("Hidden path")
+ax.set_ylabel("Probability given SSW")
+for tick in ax.get_xticklabels():
+    tick.set_fontfamily(cf.MONO)
+plt.show()
+```
 
-We condition on a fixed sequence length $n$. The example has no end state, so its joint probability includes $n$ emissions and $n-1$ transitions. Scoring one specified path takes $\mathcal O(n)$ time. Extra factors for stopping would define a different model.
+At 20 positions the two-state model already has $2^{20}=1{,}048{,}576$ paths. At 100 positions it has about $1.27\times10^{30}$. Scoring each separately costs $\mathcal{O}(nK^n)$ operations. The obstacle is the number of explanations, rather than the cost of scoring one. Dynamic programming will let us combine paths sharing a state at the same position instead of enumerating their complete histories.
 
 ## Parameters and estimation
 
-An HMM with $K$ states and $M$ symbols displays $K+K^2+KM$ probability entries. Normalization leaves
-$$
-(K-1)+K(K-1)+K(M-1)
-$$
-free parameters. The B/I model has six free parameters. With labeled paths, estimates come from normalized counts of first states, state transitions, and symbols emitted in each state. With only observed sequences, those state counts are unavailable; Lesson 13 sketches Baum-Welch estimation.
+If region labels are supplied for training, we can count first states, state transitions, and symbols emitted in each state, then normalize the appropriate counts. When only sequences are supplied, the state counts themselves are unknown. Estimation must then account for several possible paths, which motivates the inference methods that follow.
 
 ::: {#exm-hmm-supervised-counts}
 ## Estimating emissions from a labeled path
@@ -258,34 +282,7 @@ The annotation source defines what the model learns to call an island. Labels ba
 The path contains transitions $II,IB,BB,BB$, giving $\widehat a_{II}=\widehat a_{IB}=1/2$ and $\widehat a_{BB}=1$. These exact zeros and ones reflect a tiny sample, not biological certainty. Pseudocounts prevent these small-sample estimates from ruling out unobserved events, as in Lesson 9.
 :::
 
-The conditional-independence statement has a precise consequence. If the path is known, learning that $x_{i-1}=S$ does not change the emission distribution at position $i$ beyond what $\pi_i$ already tells us. Dependence can still appear after the path is hidden: two adjacent $S$ symbols are correlated because both are more likely to lie inside the same persistent $I$ run. HMMs create dependence among observations by mixing over correlated hidden states.
-
-### Dependence after hiding the states
-
-We can quantify the dependence between observations using the same B/I model. The first observation is S with probability
-$$
-P(X_1=S)=0.5(0.3)+0.5(0.8)=0.55.
-$$
-Before observing anything, the second hidden state is B with probability $0.5(0.8)+0.5(0.4)=0.6$, and I with probability 0.4. Thus $P(X_2=S)=0.6(0.3)+0.4(0.8)=0.50$.
-
-Now sum the joint probability of SS over its four possible hidden paths:
-$$
-\begin{aligned}
-P(SS)&=0.5(0.3)[0.8(0.3)+0.2(0.8)]\\
-&\quad+0.5(0.8)[0.4(0.3)+0.6(0.8)]\\
-&=0.06+0.24=0.30.
-\end{aligned}
-$$
-Independence would instead give $0.55(0.50)=0.275$. Observing the first S raises the probability of a second S to $0.30/0.55\approx0.545$. The first observation supplies evidence for I; persistence of that hidden state carries some of the evidence to the next position.
-
-This calculation also clarifies what to check in a simulation. Matching the overall frequency of S is insufficient: a simulator that draws independent symbols can reproduce a marginal frequency while getting adjacent pairs wrong. For this model, both the first-position frequency and the SS frequency have exact targets. They need not match frequencies at every later position, because the initial hidden distribution need not remain unchanged after a transition. Conditional independence of emissions is a statement made after fixing the hidden path; summing over that path can produce dependent observations.
-
-## Limitations
-
-1. **Emissions are conditionally independent.** Once the state is known, the model forgets the previous symbol. A two-state, single-base HMM cannot directly express extra probability for $CG$; the state must also carry the previous base or emit pairs.
-2. **State durations are geometric.** The highest-probability run length is always one, even when observed regions have a typical nontrivial length.
-3. **The state set is chosen by the analyst.** Two states force every position into background or island and omit promoter structure.
-4. **Parameters can fit the wrong population.** Estimates from one genome may fail on another. Evaluation should hold out long genomic regions, as in Lesson 10.
+The two-state S/W model represents GC enrichment and persistence. To retain the CpG transition signal as well, a state can include both the region label and the current DNA base. The eight states $B_A,B_C,B_G,B_T,I_A,I_C,I_G,I_T$ then distinguish, for example, a C-to-G transition inside an island from the same transition in background [@durbin1998]. The two-state simplification lets us study hidden paths without that additional bookkeeping.
 
 ## Exercises
 
@@ -299,6 +296,10 @@ Enumerate the four paths for observation $\texttt{SW}$, compute their joint prob
 
 ::: {#exr-hmm-duration}
 Choose $a_{II}$ so that the mean island length is 200 bases. State the corresponding probability of leaving $I$ at each base.
+:::
+
+::: {#exr-hmm-normalization}
+Show that $\sum_x\sum_\pi P(x,\pi)=1$ at a fixed length $n$ by summing out the last observation and last hidden state, then repeating backward. Which row-normalization assumptions does each step use?
 :::
 
 ::: {#exr-hmm-memory}

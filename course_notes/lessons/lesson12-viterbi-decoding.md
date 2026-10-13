@@ -55,7 +55,7 @@ Because $P(x)$ is fixed once $x$ is observed, this also maximizes $P(\pi\mid x)=
 
 ## Best prefixes
 
-Different histories can reach the same state at the same position. Once there, the HMM assigns either history the same probability factors for any specified continuation: future transitions depend on the current state, and emissions depend on the states that produce them. Multiplying by these same nonnegative factors preserves which prefix is better. We therefore keep only one best score per state and position.
+The alignment dynamic program kept one best score for each pair of consumed prefixes. Here the corresponding subproblem is a sequence prefix ending in a specified hidden state. Different histories can reach the same state at the same position. Once there, the HMM assigns either history the same probability factors for any specified continuation: future transitions depend on the current state, and emissions depend on the states that produce them. Multiplying by these same nonnegative factors preserves which prefix is better. We therefore keep only one best score per state and position.
 
 ::: {#def-viterbi-score}
 ## Viterbi score
@@ -133,7 +133,7 @@ $$
 so $\pi^*=\texttt{IIBB}$. Direct multiplication gives $P(\texttt{SSWS},\texttt{IIBB})=0.0129024$.
 :::
 
-The last S is assigned to background even though $e_I(S)>e_B(S)$. Comparing the complete histories favors IIBB over IIII. The next example isolates why changing only the last label of IIBB also loses.
+The last S is assigned to background even though $e_I(S)>e_B(S)$. Comparing the complete histories favors IIBB over IIII. The next example shows why retaining both ending states is essential.
 
 ```{.python .execute}
 #| label: fig-viterbi-trellis
@@ -162,31 +162,44 @@ plt.show()
 
 
 ::: {#exm-viterbi-greedy}
-## Emissions alone choose a different path
-Choosing the state with the larger emission probability at each position gives $\texttt{IIBI}$ for $\texttt{SSWS}$. Its joint probability is
-$$
-0.5(0.8)(0.6)(0.8)(0.4)(0.7)(0.2)(0.8)=0.0086016,
-$$
-which is smaller than $0.0129024$ for $\texttt{IIBB}$. The emission-only choice gains a factor $0.8/0.3$ at the final $S$, but loses a factor $0.2/0.8$ by switching instead of staying in background. The combined factor is $2/3$.
+## Why we keep both states
+For the shorter observation $\texttt{WSS}$, the two rows are
+
+| State | $W$, $i=1$ | $S$, $i=2$ | $S$, $i=3$ |
+|---|---:|---:|---:|
+| $B$ | 0.35 | 0.084 | 0.02016 |
+| $I$ | 0.10 | 0.056 | 0.02688 |
+
+At position 2, the best path ending in I is BI, with probability $0.35(0.2)(0.8)=0.056$. It loses to BB at 0.084. But another S favors continuing in I: BII reaches $0.056(0.6)(0.8)=0.02688$, beating BBB at $0.084(0.8)(0.3)=0.02016$. Keeping only the column winner would discard BI before it could become the best complete path.
 :::
 
-Viterbi keeps a best prefix for each possible ending state because the next transition depends on that state. It cannot replace the whole column with a single winning prefix: a prefix that loses now may have a much better transition to a state needed later. The proof identifies exactly which histories can be merged safely.
+```{.python .execute}
+#| label: fig-viterbi-column-loser
+#| fig-cap: "Viterbi scores for WSS. The optimal path BII passes through the smaller entry in column 2, so a best prefix must be retained for each ending state."
+#| fig-alt: "A two-row three-column trellis for W S S. Red nodes follow B, I, I; the middle I score 0.056 is smaller than the B score 0.084."
+#| fig-width: 6
+#| fig-height: 3
+fig, ax = plt.subplots()
+cf.trellis(
+    ax, ["B", "I"], list("WSS"),
+    [[0.35, 0.084, 0.02016], [0.10, 0.056, 0.02688]],
+    backpointers=[((0, 0), (0, 1)), ((0, 0), (1, 1)),
+                  ((0, 1), (0, 2)), ((1, 1), (1, 2))],
+    path=[(0, 0), (1, 1), (1, 2)], fmt="{:.5g}",
+)
+plt.show()
+```
 
-::: {.callout-note collapse="true" title="Going deeper: evidence needed to introduce a region"}
+### How several bases support a region
 
-Consider a run of $r\geq1$ observed S symbols between two positions whose hidden labels are fixed to B. Compare two candidate paths inside this interval: keeping all $r$ positions in B, or changing them all to I and returning to B afterward. Factors outside the interval, including the flanking emissions, cancel in the probability ratio.
-
-The all-B candidate uses $r+1$ transitions of probability 0.8 and $r$ emissions of probability 0.3. The island candidate uses a B-to-I transition of probability 0.2, $r-1$ I self-transitions of probability 0.6, an I-to-B transition of probability 0.4, and $r$ emissions of probability 0.8. Consequently,
+The transition probabilities express a biological modeling choice: region labels tend to persist. How much sequence evidence pays for entering and leaving an island? Consider $r\geq1$ S symbols between two positions whose labels are fixed to B. Compare labeling the whole run B with labeling it I. The flanking emissions and all factors outside the interval cancel, leaving
 $$
 \frac{P(\text{island candidate},x)}{P(\text{all-B candidate},x)}
 =\frac{0.2(0.6)^{r-1}(0.4)}{(0.8)^{r+1}}
 \left(\frac{0.8}{0.3}\right)^r
 =\frac{2^{r-1}}{3}.
 $$
-For run lengths 1, 2, and 3, the ratios are $1/3$, $2/3$, and $4/3$. Three consecutive S emissions make this island candidate preferable; one or two do not compensate for introducing and ending the region.
-
-This is a comparison of two paths with fixed flanking states, not a minimum-length rule for every Viterbi island. At a sequence boundary the initial probability replaces one transition, and uncertain flanking labels can change the comparison. The calculation shows explicitly how evidence from several emissions can pay for a state change. Viterbi performs all such compatible comparisons together.
-:::
+The numerator pays for entering I, staying there, and returning to B. Each S favors I through the emission ratio $0.8/0.3$. For run lengths 1, 2, and 3, the combined ratios are $1/3$, $2/3$, and $4/3$: the three-S run favors the island candidate. This comparison explains how several individually ambiguous bases can support a region together. It assumes fixed flanking labels; Viterbi also compares paths with different boundaries.
 
 ## Log-space implementation
 
@@ -268,8 +281,6 @@ path, math.exp(log_probability)
 
 The trellis above shows ordinary probabilities for the hand calculation. In code, a zero probability becomes $-\infty$: adding it makes that candidate impossible, and a finite candidate always beats it. If every final score is $-\infty$, the model gives the observed sequence probability zero; returning an arbitrary path would conceal this failure.
 
-For example, change the emissions so $B$ can emit only $W$ and $I$ can emit only $S$, leaving the positive transitions unchanged. The observation $\texttt{SSWS}$ then forces $\texttt{IIBI}$. If we also set $a_{BI}=0$ and $a_{BB}=1$, the same observation becomes impossible because its last symbol requires the forbidden transition. These two cases test different behavior: one must return the unique compatible path, and the other must report that no path exists.
-
 ## Correctness and cost
 
 ::: {#thm-viterbi-correctness}
@@ -324,25 +335,7 @@ for candidate, probability in ranked_paths[:3]:
 
 The dynamic program agrees with direct enumeration on this instance. Two additional checks catch boundary errors: a length-one sequence must return $\arg\max_k p_ke_k(x_1)$, and deterministic emissions must force the only compatible path.
 
-### Ties and alternate optimal paths
-
-The recurrence may have equal candidates. A single backpointer then returns one optimal path, but other optimal paths exist. To count or enumerate all optimal paths, store every predecessor attaining the maximum and trace the resulting backpointer graph. This can produce exponentially many paths even though their optimal score is computed in polynomial time.
-
-::: {#exm-viterbi-tie}
-## A model in which every path ties
-Let both states have initial probability $1/2$, every transition probability $1/2$, and identical emission probabilities. For any fixed observation of length $n$, every state path has the same joint probability. Viterbi still returns one path because the implementation has a deterministic tie rule. The returned labels contain no evidence about the hidden state; the tie is a property of the model, not a computational failure.
-:::
-
-### From a path to intervals
-
-A decoded path becomes a set of intervals by merging consecutive positions with the same state. For $\texttt{IIBB}$, positions 1 through 2 form one island interval and positions 3 through 4 form background. On real coordinates, off-by-one errors enter when converting one-based mathematical positions to zero-based, half-open file formats such as BED. A validation example should include a state change at the first or last possible boundary and check the exact reported coordinates. In zero-based half-open coordinates, the island interval in this example is $[0,2)$, which includes indices 0 and 1.
-
-## Limitations
-
-1. **The best path can carry little total probability.** For this observation, $P(x)=0.060576$, so the Viterbi path contains about $21.3\%$ of the probability mass. Lesson 13 sums across paths.
-2. **A hard path hides uncertainty.** Near-tied complete paths can disagree about a position while the decoder still returns one label. The values $v_k(i)$ score best prefixes, rather than probabilities that position $i$ is in state $k$. Lesson 13 sums over paths to obtain those state probabilities.
-3. **The answer is conditional on the model.** Incorrect emission, transition, or state definitions can produce a precisely computed but biologically poor path.
-4. **Ties need a convention.** The code returns the first maximizing state. Tests should accept any optimal path unless a tie rule is part of the specification.
+A decoded path becomes intervals by merging consecutive equal labels. For IIBB, positions 1 through 2 form the predicted island-like region. This is a concrete annotation under the model, but it leaves a new question: how much support does each label have? The best path accounts for only $0.0129024/0.060576\approx21.3\%$ of the probability conditional on SSWS. The next lesson adds the probabilities of alternative paths to assess individual positions.
 
 ## Exercises
 

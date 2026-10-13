@@ -14,17 +14,21 @@ How can an alignment score measure evidence for relatedness rather than just cou
 #| label: setup
 #| code-fold: true
 import math
+import sys
+
+sys.path.insert(0, "../style")
+import matplotlib.pyplot as plt
+import numpy as np
+import coursefigs as cf
+
+cf.use_style()
 ```
 
 ## Matches and background composition
 
-Two DNA fragments agree at eight of ten positions. That sounds persuasive until we learn that both fragments consist mostly of A. Even unrelated A-rich fragments agree often. To judge a match, we need a comparison: how often would these aligned pairs occur in unrelated sequence?
+Two DNA fragments have eight A/A matches and two mismatches in ten paired positions. If A is rare, those matches are striking. If both fragments come from A-rich sequence, unrelated fragments often agree this way. We need a score that measures agreement relative to the background composition.
 
 The data today are two equal-length strings with their positions already paired. We want a numerical score for that fixed, ungapped alignment. Lesson 1 supplied several ways to count differences; here we ask which differences should carry the most evidence. Finding the best placement of gaps comes in Lesson 3.
-
-::: {.biology}
-A protein sequence can be obtained by translating an identified DNA coding sequence into amino-acid letters; comparing it with known proteins can suggest a function to investigate. Amino-acid replacements occur at different frequencies in related proteins, motivating a score table that distinguishes kinds of mismatch [@ebi-pairwise].
-:::
 
 ::: {#def-aligned-pair-data}
 ## Aligned pair data
@@ -44,7 +48,7 @@ The background model $R$ draws the two letters independently with base probabili
 Both models assume that distinct alignment columns are independent and use the same pair distribution at every column.
 :::
 
-For this biological question, $p_{ab}$ describes pairs in corresponding positions of related sequences. These are joint probabilities, not probabilities of the second letter conditional on the first: the entire table sums to one. Later, a Markov transition table will instead have rows that sum to one.
+A probability specifies a sampling frequency. If we repeatedly generate aligned pairs under $M$, about a fraction $p_{ab}$ are the pair $(a,b)$. It describes both letters together, so the entire table sums to one. A probability conditional on the first letter being A would instead describe frequencies only among pairs whose first letter is A. Those conditional probabilities would sum to one across that row.
 
 One way to estimate $p_{ab}$ is to count aligned pairs in representative sequences already known to be related and normalize the counts. Unobserved pairs need a small positive allowance to satisfy our strictly positive model. Background letter frequencies provide $q_a$. In this lesson, we treat the probabilities as calibrated separately and supplied as inputs, rather than estimating them from the candidate pair we want to judge. The choice of related sequences matters: close relatives generally preserve more identities than distant relatives [@durbin1998]. With the probabilities fixed, we can examine the scoring rule without first solving an estimation problem.
 
@@ -59,7 +63,7 @@ Consider a synthetic DNA model with $q_a=1/4$ for every base. In the related mod
 
 Both tables are normalized. Under $M$, the total probability of a match is $4/8=1/2$. Under $R$, it is $4/16=1/4$. These values are chosen for arithmetic, not fitted to genomic data.
 
-For example, the pair AA has probability $1/8$ under $M$ and $1/16$ under $R$. Its ratio is 2, favoring $M$ by a factor of two. A CG pair instead has ratio $2/3$, favoring $R$. Multiplying ratios accumulates evidence across independent columns. Taking logarithms turns this multiplication into addition, which lets us score one column at a time.
+For example, AA has probability $1/8$ under $M$ and $1/16$ under $R$: we expect twice as many AA pairs when sampling from $M$. The ratio 2 expresses that relative evidence. Equal probability differences can represent different relative evidence: increasing from 0.01 to 0.02 doubles the probability, whereas increasing from 0.50 to 0.51 gives a ratio of only 1.02. A CG pair has ratio $2/3$, favoring $R$. Independent columns contribute multiplying ratios; logarithms turn the product into a sum that we can compute one column at a time.
 
 ::: {#def-pair-log-odds}
 ## Log-odds score
@@ -93,7 +97,7 @@ $$
 The second equality uses the logarithm-of-a-product rule. Each observed pair contributes exactly its column score.
 :::
 
-A score of 3 bits means the observed alignment is eight times as likely under $M$ as under $R$. It does not give a probability that $M$ is true. For illustration, suppose $M$ and $R$ are the only possibilities, with prior probabilities $1/100$ and $99/100$. Bayes' rule gives
+A score of 3 bits means the observed alignment is eight times as likely under $M$ as under $R$. It does not give a probability that $M$ is true. For illustration, suppose $M$ and $R$ are the only possibilities. Before seeing these letters, we assign $M$ probability $1/100$ and $R$ probability $99/100$. These *prior probabilities* express how often we expect each origin among candidate pairs before using their alignment evidence. Bayes' rule combines those starting odds with the likelihood ratio:
 $$
 \frac{P(M\mid x,y)}{P(R\mid x,y)}
 =\frac{P(x,y\mid M)P(M)}{P(x,y\mid R)P(R)}
@@ -171,7 +175,7 @@ Expectation is a probability-weighted average. It predicts the average over repe
 $$
 \mathbb E_R[s]=\tfrac14(1)+\tfrac34\log_2(2/3)\approx-0.189.
 $$
-One hundred unselected background columns therefore have expected total score about $-18.9$ bits. Some chance alignments still score positively, especially when we search many candidates and retain the best one.
+One hundred unselected background columns therefore have expected total score about $-18.9$ bits. Averaging the same scores under the uniform related model gives $\mathbb E_M[s]=\tfrac12(1)+\tfrac12\log_2(2/3)\approx0.208$: the two origins predict opposite average directions. Individual chance alignments can still score positively, especially when we search many candidates and retain the best one.
 
 ::: {#exm-score-background-change}
 ## Changing the background
@@ -184,7 +188,24 @@ $$
 The same score has expectation $49/75-26/75=23/75>0$. Unrelated A-rich strings accumulate positive scores on average.
 :::
 
-This example changes the background while keeping the score fixed. A genuine log-odds table must be recalculated when its background changes.
+We can repair the score by building a related model for this same A-rich background. Suppose $M$ generates half its pairs by two independent draws from $q$, and half by drawing one letter from $q$ and copying it. Then
+$$
+p_{ab}=\tfrac12q_aq_b+\tfrac12q_a[a=b],
+$$
+where $[a=b]$ equals 1 for a match and 0 otherwise. This model preserves the background frequencies in each sequence but favors agreement between them. Its log-odds scores are
+$$
+s(A,A)=\log_2(9/8)\approx0.170,\qquad
+s(C,C)=s(G,G)=s(T,T)=3,\qquad
+s(a,b)=-1\quad(a\ne b).
+$$
+An A/A match now supplies little evidence because it is already common by chance. A match of a rare base supplies much more. The opening pair with eight A/A matches and two mismatches scores $8\log_2(9/8)-2\approx-0.641$ bits, favoring the background model even though the simple $+1/-1$ rule awards 6 points.
+
+Averaging this recalibrated table under $R$ gives
+$$
+\mathbb E_R[s]=\frac{16}{25}\log_2(9/8)+\frac{1}{75}(3)-\frac{26}{75}
+\approx-0.198.
+$$
+Unselected A-rich background columns now decrease the score on average. The sign is a consequence of using two normalized probability models, as the next proposition shows.
 
 ::: {#prp-background-log-odds}
 ## Background expectation of a log-odds score
@@ -201,60 +222,78 @@ Sketch. For $u>0$, the derivative of $u-1-\ln u$ is $1-1/u$, negative below 1 an
 
 Thus a properly calibrated log-odds table has negative background expectation unless its two models coincide. This is an average statement for unselected columns. It does not prevent the best candidate in a large search from receiving a positive score.
 
-::: {.callout-note collapse="true" title="Going deeper: match fraction and accumulated evidence"}
+The expectation describes repeated sampling. In @fig-log-odds-composition-walk, the same simulated pairs receive two scores, so the change in behavior comes entirely from calibration.
 
-For the synthetic pair model, let $m$ be the number of matches in $n$ fixed columns. The remaining $n-m$ columns are mismatches, so
-$$
-S=m+(n-m)\log_2(2/3).
-$$
-Writing $f=m/n$, a positive score requires
-$$
-f>\frac{-\log_2(2/3)}{1-\log_2(2/3)}\approx0.369.
-$$
-Thus a majority of matches is unnecessary for positive evidence under these particular models. The threshold lies between the background match probability $1/4$ and the related-model match probability $1/2$. Changing either model changes this threshold.
-
-For ten fixed columns with four matches, the score is about $0.490$ bits and the likelihood ratio is only $1.405$. For one hundred columns with forty matches, the score is about $4.902$ bits and the ratio is about $29.9$. The same match fraction supplies different amounts of evidence because the second calculation contains ten times as many observations. This interpretation uses the independent-column assumption; copying the same ten observed columns ten times does not create new independent evidence.
-
-We can also compute the expected score under the related model:
-$$
-\mathbb E_M[s]=\tfrac12(1)+\tfrac12\log_2(2/3)\approx0.208.
-$$
-Together with the negative background expectation, this explains the direction of the score: under repeated independent sampling, related-model columns accumulate positive evidence on average and background columns accumulate negative evidence. Individual alignments can still favor the wrong model.
+::: {.algorithm}
+**Algorithm: compare score accumulation under the two models.**
+Draw independent ordered pairs from each supplied model. Score each stream first by match $+1$/mismatch $-1$, then by its calibrated log-odds table. Plot the running sums against the number of observed pairs.
 :::
 
-## Score scales and gap costs
+```{.python .execute}
+#| label: fig-log-odds-composition-walk
+#| code-fold: true
+#| code-summary: "Simulate and compare accumulated scores"
+#| fig-cap: "Simulated pair streams under the A-rich background R and related model M, scored in two ways. Ordinary match rewards rise even for chance pairs; calibrated log-odds scores accumulate evidence in opposite directions."
+#| fig-alt: "Two line plots against number of paired columns. Both cumulative point scores rise on the left; the background log-odds falls and the related-model log-odds rises on the right."
+#| fig-width: 6
+#| fig-height: 3.5
+np.random.seed(2)
+rich_background = {"A": 0.8, "C": 1 / 15, "G": 1 / 15, "T": 1 / 15}
+words, random_probabilities, related_probabilities = [], [], []
+for a in "ACGT":
+    for b in "ACGT":
+        random_probability = rich_background[a] * rich_background[b]
+        copy_probability = rich_background[a] if a == b else 0
+        words.append((a, b))
+        random_probabilities.append(random_probability)
+        related_probabilities.append(0.5 * random_probability + 0.5 * copy_probability)
 
-The total score for a gapped alignment adds substitution scores and gap scores. A linear gap model contributes $g<0$ for each gap character. We have derived the substitution terms; this chosen gap penalty is an additional assumption about insertions and deletions. Lesson 6 will distinguish opening a gap from extending it.
+fig, axes = plt.subplots(1, 2)
+for label, probabilities, line_style in [
+    ("Background R", random_probabilities, "-"),
+    ("Related M", related_probabilities, "--"),
+]:
+    draws = np.random.choice(len(words), size=300, p=probabilities)
+    raw_scores, calibrated_scores = [], []
+    for word_index in draws:
+        a, b = words[word_index]
+        raw_scores.append(1 if a == b else -1)
+        calibrated_scores.append(math.log2(
+            related_probabilities[word_index] / random_probabilities[word_index]))
+    columns = np.arange(1, len(draws) + 1)
+    axes[0].plot(columns, np.cumsum(raw_scores), line_style, label=label)
+    axes[1].plot(columns, np.cumsum(calibrated_scores), line_style, label=label)
+for ax in axes:
+    ax.set_xlabel("Paired columns")
+    ax.axhline(0, color=cf.RULE, linewidth=0.8)
+axes[0].set_ylabel("Cumulative points")
+axes[1].set_ylabel("Cumulative log-odds (bits)")
+axes[1].legend()
+plt.show()
+```
 
-Multiplying every substitution and gap score by the same positive constant preserves the ordering of all alignments. Changing units from bits to natural logarithms does exactly this. Multiplying only the substitution scores changes their weight relative to gaps and can change the chosen alignment.
-
-::: {#exm-score-shift}
-## Adding a constant can change the optimum
-Align $\texttt{A}$ with $\texttt{A}$, using match $+1$ and gap $-2$. The single-column alignment scores 1; the two-column alignment $\texttt{A-}/\texttt{-A}$ scores $-4$.
-
-Add 6 to every column score, including gaps. The first alignment now scores 7 and the second scores 8. A per-column shift rewards extra columns, whose number can differ between alignments.
-:::
-
-Gap-gap columns are never allowed. The two gap columns in this example are valid under Lesson 1's alignment definition, though some later scoring conventions forbid an immediate switch between opposite gap types.
-
-The likelihood-ratio derivation applies to a supplied ungapped alignment under our two column models. Adding chosen gap costs gives an optimization objective, but does not by itself supply a normalized probability model for gapped strings. Lesson 3 finds the alignment maximizing that objective. Interpreting a score after such a search still requires accounting for how the alignment was selected.
+The derivation scores a supplied ungapped alignment. Adding gap scores creates an alignment objective, but a normalized model for gapped strings needs further assumptions. Searching for the highest-scoring alignment also changes the distribution of the reported score: it selects the best among many candidates.
 
 ## Exercises
 
-::: {#exr-lesson03-expected-score}
+::: {#exr-log-odds-expected-score}
 Assume each ordered DNA pair is equally likely under the background. Compute the expected score for match $+1$ and mismatch $-1$.
 :::
 
 ::: {#exr-log-odds-hand}
-Using the synthetic pair model, score $\texttt{ACGA}/\texttt{ATGT}$ in bits and check the likelihood ratio by multiplication.
+Using the uniform-background pair model, score $\texttt{ACGA}/\texttt{ATGT}$ in bits and check the likelihood ratio by multiplication.
 :::
 
-::: {#exr-lesson03-score-assumption}
+::: {#exr-log-odds-score-assumption}
 Give one biological reason a protein scoring matrix might assign different scores to two kinds of mismatch.
 :::
 
+::: {#exr-log-odds-match-fraction}
+For the uniform-background pair model, write the score of $n$ paired columns with $m$ matches. Find the smallest match fraction $m/n$ that gives positive evidence, and explain why the same fraction supplies more evidence as $n$ grows.
+:::
+
 ::: {#exr-log-odds-units}
-Prove that multiplying all column scores by a positive constant preserves every maximizing alignment. Explain why adding a constant need not.
+Prove that multiplying all column scores by a positive constant preserves every maximizing alignment. To see why adding a constant need not, score A/A and A-/-A using match $+1$ and gap $-2$, then add 6 to every column score, including gaps.
 :::
 
 ::: {#refs}

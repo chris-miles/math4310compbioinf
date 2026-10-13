@@ -55,7 +55,7 @@ Mismatch fractions describe the observed letters, not the full history of substi
 
 An *evolutionary distance* estimates the expected number of substitutions per site along the path between two samples. Unlike a mismatch fraction, it can exceed one. We will supply these distances to the tree algorithm; they may come from a fitted substitution model rather than raw mismatch counts.
 
-::: {.callout-note collapse="true" title="Going deeper: a correction for hidden substitutions"}
+### A correction for hidden substitutions
 The Jukes–Cantor model assumes equal base frequencies and equal rates for changes between each pair of different bases. Its predicted mismatch fraction after total path distance $d$ is
 $$
 f=\frac34\left(1-e^{-4d/3}\right).
@@ -66,8 +66,23 @@ d=-\frac34\ln\left(1-\frac43f\right),\qquad 0\leq f<\frac34.
 $$
 For $f=0.1$, this gives $d\approx0.1073$, slightly more than the observed mismatch fraction. As the lineages diverge, their bases approach independent uniform draws, so the probability of a mismatch approaches $3/4$. The observed difference then *saturates*: large additional evolutionary distances produce small changes in $f$. The correction diverges as $f$ approaches $3/4$ and is not a finite real estimate at or above that value. Near saturation, sampling error in $f$ becomes large uncertainty in $d$ [@durbin1998].
 
-A corrected matrix estimated from finite sequences need not satisfy the triangle inequality or fit any tree exactly. A model-based correction does not remove sampling noise or guarantee that the substitution assumptions hold.
-:::
+A corrected matrix estimated from finite sequences need not fit any tree exactly: correcting for hidden substitutions still leaves sampling noise and model assumptions.
+
+```{.python .execute}
+#| label: fig-upgma-saturation
+#| fig-cap: "Expected mismatch fraction under the Jukes-Cantor model. Additional substitutions become harder to detect as the curve approaches three quarters, so observed mismatches increasingly underestimate evolutionary distance."
+#| fig-alt: "A rising concave curve of mismatch fraction against substitutions per site approaches the horizontal level 0.75; a dashed no-hidden-changes line rises diagonally."
+distance = np.linspace(0, 3, 301)
+mismatch = 0.75 * (1 - np.exp(-4 * distance / 3))
+fig, ax = plt.subplots()
+ax.plot(distance, mismatch, label="Expected mismatch fraction")
+ax.plot([0, 1], [0, 1], "--", color=cf.RULE, label="Every change remains visible")
+ax.axhline(0.75, color=cf.RULE, linewidth=0.8, linestyle=":")
+ax.set(xlabel="Evolutionary distance (substitutions per site)",
+       ylabel="Mismatch fraction", ylim=(0, 1))
+ax.legend()
+plt.show()
+```
 
 ## What the tree must explain
 
@@ -243,7 +258,7 @@ The figure's horizontal distances encode branch lengths, not merely the order of
 
 ## Why exact ultrametric input is recovered
 
-The hand example works because all cross-cluster distances at a merge agree. We now show that this agreement persists for any exact ultrametric input.
+Under a clock, the closest tips meet at the youngest ancestral height because their distance is twice that height. Merging them therefore recovers the most recent split. Once this group is represented by a cluster, every member has the same distance to a tip outside it: all those paths meet at the same older ancestor. Averaging preserves that distance, so the same reasoning applies at the next merge. The proof makes this repeated step precise.
 
 ::: {#thm-upgma-recovery}
 ## Exact distance recovery
@@ -276,29 +291,54 @@ time and $\mathcal{O}(n^2)$ space, assuming constant-time arithmetic and diction
 
 ## When evolutionary rate changes the answer
 
-A small distance can reflect a recent ancestor, a slow rate, or both. Consider a true rooted tree in which A and B are sisters under U, and C branches directly from R. Suppose its evolutionary branch lengths are
-$$
-R\to U=1,\quad U\to A=1,\quad U\to B=9,\quad R\to C=1
-$$
-in the same hundredths-of-a-substitution units. The B lineage has accumulated much more change. The true additive distances are
-$$
-d_{AB}=10,\qquad d_{AC}=3,\qquad d_{BC}=11.
-$$
-These fail the ultrametric condition: 11 is the unique largest value. UPGMA first merges A,C because 3 is smallest, even though their common ancestor R is older than the ancestor U of A,B. It groups the slowly changing tips rather than the true sister pair.
+A small distance can reflect a recent ancestor, a slow rate, or both. Suppose the true tree separates the pair A,B from the pair C,D. Give A and C terminal branches of length 1, B and D terminal branches of length 8, and the edge connecting the pairs length 1, all in the same hundredths-of-a-substitution units. Summing along the paths gives
+
+| | A | B | C | D |
+|---|---:|---:|---:|---:|
+| A | 0 | 9 | 3 | 10 |
+| B | 9 | 0 | 10 | 17 |
+| C | 3 | 10 | 0 | 9 |
+| D | 10 | 17 | 9 | 0 |
+
+A and C have the smallest distance, 3, even though they belong to different pairs in the true tree. UPGMA joins these slowly changing tips first. This changes the branching pattern, not merely its branch lengths.
 
 ```{.python .execute}
 #| label: code-upgma-clock-failure
 unequal_rate_distances = np.array([
-    [0, 10, 3],
-    [10, 0, 11],
-    [3, 11, 0],
+    [0, 9, 3, 10],
+    [9, 0, 10, 17],
+    [3, 10, 0, 9],
+    [10, 17, 9, 0],
 ])
-wrong_tree, wrong_merges = upgma(["A", "B", "C"], unequal_rate_distances)
-assert wrong_merges[0][:2] == (("A",), ("C",))
+wrong_tree, wrong_merges = upgma(labels, unequal_rate_distances)
 wrong_merges
 ```
 
-The second merge uses $(10+11)/2=10.5$, so the output predicts both A–B and C–B distances to be 10.5. It fits neither original value exactly. More sequence data would not repair this example: the distances were already exact; the failed assumption was the clock. Methods such as neighbor joining instead work with additive distances without imposing equal root-to-tip lengths, but normally return an unrooted tree [@durbin1998].
+After merging A,C, their distances to B and D are both 9.5. The code resolves that tie by joining B next; the last merge occurs at distance 12. The inferred A-to-C path has length 3, but the inferred A-to-B path has length 9.5 instead of 9. More sequence data would not repair this example: the input distances were already exact; the failed assumption was the clock.
+
+```{.python .execute}
+#| label: fig-upgma-rate-failure
+#| fig-width: 6
+#| fig-height: 6
+#| fig-cap: "An unequal-rate tree and UPGMA's reconstruction from its exact distances. The true tree pairs A with B and C with D; UPGMA instead joins the slowly changing A and C. Horizontal extents show branch lengths in both panels."
+#| fig-alt: "Two trees with root drawn at the left. In the true tree A and C have short terminal branches and B and D long ones. UPGMA pairs A and C and places all tips at the same horizontal coordinate."
+true_tree = {"name": "", "length": 0, "children": [
+    {"name": "", "length": 0.5, "children": [
+        {"name": "A", "length": 1}, {"name": "B", "length": 8}]},
+    {"name": "", "length": 0.5, "children": [
+        {"name": "C", "length": 1}, {"name": "D", "length": 8}]},
+]}
+fig, axes = plt.subplots(2, 1)
+cf.tree(axes[0], true_tree)
+cf.tree(axes[1], wrong_tree)
+axes[0].set_title("True tree: root drawn at the middle of the connecting edge")
+axes[1].set_title("UPGMA: closest tips are joined")
+for ax in axes:
+    ax.set_xlim(-0.5, 10)
+plt.show()
+```
+
+The true distances still contain information about the branching pattern. For example, $d_{AB}+d_{CD}=18$, while both $d_{AC}+d_{BD}$ and $d_{AD}+d_{BC}$ equal 20: the latter paths cross the connecting edge twice. Methods for additive distances can use such relationships without imposing a clock; neighbor joining is one example and normally returns an unrooted tree [@durbin1998].
 
 A sequence tree describes the history of the sampled region; extending its conclusions to a whole genome requires further assumptions. Distance summaries discard which columns supplied the differences. The next lesson keeps those characters and asks how many changes a candidate tree requires.
 
@@ -321,7 +361,7 @@ For three tips with all off-diagonal distances equal to 6, draw two possible bin
 :::
 
 ::: {#exr-upgma-rate-change}
-In the unequal-rate example, change the length U→B from 9 to $b\geq0$. Find the range of $b$ for which A,C is the unique first merge. Explain why knowing the true distances perfectly is not enough to justify that merge biologically.
+In the unequal-rate example, change both long terminal branches, to B and D, from 8 to $b\geq0$. Find the range of $b$ for which A,C is the unique first merge. Explain why knowing the true distances perfectly is not enough to justify that merge biologically.
 :::
 
 ::: {#refs}

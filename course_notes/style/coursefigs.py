@@ -51,6 +51,37 @@ def use_style() -> None:
     plt.style.use(STYLE_PATH)
 
 
+def pca_projection(
+    ax: plt.Axes,
+    points: np.ndarray,
+    direction: Sequence[float],
+    labels: Sequence[str] = (),
+) -> None:
+    """Draw centered two-gene samples and their perpendicular line projections."""
+    points = np.asarray(points, dtype=float)
+    direction = np.asarray(direction, dtype=float)
+    direction = direction / np.linalg.norm(direction)
+    scores = points @ direction
+    projected = scores[:, None] * direction
+    extent = max(1.0, float(np.max(np.abs(points)))) * 1.4
+    line = np.array([-extent, extent])[:, None] * direction
+    ax.plot(line[:, 0], line[:, 1], color=RULE, linewidth=1)
+    for i, (point, projection) in enumerate(zip(points, projected)):
+        ax.plot([point[0], projection[0]], [point[1], projection[1]],
+                color=RULE, linewidth=1)
+        if labels:
+            ax.annotate(labels[i], point, xytext=(4, 5),
+                        textcoords="offset points", fontsize=9)
+    ax.scatter(points[:, 0], points[:, 1], color=INK, s=25,
+               label="sample", zorder=3)
+    ax.scatter(projected[:, 0], projected[:, 1], color=EMPHASIS,
+               marker="x", s=30, linewidths=1.5, label="projection", zorder=4)
+    ax.plot(0, 0, marker="+", color=RULE, markersize=7, markeredgewidth=1)
+    ax.set(xlim=(-extent, extent), ylim=(-extent, extent),
+           xlabel="Centered gene 1", ylabel="Centered gene 2")
+    ax.set_aspect("equal", adjustable="box")
+
+
 def _bare(ax: plt.Axes) -> None:
     """Remove axes chrome for schematics that are not data plots."""
     ax.set_xticks([])

@@ -14,8 +14,10 @@ Symbols are defined when they first appear in a lesson. Some letters have differ
 | $g<0$ | Signed score per gap character in a linear-gap model |
 | $F(i,j)$ | Best global-alignment score for two prefixes |
 | $H(i,j)$ | Best local-alignment score ending at two prefix boundaries, allowing an empty alignment |
-| $d,e>0$ | Gap-open and gap-extension penalties |
-| $G(k)=d+(k-1)e$ | Cost of a length-$k$ gap |
+| $d_o,d_e>0$ | Gap-open and gap-extension penalties |
+| $G(\ell)=d_o+(\ell-1)d_e$ | Cost of a length-$\ell$ gap |
+| $Q(i,j)$ | Fitting-alignment score for a read prefix against a reference prefix |
+| $h$ | Number of seed hits to verify |
 | $M,I_x,I_y$ | Affine-alignment tables for paired letters, a gap in $y$, and a gap in $x$ |
 | $\mathcal O(\cdot)$ | Asymptotic upper bound on growth |
 | $k$ | Word length in a $k$-mer |
@@ -55,6 +57,7 @@ Symbols are defined when they first appear in a lesson. Some letters have differ
 | $v_k$, $t_k=Zv_k$ | PCA loading direction in gene space and its sample-score vector |
 | $Z=UDV^\top$ | Singular value decomposition, with $D=\operatorname{diag}(d_k)$ in this context |
 | $T=ZV=UD$, $\lambda_k=d_k^2/(n-1)$ | PCA score matrix and component variances |
+| $\rho_{ij}$ | Probability that a sampled RNA-seq read in sample i is assigned to gene j |
 | $C_{ij}$, $L_i$, $R_{ij}$ | Assigned RNA-seq read count, sample's total assigned count, and counts per million |
 | $\sigma_j$, $W=ZG^{-1}$ | Gene's sample standard deviation and standardized matrix, with $G=\operatorname{diag}(\sigma_j)$ |
 

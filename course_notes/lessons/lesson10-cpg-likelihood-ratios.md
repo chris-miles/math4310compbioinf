@@ -13,8 +13,15 @@ How can two sequence models classify a genomic window?
 ```{.python .execute}
 #| label: setup
 #| code-fold: true
-#| code-summary: "Setup: imports"
+#| code-summary: "Setup: imports and figure style"
 import math
+import random
+import sys
+
+sys.path.insert(0, "../style")
+import matplotlib.pyplot as plt
+import coursefigs as cf
+cf.use_style()
 ```
 
 ## CpG islands
@@ -70,14 +77,14 @@ This uses the same product-to-sum rule as Lesson 2, but adjacent pairs now overl
 
 ## A synthetic CpG classifier
 
-Use the illustrative models below. The island model has the same row for every current base. The background model makes $G$ rare after $C$.
+Use the illustrative models below. Both models have neighboring-base dependence: the island model favors G especially after C, while the background model suppresses that transition. They also differ in their overall preferences for C and G. The numbers are chosen for hand calculation, not fitted to a genome.
 
 $$
 A^+=
 \begin{array}{c|rrrr}
  & A&C&G&T\\\hline
 A&.2&.3&.3&.2\\
-C&.2&.3&.3&.2\\
+C&.1&.3&.5&.1\\
 G&.2&.3&.3&.2\\
 T&.2&.3&.3&.2
 \end{array}
@@ -97,31 +104,33 @@ We take $q_a^+=q_a^-=1/4$ for every base, so the initial term cancels. Write $\b
 | pair begins with | $A$ | $C$ | $G$ | $T$ |
 |---|---:|---:|---:|---:|
 | $A$ | -0.585 | 0.585 | 0.585 | -0.585 |
-| $C$ | -0.585 | 0.000 | 1.585 | -0.585 |
+| $C$ | -1.585 | 0.000 | 2.322 | -1.585 |
 | $G$ | -0.585 | 0.585 | 0.585 | -0.585 |
 | $T$ | -0.585 | 0.585 | 0.585 | -0.585 |
 
-Rows denote the first base of a pair and columns the second. For example,
+Rows denote the first base of a pair and columns the second. A pair receives a positive contribution when it is more likely in the island model and a negative contribution when it is more likely in background. For example,
 $$
-\beta(C,G)=\log_2(0.3/0.1)=\log_2 3\approx1.585.
+\beta(C,G)=\log_2(0.5/0.1)=\log_2 5\approx2.322.
 $$
+
+The remaining C-row entries explain how that preference changes the whole model. CC contributes zero because both models give it probability 0.3. CA and CT each contribute $\log_2(0.1/0.3)\approx-1.585$ bits: these exits from C favor background. Outside the C row, the $\pm0.585$ scores reflect the models' differing base preferences. The score combines composition and order, with an additional effect specifically after C.
 
 ::: {#exm-cpg-two-windows}
 ## Equal composition, opposite classifications
 For `GCTA`, the adjacent pairs are `GC`, `CT`, and `TA`:
 $$
-S(\texttt{GCTA})=0.585-0.585-0.585=-0.585.
+S(\texttt{GCTA})=0.585-1.585-0.585=-1.585.
 $$
 For `CGTA`, the pairs are `CG`, `GT`, and `TA`:
 $$
-S(\texttt{CGTA})=1.585-0.585-0.585=0.415.
+S(\texttt{CGTA})=2.322-0.585-0.585=1.152.
 $$
-At threshold zero, the first window is background-like and the second island-like under these models. Base composition alone cannot make this distinction. Neither four-base decision identifies a real CpG island or reports whether these cytosines are methylated.
+At threshold zero, the first window is background-like and the second island-like under these models. Their 2.737-bit score difference comes entirely from order because their base counts agree. The classifications describe which synthetic model better fits each window.
 :::
 
 ::: {#exm-cpg-threshold}
 ## The threshold changes the decision
-The likelihood ratio for `CGTA` is $2^{0.415}\approx1.33$. Threshold zero calls it an island. Threshold one bit requires the island model to be more than twice as likely, so the same window is classified as background.
+The likelihood ratio for `CGTA` is $2^{1.152}\approx2.22$. Threshold zero calls it an island. Threshold two bits requires the island model to be more than four times as likely, so the same window is classified as background.
 :::
 
 The parameters and four-base windows are teaching examples. Real estimates come from much longer labeled island and flanking sequences.
@@ -156,10 +165,10 @@ def markov_log_ratio(
         score += math.log2(numerator / denominator)
     return score
 
-
 plus_row = {"A": 0.2, "C": 0.3, "G": 0.3, "T": 0.2}
 minus_row = {"A": 0.3, "C": 0.2, "G": 0.2, "T": 0.3}
 transition_plus = {base: plus_row.copy() for base in "ACGT"}
+transition_plus["C"] = {"A": 0.1, "C": 0.3, "G": 0.5, "T": 0.1}
 transition_minus = {base: minus_row.copy() for base in "ACGT"}
 transition_minus["C"] = {"A": 0.3, "C": 0.3, "G": 0.1, "T": 0.3}
 initial_plus = {base: 0.25 for base in "ACGT"}
@@ -177,46 +186,17 @@ initial_minus = initial_plus.copy()
 ]
 ```
 
-One length-$w$ window costs $\mathcal{O}(w)$ time. For a genome of length $N$ and $1\leq w\leq N$, separately scoring its $N-w+1$ windows costs $\mathcal{O}(Nw)$. A rolling calculation can reuse the contributions from overlapping pairs.
-
-On the string `GCTAA`, shift the four-base window from `GCTA` to `CTAA`. Its pairs change from GC, CT, TA to CT, TA, AA. With equal initial distributions, only GC leaves and AA enters:
-$$
-S(\texttt{CTAA})=S(\texttt{GCTA})-\beta(G,C)+\beta(A,A)
-\approx-0.585-0.585-0.585=-1.755.
-$$
-The shift removes a pair favoring the island model and adds one favoring background, lowering the evidence for an island-like region.
-
-::: {.algorithm}
-**Algorithm: update an overlapping window score.**
-For $w\geq2$, subtract the outgoing pair's score and add the incoming pair's score. Retain the shared pair contributions. If the initial distributions differ, also replace the old initial-base log ratio by the new one.
-:::
-
-```{.python .execute}
-#| label: code-cpg-rolling-check
-old_score = markov_log_ratio(
-    "GCTA", initial_plus, initial_minus, transition_plus, transition_minus
-)
-outgoing = math.log2(transition_plus["G"]["C"] / transition_minus["G"]["C"])
-incoming = math.log2(transition_plus["A"]["A"] / transition_minus["A"]["A"])
-rolling_score = old_score - outgoing + incoming
-direct_score = markov_log_ratio(
-    "CTAA", initial_plus, initial_minus, transition_plus, transition_minus
-)
-assert math.isclose(rolling_score, direct_score)
-round(rolling_score, 6), round(direct_score, 6)
-```
-
-After scoring the first window, each shift requires constant work, giving $\mathcal{O}(N)$ total time under constant-time arithmetic and lookups. Width-one windows have no pairs and use only the initial-base score.
+One length-$w$ window costs $\mathcal{O}(w)$ time: it has one initial-base contribution and $w-1$ pair contributions. Every pair can strengthen or weaken the accumulated evidence.
 
 ## Likelihood ratios and prior odds
 
-A prior probability describes the class frequency before examining the window. A posterior probability describes it after using the observed sequence. Bayes' rule gives
+Recall the prior-odds calculation from Lesson 2. Here the prior $P(M_+)$ is the fraction of windows expected to be island-like before inspecting their letters, for the window-sampling scheme we plan to use. The posterior $P(M_+\mid x)$ is the class probability after inspecting this window. Bayes' rule gives
 $$
 \frac{P(M_+\mid x)}{P(M_-\mid x)}
 =\frac{P(x\mid M_+)}{P(x\mid M_-)}
 \frac{P(M_+)}{P(M_-)}.
 $$
-The common factor $P(x)$ cancels. The prior therefore matters even when we can compute both likelihoods exactly.
+Both posterior probabilities divide by $P(x)$, the overall probability of observing the window after allowing either class. Taking their ratio cancels that common denominator. The sequence likelihood ratio therefore multiplies the starting class odds.
 
 A threshold also allows unequal class prevalence. Under equal costs for the two kinds of classification error, choosing the more probable class by Bayes' rule favors the island class when
 $$
@@ -224,7 +204,55 @@ S(x)>\log_2\frac{P(M_-)}{P(M_+)}.
 $$
 If islands are rare, the right side is positive. A window needs stronger sequence evidence to overcome the prior odds. In practice, the threshold can instead be selected on validation data to meet a desired false-positive rate.
 
-For example, if the prior island probability is 0.1, the prior odds are $1/9$. The likelihood ratio $4/3$ for `CGTA` changes the odds to $4/27$, giving posterior probability $4/31\approx0.129$. Evidence in favor of the island model has raised its probability, but background remains the more probable class.
+For example, if the prior island probability is 0.1, the prior odds are $1/9$. The exact likelihood ratio $20/9$ for `CGTA` changes the odds to $20/81$, giving posterior probability $20/101\approx0.198$. The letters nearly double the island probability, but background remains the more probable class.
+
+## Evidence accumulates along the sequence
+
+A four-base window provides only three pair contributions. Longer windows have more opportunities to distinguish the chains. If a window has $w-1$ pairs with average contribution $\bar\beta$, then, with our equal initial distributions,
+$$
+S(x)=(w-1)\bar\beta.
+$$
+For example, an average of 0.1 bit per pair yields 0.9 bit in ten bases but 19.9 bits in 200 bases. Those scores mean likelihood ratios of about 1.87 and nearly one million. They describe two whole-window hypotheses, so the gain in evidence assumes the whole window belongs to the same regime.
+
+We can see the accumulation by simulating a sequence with background, then an island, then background again. At each new position, use the row of the current region's chain. Both chains are the synthetic models already scored by hand.
+
+::: {.algorithm}
+**Algorithm: simulate a changing region and accumulate evidence.**
+Draw the first base from the shared initial distribution. For each later position, select the island or background transition matrix according to its known simulation label and draw from the row of the previous base. Append the base and add its pair log ratio to the cumulative score.
+:::
+
+```{.python .execute}
+#| label: fig-cpg-cumulative-evidence
+#| code-fold: true
+#| fig-cap: "Cumulative island-versus-background log ratio for a simulated sequence; the shaded interval uses the island chain. Upward and downward trends show where successive pairs favor each model."
+#| fig-alt: "A cumulative score curve falls through background, rises within the shaded island interval from bases 201 to 400, and falls again in background."
+rng = random.Random(0)
+alphabet = list(initial_plus)
+sequence = rng.choices(alphabet, weights=list(initial_plus.values()), k=1)
+cumulative_score = [0.0]
+for position in range(1, 800):
+    region_matrix = (transition_plus if 200 <= position < 400
+                     else transition_minus)
+    previous = sequence[-1]
+    row = region_matrix[previous]
+    current = rng.choices(alphabet, weights=[row[base] for base in alphabet], k=1)[0]
+    sequence.append(current)
+    contribution = math.log2(transition_plus[previous][current]
+                              / transition_minus[previous][current])
+    cumulative_score.append(cumulative_score[-1] + contribution)
+
+fig, ax = plt.subplots()
+ax.axvspan(200.5, 400.5, color=cf.LIGHT, label="Simulated island")
+ax.plot(range(1, 801), cumulative_score)
+ax.set_xlabel("Base position")
+ax.set_ylabel("Cumulative log ratio (bits)")
+ax.legend()
+plt.show()
+```
+
+The curve need not rise at every island base: CA and CT still favor background there. Its trend reflects the balance of all pair contributions. The height at position $i$ scores the whole prefix $x_1\ldots x_i$ under two homogeneous chains; the change in slope shows where local evidence changes. A positive prefix score is therefore not a label for its final base.
+
+Window width creates a related compromise. Short windows respond quickly to a change of region but contain few pairs, so individual contributions can reverse a call. Long windows accumulate stronger evidence within a region but mix the two regimes near a boundary. For instance, a 100-base window straddling a boundary could contain 50 background bases and 50 island bases; either whole-window label assigns one class to bases from the other. Allowing the region label to change inside the sequence is the problem taken up by hidden Markov models.
 
 ## Estimation and evaluation
 
@@ -246,32 +274,10 @@ $$
 \qquad
 \text{specificity}=\frac{72}{80}=0.90.
 $$
-Raising the threshold can remove false positives, but it can also turn true positives into false negatives. There is no threshold-free statement that the classifier has 90% accuracy in every application: performance also changes with window length, genome, and the frequency of islands in the evaluated set.
+Raising the threshold can remove false positives, but it can also turn true positives into false negatives. The 0.90 specificity describes background windows at this threshold. It does not describe all windows: 88 of the 100 windows were classified correctly, giving accuracy 0.88.
 :::
 
-A useful comparison shuffles each window many times while preserving its base counts. This changes dinucleotide order while keeping GC content fixed. Comparing original scores with the shuffled score distribution measures how much the ordering contributes beyond composition. Similar classification accuracy alone is inconclusive: a threshold can conceal substantial changes in individual scores.
-
-::: {.callout-note collapse="true" title="Going deeper: precision and class prevalence"}
-
-Sensitivity and specificity condition on the true class. A user examining a list of predicted islands asks a different question: what fraction of that list is correct? This fraction is called *precision*, $TP/(TP+FP)$ when at least one positive prediction is made.
-
-In @exm-cpg-confusion, precision is $16/(16+8)=2/3$, even though specificity is 0.90. To see the role of prevalence, suppose sensitivity remains 0.80 and specificity remains 0.90 in a population of 1,000 windows containing only 10 islands. The expected counts are 8 true positives and 99 false positives. Their ratio gives a precision of about $8/107=0.075$ in the corresponding population calculation.
-
-More generally, let $p$ denote island prevalence, $s$ sensitivity, and $t$ specificity. A randomly selected window is a correctly predicted island with probability $sp$, and a falsely predicted island with probability $(1-t)(1-p)$. Therefore
-$$
-P(\text{island}\mid\text{positive prediction})
-=\frac{sp}{sp+(1-t)(1-p)}.
-$$
-This calculation assumes the class-conditional performance transfers to the new population. It explains why evaluating on a balanced sample can misrepresent the usefulness of a genome-wide candidate list. To interpret that list, we need the class frequency as well as performance within each class. Raising the threshold may improve precision, but its new sensitivity and specificity must be measured rather than assumed.
-:::
-
-## Limitations
-
-1. **Fixed windows blur boundaries.** The classifier labels a whole window and cannot say where an island begins. Lesson 11 makes the region label a state that changes along the sequence.
-2. **Window length changes the evidence.** A score of 0.1 bit per pair becomes about 20 bits over 200 bases but is weak evidence over ten bases. Raw scores from different lengths are not directly comparable.
-3. **Training labels define the target.** A chain trained on one annotation rule or species may not transfer to another genome with different composition.
-4. **Related windows leak information.** Overlapping windows and homologous regions must stay in the same data split. Otherwise held-out performance measures memorized neighbors.
-5. **A first-order chain sees only dinucleotides.** It cannot represent longer motifs, distance to a promoter, or experimental methylation measurements.
+The labels used for fitting define the target, and the model sees only adjacent pairs. Longer motifs, promoter context, and experimental methylation measurements would require additional information.
 
 ## Exercises
 

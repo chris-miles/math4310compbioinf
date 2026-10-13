@@ -67,7 +67,7 @@ The node r gives the algorithm a direction in which to process the tree. Under t
 
 ## Fitch's recurrence
 
-Enumerating every ancestral assignment would try four states at every internal node. The tree structure lets us summarize a solved subtree instead.
+With $N$ leaves, a rooted binary tree has $N-1$ internal nodes, so enumerating ancestral bases tries $4^{N-1}$ assignments at each site. Choosing one base too early can also lose an optimum. If a pair of leaves has A and C, either A or C at their parent costs one change; the rest of the tree may decide which choice is useful. We retain both possibilities until that context is available.
 
 For each node v, store its subtree minimum $c_v$ and a set $S_v$ of states attaining that minimum *at the root of that subtree*. At a leaf with observed base b, set $S_v=\{b\}$ and $c_v=0$. For an internal node with children u and w, use
 $$
@@ -79,55 +79,44 @@ $$
 $$
 An intersection means both children can use the same state without adding a change. Disjoint sets require a change; their union records the parent choices that attain the new minimum. Process children before their parent, a *postorder* traversal. The final answer is $c_r$.
 
+Why is a set enough when there are four possible bases and many ancestral assignments? What the parent needs is the cost of attaching to the solved subtree.
+
+::: {#lem-fitch-attachment}
+## Cost of attaching a subtree
+Suppose a subtree rooted at v has minimum cost $c_v$ and minimizing root states $S_v$. If its parent has fixed state $t$, the minimum cost of the subtree **including its edge to that parent** is
+$$
+c_v+\mathbf 1\{t\notin S_v\}.
+$$
+:::
+
+::: {.proof}
+If $t\in S_v$, choose a minimum-cost subtree rooted at t and pay zero for the connecting edge. Otherwise, choose any root state in $S_v$ and pay one edge change, achieving $c_v+1$. A lower cost would have to be $c_v$, since costs are integers. That would require both a minimum-cost subtree and a zero-cost edge, making t a member of $S_v$, a contradiction.
+:::
+
+The connecting edge matters. For two A leaves, forcing their parent to C costs two changes inside that subtree; attaching an A-rooted subtree to a C state above it costs only one. The lemma concerns the latter quantity, which is exactly what the next recurrence step uses.
+
 ::: {#thm-fitch-correctness}
 ## Correctness of Fitch's algorithm
 For a binary tree and the equal-cost objective, the recurrence returns the minimum number of changes at each site.
 :::
 
 ::: {.proof}
-Induct on subtrees. The leaf initialization fixes the observed state. Assume each child has its true minimum and exactly the states attaining that minimum in its set. For a parent state t, the best cost from a child subtree plus its connecting edge is the child minimum if t belongs to the child set, and the child minimum plus one otherwise. In the latter case, using a minimizing child state pays one edge change; any assignment rooted at t costs at least one more within the child subtree. No choice can do better.
+Induct on subtrees. The leaf initialization fixes the observed state. Assume each child has its true minimum and its minimizing root states. By @lem-fitch-attachment, each child contributes its minimum plus zero or one according to whether the proposed parent state belongs to its set.
 
 The two child contributions add, since their assignments can be chosen independently after fixing t. If the sets intersect, choosing t in the intersection pays no extra change; every other t pays at least one. If they are disjoint, no t can avoid both penalties. Choosing t in their union pays exactly one, while choosing outside pays two. This establishes both the minimum and its minimizing root states, completing the induction.
 :::
 
 ## Two sites by hand
 
-At site 1, a and b both have A, so $S_u=\{A\}$ and $c_u=0$. Similarly $S_v=\{G\}$ and $c_v=0$. Their sets are disjoint: $S_r=\{A,G\}$ and $c_r=1$. Assigning A to r and u, and G to v, places the one change on r–v. At least one change is necessary because the leaves are not all the same, so the score is independently confirmed.
+At site 1, a and b both have A, so $S_u=\{A\}$ and $c_u=0$. Similarly $S_v=\{G\}$ and $c_v=0$. Their sets are disjoint: $S_r=\{A,G\}$ and $c_r=1$. Assigning A to r and u, and G to v, places the one change on r–v. Either A or G at the root gives a one-change explanation.
 
-At site 2, $S_u=\{C\}$ with cost zero. The C/T pair under v gives $S_v=\{C,T\}$ with cost one. The root intersection is $\{C\}$, so the total remains one. Assign C to all three internal nodes; only the edge to d changes. Again, two observed bases require at least one change. Adding sites gives alignment score two.
-
-```{.python .execute}
-#| label: fig-fitch-two-sites
-#| fig-cap: "Fitch sets on the same candidate tree for two alignment sites. Each panel needs one change; branch extents are drawing coordinates, not evolutionary lengths. Internal labels show the locally minimizing sets."
-#| fig-alt: "Two rooted four-leaf trees pairing a with b and c with d. Site 1 has A/A and G/G pairs and root set A,G. Site 2 has C/C and C/T pairs and root set C."
-#| fig-width: 7
-#| fig-height: 3.5
-site_trees = [
-    {"name": "r: {A,G}", "length": 0.6, "children": [
-        {"name": "u: {A}", "length": 1, "children": [
-            {"name": "a: A", "length": 1}, {"name": "b: A", "length": 1}]},
-        {"name": "v: {G}", "length": 1, "children": [
-            {"name": "c: G", "length": 1}, {"name": "d: G", "length": 1}]},
-    ]},
-    {"name": "r: {C}", "length": 0.6, "children": [
-        {"name": "u: {C}", "length": 1, "children": [
-            {"name": "a: C", "length": 1}, {"name": "b: C", "length": 1}]},
-        {"name": "v: {C,T}", "length": 1, "children": [
-            {"name": "c: C", "length": 1}, {"name": "d: T", "length": 1}]},
-    ]},
-]
-fig, axes = plt.subplots(1, 2)
-for ax, tree, title in zip(axes, site_trees, ["site 1: score 1", "site 2: score 1"]):
-    cf.tree(ax, tree)
-    ax.set_title(title)
-plt.show()
-```
+At site 2, $S_u=\{C\}$ with cost zero. The C/T pair under v gives $S_v=\{C,T\}$ with cost one. The root intersection is $\{C\}$, so the total remains one. Assign C to all three internal nodes; only the edge to d changes. Adding sites gives alignment score two.
 
 ### Reconstructing one ancestral assignment
 
 Choose any state in the root set. Move from parent to child: if the parent's chosen state belongs to the child set, reuse it; otherwise choose any state from that set and pay one edge change. Continue to the leaves. The proof's child contributions show that this procedure attains the score.
 
-This returns one optimum. The sets describe minima for isolated subtrees; they do **not** list all states a node can take in every globally optimal assignment. A locally more expensive assignment can sometimes save a change on the edge above it. Enumerating every optimal reconstruction requires richer state-conditioned costs and back-pointers [@durbin1998, p. 176].
+The sets describe minima for isolated subtrees. To see why this matters, change the leaf bases to $a=A$, $b=C$, $c=G$, $d=G$. Now $S_u=\{A,C\}$ with cost 1, $S_v=\{G\}$ with cost 0, and the full tree costs 2. Choosing $r=v=G$ and $u=A$ pays on the edges u-to-b and r-to-u. Choosing $r=u=v=G$ instead pays on u-to-a and u-to-b, still totaling 2, even though $G\notin S_u$. The extra change inside u's subtree saves a change above it. Fitch reconstruction supplies one optimum; finding all optimal ancestral assignments requires the state-conditioned costs described by weighted parsimony [@durbin1998].
 
 ## A runnable scorer and reconstruction
 
@@ -199,7 +188,30 @@ for site in range(2):
 print(site_scores, sum(site_scores))
 ```
 
-The output $[1,1]$, total 2, agrees with both hand calculations. Checking the reconstructed edge costs and fixed leaf states tests different requirements: a low-cost assignment is not valid if it changes an observed leaf.
+The output $[1,1]$, total 2, agrees with the hand calculation. The figure draws the sets returned by the same computation.
+
+```{.python .execute}
+#| label: fig-fitch-two-sites
+#| fig-cap: "Computed Fitch sets for the two alignment sites. Disjoint child sets require a change; a shared state lets the parent join the child subtrees without adding one. Branch extents are drawing coordinates, not evolutionary lengths."
+#| fig-alt: "Two four-leaf trees pairing a with b and c with d. Site 1 combines A and G into root set A,G. Site 2 intersects C with C,T to give root set C."
+#| fig-width: 6
+#| fig-height: 5.5
+def labeled_subtree(node: str, sets: dict[str, set[str]]) -> dict:
+    """Build drawing labels from the computed Fitch sets."""
+    label = node + ": {" + ",".join(sorted(sets[node])) + "}"
+    result = {"name": label, "length": 1}
+    if node in children:
+        result["children"] = [labeled_subtree(child, sets) for child in children[node]]
+    return result
+
+fig, axes = plt.subplots(2, 1)
+for site, ax in enumerate(axes):
+    observed = {taxon: sequence[site] for taxon, sequence in alignment.items()}
+    score, sets, _ = fitch_site(children, "r", observed)
+    cf.tree(ax, labeled_subtree("r", sets))
+    ax.set_title(f"Site {site + 1}: {score} change")
+plt.show()
+```
 
 For N leaves a binary tree has $2N-1$ nodes. With the fixed four-base alphabet, set operations take bounded time, so one site costs $\mathcal O(N)$ time and space. Scoring m sites costs $\mathcal O(mN)$ time. Processing one site at a time retains $\mathcal O(N)$ working storage; storing all ancestral sequences additionally needs $\mathcal O(mN)$ space.
 
@@ -230,7 +242,7 @@ for a, b, c, d in splits:
     print(f"{a}{b}|{c}{d}", total)
 ```
 
-This exhaustive comparison is feasible for four taxa. For $N\ge3$ named taxa, the number of unrooted binary trees is $(2N-5)!!$, the product of odd integers from 1 through $2N-5$. Adding another leaf inserts it on any of the current tree's $2N-3$ edges, explaining the next multiplicative factor. Fast scoring of one tree therefore does not make exhaustive tree search practical. Larger searches often improve a starting tree by local rearrangements, which can stop before the global minimum. Fitch's guarantee concerns the supplied tree, not such a search strategy.
+This exhaustive comparison is feasible for four taxa. For $N\ge3$ named taxa, the number of unrooted binary trees is $(2N-5)!!$, the product of odd integers from 1 through $2N-5$. Adding another leaf inserts it on any of the current tree's $2N-3$ edges, explaining the next multiplicative factor. There are $15!!=2{,}027{,}025$ trees for 10 taxa and $35!!\approx2.22\times10^{20}$ for 20 taxa. Fast scoring of one tree therefore does not make exhaustive tree search practical. Larger searches often improve a starting tree by local rearrangements, which can stop before the global minimum. Fitch's guarantee concerns the supplied tree, not such a search strategy.
 
 ## Biological limits of the answer
 

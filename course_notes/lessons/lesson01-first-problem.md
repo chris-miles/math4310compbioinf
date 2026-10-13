@@ -47,7 +47,7 @@ The conversion from signal to letters is called *basecalling*. A read records se
 
 For example, suppose a read is $\texttt{ACGTT}$ and a candidate reference segment is $\texttt{ACTT}$. A gap can place the final TT pairs together, suggesting an extra G in the read relative to this segment. The alignment alone cannot tell whether that G is biological or a basecalling error. We first need a precise comparison rule, then evidence from the measurements and other reads to interpret the difference.
 
-The two strands of DNA pair $A$ with $T$ and $C$ with $G$ and run in opposite directions. The *reverse complement* of a string is the other strand's reading: the reverse complement of $GAG$ is $CTC$. In ordinary DNA read mapping, the read's orientation relative to the reference is unknown, so we consider both the sequence and its reverse complement. They describe opposite strands of the same double-stranded fragment.
+DNA reads can come from either strand. Read mapping therefore also considers the *reverse complement*, formed by reversing the string and exchanging A with T and C with G; for example, GAG becomes CTC. Our examples assume the orientation has already been chosen.
 
 ## Hamming distance
 
@@ -103,7 +103,19 @@ $$
 $d_H(x, y) = 1$ and $d_H(x, z) = 4$.
 :::
 
-$z$ can be obtained from $x$ by deleting the first letter and appending one letter. Hamming distance reports four because it pairs position $i$ of one string with position $i$ of the other; the deletion shifts the surviving letters. Thus the count describes this fixed correspondence. It does not establish that four mutations occurred.
+$z$ can be obtained from $x$ by deleting the first A and appending A at the end. The surviving CGTT stays in order, but moves one position to the left. Fixed-position comparison now pairs C with A, G with C, and T with G. One deletion can therefore create many mismatched positions without changing those surviving bases. In @fig-first-problem-shift, gaps restore their correspondence.
+
+```{.python .execute}
+#| label: fig-first-problem-shift
+#| fig-cap: "The read x and candidate z paired at fixed positions (left) and with a shifted correspondence (right). Four fixed-position mismatches become four matches and two gap columns."
+#| fig-alt: "Two pairs of sequence rows: ACGTT over CGTTA has four mismatch dots; ACGTT- over -CGTTA pairs the middle CGTT letters."
+#| fig-width: 6
+#| fig-height: 2
+fig, axes = plt.subplots(1, 2)
+cf.alignment(axes[0], x, z, labels=("x", "z"))
+cf.alignment(axes[1], x + "-", "-" + z, labels=("x", "z"))
+plt.show()
+```
 
 ## Edit distance
 
@@ -144,12 +156,6 @@ Every insertion or deletion changes the length by one, while a substitution leav
 
 For example, changing $\texttt{ACGTT}$ to $\texttt{ACT}$ requires at least two edits because the lengths differ by two. Deleting G and one T achieves two, so the distance is exactly two. For equal-length strings the length bound is zero and may tell us very little; the earlier example needed a separate argument to exclude one substitution.
 
-There is also a useful check involving a third string $z$. Concatenate a shortest edit sequence from $x$ to $y$ with one from $y$ to $z$. This constructs a route from $x$ to $z$ of length $d_E(x,y)+d_E(y,z)$, so
-$$
-d_E(x,z)\leq d_E(x,y)+d_E(y,z).
-$$
-The direct optimum can improve on that route, but cannot cost more. For @exm-edit-distance, the route through $y$ costs $1+3=4$, while the direct route costs 2. Such bounds let us reject inconsistent distance calculations before implementing a search.
-
 ## Counting alignments
 
 $d_H$ uses $n$ comparisons because it fixes the correspondence in advance. Edit distance allows many correspondences. An alignment records one of them and makes its cost visible: count the mismatched letter pairs and the gap columns. We first count the possible alignments to see why searching each separately is impractical.
@@ -159,7 +165,11 @@ $d_H$ uses $n$ comparisons because it fixes the correspondence in advance. Edit 
 An *alignment* of $x$ and $y$ writes the two strings one above the other with gap symbols $-$ inserted so that every column is a letter over a letter, a letter over a gap, or a gap over a letter, and reading each row without its gaps gives back the original string.
 :::
 
-Reading an alignment from left to right gives a transformation: preserve a matching letter, substitute a mismatched letter, delete a letter opposite a gap, or insert a letter opposite a gap. A shortest edit sequence can be represented this way, so minimizing this alignment cost gives edit distance. Arbitrary edit sequences may contain redundant changes, such as inserting a letter and then deleting it, which an alignment need not record. Here are alignments realizing $d_E(x, z) = 2$ and $d_E(x, y) = 1$:
+Reading an alignment from left to right gives a transformation: preserve a match, substitute a mismatch, delete a top-row letter opposite a gap, or insert a bottom-row letter opposite a gap. Thus every alignment supplies an edit sequence with the same cost.
+
+The converse needs a little care. In a shortest edit sequence, inserted letters are chosen in their final form, deleted originals need no substitutions, and surviving originals change at most once. Otherwise an operation could be removed or several substitutions replaced by one. Surviving original letters also retain their order. Pair each with its final letter, put deleted originals opposite gaps, and put inserted letters opposite gaps in the other row. This constructs an alignment with the same edit cost. Minimizing over alignments therefore gives exactly $d_E$.
+
+Here are alignments realizing $d_E(x, z) = 2$ and $d_E(x, y) = 1$:
 $$
 \begin{array}{c}
 \texttt{A C G T T -} \\
@@ -269,9 +279,9 @@ By shared 3-mers, $z$ is closer to $x$ than $y$ is. Hamming distance and edit di
 
 The three definitions disagree because they measure different things: $d_H$ counts mismatched positions, $d_E$ minimizes the number of allowed edits, and shared $k$-mers count preserved words wherever they sit. In $y$, changing position 4 destroys CGT and GTT, leaving only ACG shared with $x$. In $z$, the shift preserves CGT and GTT, although ACG is lost and TTA is gained at the boundaries. Thus a shift can preserve most words without preserving their positions. A substitution affects up to $k$ windows, depending on its position; choosing $k$ changes how much local agreement a shared word demands.
 
-For fixed $k$ and expected constant-time dictionary operations, this comparison costs $\mathcal{O}(n+m)$. If $k$ varies, copying and hashing each Python substring costs $\mathcal{O}(k)$, giving $\mathcal{O}(k(n+m))$. Short-word matches can narrow a search before alignment (Lesson 6), and overlapping words can constrain sequence reconstruction (Lesson 7). Neither use makes a shared word proof of common ancestry or a unique placement in a genome.
+For fixed $k$ and expected constant-time dictionary operations, this comparison costs $\mathcal{O}(n+m)$. If $k$ varies, copying and hashing each Python substring costs $\mathcal{O}(k)$, giving $\mathcal{O}(k(n+m))$. Short-word matches can narrow a search before alignment. A shared word alone does not establish common ancestry or a unique genomic placement.
 
-The spectrum discards the order of its words, so distinct strings can have identical spectra (@exr-first-problem-kmers). Counting only distinct shared words also discards multiplicities. These losses matter when reconstructing a sequence from its pieces: the available words need not specify one unique reconstruction (Lesson 8).
+The spectrum discards the order of its words, so distinct strings can have identical spectra (@exr-first-problem-kmers). Counting only distinct shared words also discards multiplicities. These losses matter when reconstructing a sequence from its pieces: the available words need not specify one unique reconstruction.
 
 ## Exercises
 

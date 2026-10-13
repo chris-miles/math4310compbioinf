@@ -22,13 +22,13 @@ cf.use_style()
 
 ## Eulerian paths
 
-The graph from Lesson 7 records which short words can follow one another. To reconstruct a genome, we must choose an order that uses the observed word occurrences. An algorithm can find such an order and still have no way to tell whether it is the true genome.
+The graph from Lesson 7 records which short words can follow one another. To reconstruct a genome, we must choose an order that uses the observed word occurrences. The edges specify which words must be used; their shared endpoints specify which orders are allowed.
 
 Our input is an ideal genomic k-mer multiset and its directed graph. Here "ideal" means that each valid k-mer start position in the genome contributes exactly one occurrence. We seek a walk that uses every edge occurrence once, then ask a separate question: could another complete walk spell a different sequence? The repeated-region example will distinguish an algorithmic failure from information missing in the data.
 
 Recall that $\operatorname{Comp}_k(x)$ lists the length-$k$ substrings of $x$, including repeated occurrences. In $D(K)$, each word in the multiset $K$ supplies an edge from its length-$(k-1)$ prefix to its length-$(k-1)$ suffix. Identical words supply parallel edges. Following an edge appends its last base to the sequence spelled so far.
 
-In a sequencing experiment, many reads can cover the same position. Those repeated observations provide evidence about an edge; they are not additional positions that the genome must contain. We first solve the exact reconstruction problem, then return to the different task of deciding which graph the measured reads support [@compeau2015].
+The multiplicities here are genomic occurrences, as in Lesson 7. Read abundance will return when we consider errors and contigs.
 
 ::: {#def-eulerian-trail}
 ## Eulerian path and cycle
@@ -46,9 +46,7 @@ A string $x$ with $\operatorname{Comp}_k(x)=K$ determines an Eulerian path in $D
 Sketch. Consecutive genomic $k$-mers overlap in $k-1$ symbols, so their edges meet in order. Conversely, traversing an edge appends its final symbol. Using every edge occurrence once gives exactly $K$.
 :::
 
-For example, at $k=3$, two independently sampled copies of read `ACGT` supply two `ACG` observations and two `CGT` observations. If the genome is `ACGT`, its ideal spectrum contains each word only once. Treating all four observed occurrences as genomic edges gives degree differences $+2$ at `AC` and $-2$ at `GT`; it cannot have an Eulerian path, despite the reads being correct. This is a mismatch between the data representation and the reconstruction model.
-
-The equivalence in @prp-assembly-eulerian assumes an ideal spectrum. It does not guarantee existence for raw read counts or uniqueness even with perfect data.
+The proposition reduces exact string reconstruction to a graph traversal. We still need to know when such a traversal exists, how to find it, and whether a different traversal would spell a different string.
 
 ## Degree conditions
 
@@ -63,10 +61,14 @@ Suppose all nonzero-degree nodes of a finite directed multigraph are connected w
 :::
 
 ::: {.proof}
-Sketch. Every visit to an internal node pairs one entering edge with one leaving edge, proving necessity. For sufficiency, add $t\to s$ if needed, follow unused edges until a cycle closes, then splice in closed walks from nodes incident to unused edges. Remove the added edge.
+Sketch. Every visit to an internal node pairs an entering edge with a leaving edge. Only the start and end can have an unpaired edge, proving necessity.
+
+For sufficiency, first make the graph balanced by adding $t\to s$ in the open-path case. Follow unused outgoing edges from a node $v$. At any other node, the walk has used one more incoming than outgoing edge, so balance guarantees an unused exit. It can get stuck only back at $v$, producing a closed walk.
+
+Removing that closed walk leaves balanced unused degrees. If an unused edge already touches the closed walk, we have a place to continue. Otherwise, weak connectivity gives an undirected route from the walk to a remaining edge. The first edge leaving the visited nodes must be unused, so it supplies that contact. Balance of the unused edges then guarantees an unused outgoing edge at some visited node. Start there, make another closed walk, and insert it at that node. Each insertion uses at least one new edge, so the finite process consumes every edge. In the open-path case, cut the completed cycle at the added edge and delete it to obtain a path from $s$ to $t$.
 :::
 
-Connectivity matters. Two disjoint cycles are balanced but cannot share one walk.
+The proof explains why local degree counts suffice once connectivity is checked: every unfinished excursion has somewhere to rejoin the growing walk.
 
 ::: {#exm-euler-degrees}
 ## Degree check for `TACGACG`
@@ -80,7 +82,6 @@ Connectivity matters. Two disjoint cycles are balanced but cannot share one walk
 
 The path must start at `TA` and end at `CG`.
 :::
-
 
 ### Interpreting degree differences
 
@@ -149,31 +150,7 @@ path = eulerian_path(edges)
 path, spell_node_path(path)
 ```
 
-
-::: {#exm-hierholzer-stack}
-## Hierholzer's algorithm on the shared graph
-Use the edge order
-$$
-\texttt{TA→AC},\quad \texttt{AC→CG},\quad \texttt{CG→GA},\quad
-\texttt{GA→AC},\quad \texttt{AC→CG}.
-$$
-Starting at `TA`, the stack grows through
-$$
-[\texttt{TA}], [\texttt{TA,AC}], [\texttt{TA,AC,CG}],
-[\texttt{TA,AC,CG,GA}], [\texttt{TA,AC,CG,GA,AC,CG}].
-$$
-The last `CG` has no unused exit, so it moves to the output. The same is then true of `AC`, `GA`, and the preceding nodes. The output is built backward:
-$$
-[\texttt{CG,AC,GA,CG,AC,TA}].
-$$
-Reversing it gives the Eulerian path and spells `TACGACG`.
-:::
-
-Why append nodes only when stuck? A greedy walk can close a cycle while unused edges remain elsewhere. The delayed output lets the algorithm insert that cycle at the correct occurrence of its starting node. The stack is the data structure that performs the splicing described in the proof.
-
-For an Eulerian graph, every edge is removed exactly once, and every node placed on the stack is popped exactly once. This accounts for the linear running time directly. The final length check in the code verifies that the traversal used all components rather than merely completing one balanced component.
-
-Each traversal pushes one endpoint, so total time and space are $\mathcal O(|V|+|E|)$. Choosing a different outgoing edge may return a different valid assembly.
+Each traversal pushes one endpoint, and each stack entry is popped once. The adjacency lists therefore give $\mathcal O(|V|+|E|)$ time and space. The output is reversed because a node is finalized only after all its outgoing excursions have been completed.
 
 ### Stack order and path order
 
@@ -191,26 +168,33 @@ The stack algorithm instead postpones the final ordering:
 
 Reversing the output gives $A,B,A,C$, which uses every edge once. The earlier dead end becomes the end of the final path. Popping a vertex records where its completed portion belongs after the remaining excursions have been inserted.
 
-For an independent output check, list all consecutive pairs in the returned path and compare their multiset with the input edge multiset. Checking only that each pair is an allowed edge could accept a path that repeats one edge occurrence and misses another. Degree validation and the algorithm's final length check establish the intended traversal conditions; multiset comparison checks the returned object directly, including parallel-edge multiplicity.
-
 ## Repeats and ambiguity
 
 For `ACGTCGACG` at $k=3$,
 $$K=\{\!\{\texttt{ACG},\texttt{ACG},\texttt{CGT},\texttt{GTC},\texttt{TCG},\texttt{CGA},\texttt{GAC}\}\!\}.$$
-The graph branches at `CG`.
+The node `CG` occurs three times in the genome. Between those visits lie two closed excursions: `CG → GT → TC → CG`, which appends `TCG`, and `CG → GA → AC → CG`, which appends `ACG`. The graph records both excursions but loses their order.
 
 ```{.python .execute}
 #| label: fig-euler-repeat-graph
-#| fig-cap: "A repeat creates a branch at `CG`. Either outgoing edge can be taken first in a complete Eulerian path."
-#| fig-alt: "A directed multigraph with two edges from AC to CG and branches from CG toward GT and GA."
+#| fig-cap: "The same graph permits two orders of its closed excursions from CG. Each panel highlights the excursion taken first and names the different string spelled by the completed traversal."
+#| fig-alt: "Two copies of the same directed multigraph. The upper panel highlights CG to GT to TC to CG and is labeled ACGTCGACG; the lower highlights CG to GA to AC to CG and is labeled ACGACGTCG."
 #| fig-width: 6
-#| fig-height: 3.6
+#| fig-height: 5.5
+#| code-fold: true
 repeat_edges = [("AC", "CG"), ("AC", "CG"), ("CG", "GT"),
                 ("GT", "TC"), ("TC", "CG"), ("CG", "GA"), ("GA", "AC")]
 positions = {"AC": (0, 0), "CG": (1.6, 0), "GT": (3, .9),
              "TC": (4.2, .2), "GA": (2.5, -1.1)}
-fig, ax = plt.subplots()
-cf.digraph(ax, repeat_edges, pos=positions, highlight_nodes=["CG"])
+first_excursions = [
+    [("CG", "GT"), ("GT", "TC"), ("TC", "CG")],
+    [("CG", "GA"), ("GA", "AC"), ("AC", "CG")],
+]
+fig, axes = plt.subplots(2, 1)
+for ax, excursion, spelling in zip(
+    axes, first_excursions, ["ACGTCGACG", "ACGACGTCG"]
+):
+    cf.digraph(ax, repeat_edges, pos=positions, highlight_edges=excursion)
+    ax.set_title("Complete traversal spells " + spelling)
 plt.show()
 ```
 
@@ -219,8 +203,7 @@ plt.show()
 Both `ACGTCGACG` and `ACGACGTCG` have composition $K$. Data consisting only of $K$ cannot favor either reconstruction.
 :::
 
-A repeat causes ambiguity when the available context cannot pair its incoming flanks with the correct outgoing flanks. Larger $k$ supplies more context, but demands longer error-free overlaps and fragments more readily under missing coverage.
-
+Starting at `AC`, first append G to reach `CG`. Taking the TCG excursion before the ACG excursion spells `ACGTCGACG`; reversing the two excursions spells `ACGACGTCG`. The same edges are used in each case. By contrast, `TACGACG` has only one closed excursion from `CG` before the walk ends there, so there are no two different excursions to reorder. A repeat creates ambiguity when the graph loses a pairing or ordering that changes the spelled sequence, not merely whenever a node is visited twice.
 
 ### Existence and uniqueness
 
@@ -279,7 +262,7 @@ Removing a route changes the set of sequences the graph represents. Bubble detec
 
 After filtering and graph simplification, real data still contain branches supported by substantial evidence. To identify routes rather than count observations, aggregate repeated observations of the same k-mer into one edge with a count attached. In this topology graph, a maximal path whose internal nodes each have one incoming edge and one outgoing edge has no local choice. Its spelled sequence is a *contig*. Keep the counts as evidence about support; they do not create additional branches merely because a region was sequenced many times.
 
-For the two copies of `ACGT` considered earlier, this graph has just `AC → CG → GT`, with count two on each edge. Its contig is `ACGT`. In @fig-euler-error-bubble, the two outgoing neighbors of `AC` are genuinely different, so abundance aggregation leaves the bubble intact. A contig ends where a route encounters branching, a coverage gap, or a chromosome end. An isolated component that forms a directed cycle needs separate treatment: choose a starting node and report the circular sequence rather than wait for a branch [@compeau2015].
+For example, two sampled reads `ACGT` give the topology path `AC → CG → GT`, with count two on each edge. Its contig is `ACGT`. In @fig-euler-error-bubble, the two outgoing neighbors of `AC` are genuinely different, so abundance aggregation leaves the bubble intact. A contig ends where a route encounters branching, a coverage gap, or a chromosome end. An isolated component that forms a directed cycle needs separate treatment: choose a starting node and report the circular sequence rather than wait for a branch [@compeau2015].
 
 This output separates what the reads determine from what they leave ambiguous. A contig is not necessarily a chromosome, and an assembly with fewer contigs is not automatically more accurate. Joining across an unresolved repeat can produce a longer but false sequence. Paired reads and long reads help because they connect graph regions farther apart than one k-mer overlap.
 
@@ -290,17 +273,7 @@ A simplified short-read workflow therefore has several distinct steps:
 3. Simplify tips and bubbles when the evidence supports one path.
 4. Emit unbranched contigs and use longer-range data to order or connect them.
 
-This workflow uses observed abundance to assess support, whereas the Eulerian theorem uses genomic occurrence multiplicity to specify an exact reconstruction. Aggregating observations is appropriate for finding unbranched routes, but it does not estimate how many times a repeated region occurs in the genome. Inferring genomic multiplicity from coverage is a further modeling task [@compeau2015].
-
-The traversal guarantee applies to the supplied graph. Filtering and simplification make additional claims about sequencing noise and biological variation.
-
-## Limitations
-
-1. **Balance gives existence, not uniqueness.** The repeat graph has two reconstructions.
-2. **Long repeats exceed local context.** Increasing $k$ helps only when reads support those longer exact overlaps.
-3. **Errors break the exact model.** Cleaning changes the graph and therefore requires an error model.
-4. **Coverage does not equal genomic multiplicity.** Sampling variation can blur one-copy and repeated regions.
-5. **The genome may be unidentifiable.** Contigs report the unbranched stretches when data cannot resolve branches.
+The degree theorem and traversal algorithm solve the ideal composition problem exactly. The contig workflow answers a different biological question: which stretches can the measured reads support without choosing among unresolved joins?
 
 ## Exercises
 

@@ -13,8 +13,14 @@ Given an observed sequence, how much support does each position have for each hi
 ```{.python .execute}
 #| label: setup
 #| code-fold: true
-import itertools
 import math
+import sys
+
+import matplotlib.pyplot as plt
+
+sys.path.insert(0, "../style")
+import coursefigs as cf
+cf.use_style()
 ```
 
 ## Genome labels and uncertainty
@@ -91,7 +97,13 @@ Small total sequence probability is normal: a probability model spreads its mass
 
 ## The backward algorithm
 
-Forward probabilities use the observations up through position $i$. The observations to its right also inform the label, because neighboring hidden states tend to persist.
+Could we get a state probability simply by normalizing a forward column? Yes, but it answers a question about only the prefix:
+$$
+\frac{f_I(2)}{f_B(2)+f_I(2)}
+=\frac{0.216}{0.084+0.216}=0.72
+=P(\pi_2=I\mid SS).
+$$
+This is the support for I before seeing the remaining WS. Those later bases also inform position 2 because region labels tend to persist. To use them, we need the probability of that suffix under each possible state at the current position.
 
 ::: {#def-backward-variable}
 ## Backward probability
@@ -134,6 +146,8 @@ The suffix is more likely starting from $I$ at position 3, although the symbol a
 :::
 
 ## Combining the two directions
+
+Fixing the state at position $i$ separates the calculation into a past and a future. Every prefix ending in $k$ can be joined to every suffix starting from $k$. The forward value adds the prefix probabilities; the backward value adds the conditional suffix probabilities. Multiplying the two sums accounts for every compatible combination once. Because forward includes $x_i$ and backward starts at $x_{i+1}$, no observation is counted twice.
 
 ::: {#prp-forward-backward-posterior}
 ## Forward-backward identity
@@ -191,7 +205,7 @@ The factorization joins a prefix ending in I, the specified transition and next 
 
 An annotation can therefore report a likely region while assigning only moderate support to its exact endpoint. State posteriors describe positions; transition posteriors describe boundaries. Both sum over alternative paths rather than treating one decoded path as known.
 
-## Implementation and checks
+## Computing and comparing the probabilities
 
 ::: {.algorithm}
 **Algorithm: forward-backward inference.**
@@ -257,26 +271,36 @@ for left, right in zip(forward, backward):
 probability, [round(column["I"], 3) for column in posterior]
 ```
 
-For an independent check, enumerate all 16 paths and use the joint factorization directly.
+### A disagreement inside a region
+
+Append one S to the running observation, giving SSWSS. The most probable complete path is now IIIII, with joint probability 0.005308416. The posterior at the interior W is only $\gamma_I(3)\approx0.323$, so positionwise decoding gives IIBII. A single path can win by staying in I throughout while the combined mass of paths using B at the middle position is larger. This is why the two decoding objectives can give different annotations even away from sequence boundaries.
 
 ```{.python .execute}
-#| label: code-forward-enumeration-check
-total = 0.0
-island_mass = [0.0] * 4
-for path in itertools.product(states, repeat=4):
-    mass = initial[path[0]] * emission[path[0]]["S"]
-    for i, symbol in enumerate("SWS", start=1):
-        mass *= transition[path[i - 1]][path[i]] * emission[path[i]][symbol]
-    total += mass
-    for i, state in enumerate(path):
-        if state == "I":
-            island_mass[i] += mass
-
-assert math.isclose(total, probability)
-for i in range(4):
-    assert math.isclose(island_mass[i] / total, posterior[i]["I"])
-print("Enumeration agrees with the likelihood and all four posteriors.")
+#| label: fig-forward-backward-evidence
+#| fig-cap: "Island-state probabilities for SSWSS using the observed prefix or the entire sequence. Later S observations raise support for I at the interior W, but that support remains below one half."
+#| fig-alt: "Two curves over S S W S S compare normalized forward values with full posteriors. Both dip at the central W; the full posterior there is about 0.323, above the forward-only value about 0.214."
+observations = "SSWSS"
+left, right, likelihood = forward_backward(
+    observations, states, initial, transition, emission
+)
+filtered = []
+smoothed = []
+for prefix, suffix in zip(left, right):
+    filtered.append(prefix["I"] / sum(prefix.values()))
+    smoothed.append(prefix["I"] * suffix["I"] / likelihood)
+positions = list(range(1, len(observations) + 1))
+fig, ax = plt.subplots()
+ax.plot(positions, filtered, "o--", label="Observed prefix only")
+ax.plot(positions, smoothed, "s-", label="Entire sequence")
+ax.axhline(0.5, color=cf.RULE, linewidth=0.8)
+ax.set_xticks(positions, [f"{i}\n{symbol}" for i, symbol in zip(positions, observations)])
+ax.set(xlabel="Position and observed symbol", ylabel="Probability of island state I",
+       ylim=(0, 1))
+ax.legend()
+plt.show()
 ```
+
+At the last position the two curves meet: the prefix is the whole sequence, and every backward value is one. At earlier positions their separation measures how the remaining observations change the state probability under this model.
 
 With $K=|Q|$ states, each table has $nK$ entries and each entry sums $K$ terms. Time is $\mathcal O(nK^2)$ and storage is $\mathcal O(nK)$. A likelihood alone needs only a rolling forward column and $\mathcal O(K)$ storage.
 
@@ -306,13 +330,6 @@ is the posterior probability of a particular transition. Sum over $i$ to estimat
 
 Repeat inference and re-estimation. Exact unregularized updates do not decrease training likelihood, but can settle at a local optimum; the optimization proof is beyond this lesson. Better training likelihood alone does not establish better genome annotation. Initial parameters, state definitions, and held-out evaluation still matter.
 ::::
-
-## Limitations
-
-1. **Posterior labels need not form a legal path.** For a constrained annotation, choose a decoding objective that also respects allowed transitions.
-2. **Probability-space code underflows.** Use log-sum-exp or a consistent scaling scheme for long sequences; a zero computed likelihood need not mean a mathematically impossible sequence.
-3. **Confidence is model-dependent.** An inadequate state space can give confident wrong labels.
-4. **Training and evaluation are separate.** Re-estimating parameters on the evaluation sequence changes what a held-out check measures.
 
 ## Exercises
 

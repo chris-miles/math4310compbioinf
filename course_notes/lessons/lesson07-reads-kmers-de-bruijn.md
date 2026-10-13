@@ -27,12 +27,9 @@ Read mapping in Lesson 5 assumed a reference sequence to supply coordinates. For
 
 We begin with the reads as a collection of strings, then isolate a simpler problem: reconstruct one string from its exact short-word counts. That idealization makes the graph construction visible. Comparing the two kinds of counts will show which assumptions separate the toy problem from an actual assembly.
 
-::: {#def-read-multiset}
-## Read multiset
 Let $G$ be a genome string. An *ideal read* is a substring of $G$ or its reverse complement. Observed reads can differ from these substrings because of sequencing errors. Sequencing data are a multiset $R=\{\!\{r_1,\ldots,r_m\}\!\}$ because identical read sequences may be observed more than once.
 
 A multiset is an unordered collection that retains how often each item occurs. The strings record order within each read; the multiset does not record the reads' positions in the genome.
-:::
 
 ::: {.biology}
 The DNA sample contains many molecules covering overlapping genomic regions; sequencing samples fragments from them, so a genomic position can be observed repeatedly. These repeated measurements help distinguish sequence from errors, but their counts also reflect uneven sampling rather than just the number of copies in the genome.
@@ -49,12 +46,11 @@ $$R=\{\!\{\texttt{TACG},\texttt{ACGA},\texttt{CGAC},\texttt{GACG}\}\!\}.$$
 Here $C=16/7$. End bases occur in one read and the central base occurs in four, even though starts are perfectly regular.
 :::
 
-
 ### Read boundaries and overlap
 
-Breaking reads into shorter words seems destructive. It forgets which k-mers came from the same read and where each k-mer sat inside that read. The benefit is that exact overlaps become easy to count and index. Instead of comparing every read against every other read, we use the k-mer itself as a key in a dictionary.
+Breaking reads into shorter words forgets some useful order: which words came from the same read and how far apart they were. It also exposes short overlaps shared by reads with different endpoints. Those overlaps let us join evidence from many fragments into one graph. We first count the words, then turn each word occurrence into an edge whose endpoints record the overlap.
 
-A shared k-mer is one way to find a possible overlap, but it is not required for two reads to connect in the graph we will build. For example, `TACG` and `CGAC` from @exm-read-coverage share the two-base flank `CG` and no 3-mer. At $k=3$, the last word of the first read, `ACG`, can nevertheless be followed by the first word of the second, `CGA`: their two-base suffix and prefix agree. The graph records that possible join through the node `CG`.
+A shared k-mer is one way to find a possible overlap, but it is not required for two reads to connect in the graph we will build. For example, `TACG` and `CGAC` from @exm-read-coverage share the two-base flank `CG` and no 3-mer. At $k=3$, the last word of the first read, `ACG`, can nevertheless be followed by the first word of the second, `CGA`: their two-base suffix and prefix agree. The shared flank `CG` will be the meeting point of those two edges.
 
 Matching words or flanks do not prove that reads came from neighboring genomic positions. Repeats can create the same matches at different locations. Small $k$ supplies less context for distinguishing those locations; large $k$ requires longer exact overlaps and can disconnect true neighbors when words are missing or contain errors. The choice of $k$ changes which sequence relationships the graph can represent [@compeau2015].
 
@@ -82,8 +78,6 @@ $$\operatorname{Comp}_k(x)=\{\!\{x_i\cdots x_{i+k-1}:1\leq i\leq n-k+1\}\!\}.$$
 This is a multiset: repeated occurrences remain repeated. If $k>n$, there are no valid starting positions, so the composition is empty.
 :::
 
-The exact composition is an ideal object. Breaking every read into $k$-mers instead gives coverage-weighted observations. The two multiplicities differ.
-
 ::: {#exm-spectrum-multiplicity}
 ## Genome and read multiplicity
 
@@ -92,7 +86,7 @@ The exact composition is an ideal object. Breaking every read into $k$-mers inst
 | copies in $G$ | 1 | 2 | 1 | 1 |
 | observations in $R$ | 1 | 3 | 2 | 2 |
 
-Coverage creates repeated observations of one genomic occurrence. Here the genome supplies five 3-mer occurrences, while the four reads supply eight observations. Each length-$L$ read contributes $L-k+1$ words when $L\geq k$, and no words otherwise. This total checks whether a counting program has omitted windows or invented words across read boundaries. Inferring genomic multiplicity from observed abundance is a further task [@compeau2015].
+Here the genome supplies five 3-mer occurrences, while the four reads supply eight observations. Each length-$L$ read contributes $L-k+1$ words when $L\geq k$, and no words otherwise. This total checks whether a counting program has omitted windows or invented words across read boundaries.
 :::
 
 ::: {.algorithm}
@@ -132,7 +126,11 @@ kmer_counts([genome], 3), kmer_counts(reads, 3)
 
 The model assumes one linear genome, its true multiplicities, no missing $k$-mers, and no errors. Ordering
 $$\texttt{TAC},\texttt{ACG},\texttt{CGA},\texttt{GAC},\texttt{ACG}$$
-by $(k-1)$-symbol overlaps spells `TACGACG`. Searching all orders hides the structure recorded by a graph.
+by $(k-1)$-symbol overlaps spells `TACGACG`. There are $5!$ orders of five labeled occurrences to try, and most fail the overlap requirement.
+
+One graph construction puts each word occurrence at a node and draws an arrow when two words overlap in $k-1$ symbols. Reconstruction then asks for a path visiting every occurrence node once, a *Hamiltonian path*. Repeated words require separate nodes. The de Bruijn construction moves each word occurrence onto an edge instead. Its two endpoints are the prefix and suffix that neighboring words must share. A reconstruction can revisit an overlap node while still consuming each word edge once [@compeau2015].
+
+This change matters computationally: using every edge once admits a linear-time traversal algorithm. We develop the construction here and derive that algorithm in the next lesson.
 
 ## The de Bruijn graph
 
@@ -184,7 +182,6 @@ cf.digraph(ax, edges, pos=positions, highlight_edges=[("AC", "CG")])
 plt.show()
 ```
 
-
 ### Constructing the graph by hand
 
 Each 3-mer splits into two overlapping 2-mers:
@@ -203,7 +200,7 @@ There are two useful ways to read the resulting graph. Locally, an edge says whi
 
 The construction needs the supplied words, not the unknown genome. For each word occurrence in $K$, compute its prefix and suffix and add the corresponding edge. An unknown ordering of strings becomes a traversal problem in a graph built directly from the unordered multiset.
 
-The same code can also build a graph from read-derived observations, but its parallel-edge counts then describe abundance in the reads. Consuming each observed edge once would reconstruct that different multiset, not necessarily the genome's composition. Lesson 8 separates exact reconstruction from using abundance to assess which graph routes the reads support.
+For now we supply the ideal genomic composition, so using every edge once is exactly the reconstruction requirement. The same construction on read counts gives a graph of observations; its edge counts need an additional sampling model before they can specify genomic copies.
 
 ::: {#exm-spell-de-bruijn}
 ## Spelling a walk
@@ -223,23 +220,6 @@ Sketch. Start with the first node, which contributes $k-1$ symbols. An edge labe
 
 Construction takes $\mathcal O(|K|)$ time for fixed $k$ and stores $|K|$ edges. Reconstruction now asks for a walk using every edge occurrence once. Lesson 8 supplies that algorithm.
 
-
-### How one error changes the spectrum
-
-Consider a read of length $L\geq k$ with one substituted base at one-based position $p$. A length-$k$ window beginning at $i$ contains the error exactly when $i\leq p\leq i+k-1$. Combining this with the valid start positions gives
-$$
-\max(1,p-k+1)\leq i\leq\min(p,L-k+1).
-$$
-The number of affected occurrences is therefore
-$$
-\min(p,L-k+1)-\max(1,p-k+1)+1.
-$$
-It is at most $k$, and is smaller near a read boundary.
-
-For $\texttt{ACGTTAC}$ with $k=3$, changing the fourth base T to C gives $\texttt{ACGCTAC}$. The middle words change from $\texttt{CGT,GTT,TTA}$ to $\texttt{CGC,GCT,CTA}$; the end words $\texttt{ACG}$ and $\texttt{TAC}$ survive. A substitution at the first base would affect only the first 3-mer.
-
-Each affected occurrence changes its word, but the number of newly distinct words can be smaller than the number of affected occurrences: a changed word might already appear elsewhere. Counts can also partly cancel when one word is lost in one window and gained in another. Thus the formula counts corrupted observations, not necessarily new graph edges with distinct labels. Increasing $k$ gives longer overlap context while allowing one base error to disturb more consecutive windows. The resulting graph errors are correlated, because those windows share the same wrong base.
-
 ## What changes with k
 
 Return to the reads of `TACGACG`, but suppose the read `ACGA` was not sampled. The remaining reads are `TACG`, `CGAC`, and `GACG`. Every genomic base still appears in at least one read. Whether all words are represented depends on $k$:
@@ -254,7 +234,6 @@ At $k=4$, the missing edge `ACG → CGA` breaks the route through the graph. At 
 For a DNA model with independent, equally likely bases, a particular k-mer has probability $4^{-k}$ at any position. This rough calculation explains why longer words are less likely to match by accident. Genomes are not random, and repeats violate the calculation badly, but it gives the direction of the tradeoff. Increasing k separates more repeated contexts while requiring longer error-free coverage.
 
 We can compare graphs at several $k$ values rather than assume one choice is always adequate. Our theorem in Lesson 8 applies to each fixed graph. Deciding which graph best represents the reads is a separate statistical question.
-
 
 :::: {.callout-note collapse="true" title="Going deeper: count words in a reference genome"}
 The [phiX174 reference](../data/phix174-NC_001422.1.fasta) gives us a small real sequence on which to check the same counting code. Download the repository to run this block from the lesson folder. FASTA's first line names the record; its remaining lines hold one continuous sequence.
@@ -274,12 +253,7 @@ len(reference), sum(counts.values()), len(counts)
 The first two numbers are sequence length and total 3-mer occurrences; the third counts distinct words. The genome is circular, but this calculation treats its FASTA representation as linear and omits the two 3-mers crossing the end/start boundary. This is the genome's composition, not the coverage-weighted counts of a sequencing experiment.
 ::::
 
-## Limitations
-
-1. **Exact composition assumes perfect coverage.** Missing $k$-mers remove edges; repeated sequencing adds observations without adding genomic copies.
-2. **The toy model fixes one strand.** The reverse complement of `ACG` is `CGT`: reverse the order and exchange A/T and C/G. A canonical word chooses one representative of this pair, but a graph must also retain orientation to recover valid overlaps.
-3. **The graph may lose order.** A repeated $(k-1)$-mer merges genomic positions and may permit several edge orders.
-4. **Errors create edges.** One wrong base changes up to $k$ read-derived $k$-mers.
+A repeated $(k-1)$-mer merges distinct genomic positions into one node. That merge can leave several complete edge orders compatible with the data. The next lesson distinguishes finding an order from establishing that only one sequence is possible.
 
 ## Exercises
 

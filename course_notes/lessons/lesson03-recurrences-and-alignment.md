@@ -25,7 +25,7 @@ cf.use_style()
 
 Suppose we have assembled DNA from two bacterial isolates and extracted the same gene from each assembly. The inputs are now two gene sequences, rather than two arbitrary raw reads. We expect the records to correspond from beginning to end, but an insertion or deletion can shift their internal coordinates. Global alignment makes that end-to-end expectation part of the problem: every letter in both records must appear in the answer.
 
-We have scores for matches, mismatches, and gaps, but trying every gap placement is already impractical for short strings. Today's dynamic program computes the best score; the next lesson recovers the aligned strings. If the input were instead a short read and an entire chromosome, requiring both full strings would be inappropriate. Lesson 5 changes the boundary rules to express that different task.
+We have scores for matches, mismatches, and gaps, but trying every gap placement is already impractical for short strings. A dynamic program will summarize the competing alignments in a table and compute the best score.
 
 Let $x=x_1\cdots x_n$ and $y=y_1\cdots y_m$. After reading some alignment columns, record $(i,j)$, the number of letters consumed from $x$ and $y$. An alignment consumes letters in order. A letter over a letter consumes one symbol from each string; a gap column consumes a symbol from one string. These counts turn a correspondence between letters into a path on a grid.
 
@@ -49,14 +49,24 @@ $$
 At $(2,1)$ we have consumed AC from $x$ and A from $y$. The path ends at $(4,3)$ because every letter has been used.
 :::
 
+```{.python .execute}
+#| label: fig-global-prefix-path
+#| fig-cap: "The alignment ACGT/A-GT as a path through consumed-prefix coordinates. The vertical step consumes C from x without consuming a letter from y."
+#| fig-alt: "A five-by-four grid labeled A C G T on rows and A G T on columns, with red cells at (0,0), (1,1), (2,1), (3,2), and (4,3)."
+#| fig-width: 4.5
+#| fig-height: 3.5
+path_cells = [(0, 0), (1, 1), (2, 1), (3, 2), (4, 3)]
+empty_grid = [[None] * 4 for _ in range(5)]
+fig, ax = plt.subplots()
+cf.dp_table(ax, list("ACGT"), list("AGT"), empty_grid, path=path_cells)
+plt.show()
+```
+
 ## Counting paths
 
-The grid does not reduce the number of possible alignments. Its advantage is that many paths arrive at the same prefix pair. Lesson 1 counted those alignments using $A(i,j)$; we retain that notation and now interpret each count as a number of grid paths.
+Different paths can consume the same two prefixes. Once they reach $(i,j)$, they have the same unused suffixes, even if their earlier gap placements differ. This shared continuation is what makes a table useful. Lesson 1 counted all ways of reaching each prefix pair using $A(i,j)$; we now interpret those counts as numbers of grid paths.
 
-::: {#def-recurrence}
-## Recurrence
 A *recurrence* defines a quantity from values on smaller inputs. Boundary conditions give the smallest values directly.
-:::
 
 For $i,j\geq1$, the counts satisfy
 $$
@@ -69,10 +79,7 @@ with $A(i,0)=A(0,j)=1$. Removing the final move leaves a path to one of the thre
 The recurrence gives $A(2,2)=13$, $A(3,3)=63$, and $A(10,10)=8{,}097{,}453$. Two length-10 strings have more than eight million alignments, but their table has only $11\times11=121$ cells.
 :::
 
-::: {#def-big-o}
-## Asymptotic upper bound
 We write $f(n)\in\mathcal O(g(n))$ if constants $C>0$ and $n_0$ exist such that $f(n)\le Cg(n)$ for all $n\ge n_0$.
-:::
 
 A table for lengths $n,m$ has $(n+1)(m+1)$ cells. For $n,m\geq1$, constant work per cell costs $\mathcal O(nm)$ time. Here we count integer addition as one operation; the counts themselves grow large. Big-O compares growth rates; it does not say fixed costs are irrelevant. See the [Big-O reference](../appendices/computing-math-reference.html#big-o-notation) for an example and graph.
 
@@ -82,16 +89,7 @@ A direct recursive program mirrors the counting formula, but it recomputes the s
 
 For this grid, row-major order works because each cell depends only on the row above and the cell to its left. Column-major order works too. An order that attempts $(i,j)$ before $(i-1,j)$ does not.
 
-::: {#prp-dp-reuse}
-## One value per subproblem
-For $n,m\geq1$, if each pair $(i,j)$ is computed once and each computation uses constant time after its predecessors are available, the entire recurrence table takes $\mathcal O(nm)$ time under the unit-cost arithmetic assumption.
-:::
-
-::: {.proof}
-There are $(n+1)(m+1)$ distinct index pairs. Computing each once replaces the repeated branches of the recursion tree with one table entry.
-:::
-
-Dynamic programming replaces repeated calculations with stored subproblem values. All paths reaching $(i,j)$ contribute to one count for that prefix pair. To optimize an alignment, we will instead store the best score among those paths.
+The table stores one count per prefix pair instead of recomputing it in many recursion branches. To optimize an alignment, we retain the same index pairs but store a different summary: the best score reaching each pair.
 
 ## The global alignment objective
 
@@ -116,7 +114,9 @@ $F(i,j)$ summarizes every possible alignment of those prefixes by its best score
 
 ### The three-way recurrence
 
-Take an optimal alignment of these prefixes. Its final column has exactly one form from @def-alignment-path. Removing it leaves a smaller prefix alignment. Its score must be best for those prefixes: replacing it with a better prefix and appending the same final column would improve the whole alignment. Conversely, any optimal predecessor alignment can be extended by its corresponding final column. For $i,j\geq1$, compare the three extensions:
+Suppose two paths reach the same predecessor cell, with scores 5 and 3. Appending the same final column adds the same amount to both, so the second path cannot overtake the first. The same is true for any common continuation because scores add by columns. We may therefore discard every lower-scoring path to that cell while retaining its best score.
+
+An optimal alignment ending at $(i,j)$ must use one of the three final columns from @def-alignment-path. Remove that column. If the remaining prefix were worse than another path to the same predecessor, replacing it would improve the whole alignment. Conversely, appending the indicated column to an optimal predecessor gives a valid candidate. For $i,j\geq1$, compare all three:
 $$
 F(i,j)=\max\begin{cases}
 F(i-1,j-1)+s(x_i,y_j), & \text{pair the final letters},\\
@@ -146,7 +146,7 @@ These scores can be computed in the same row-major order as the counts. Every pr
 
 Use $x=\texttt{ACGT}$, $y=\texttt{AGT}$, match $+1$, mismatch $-1$, and gap $-2$. These are illustrative scores, rather than the calibrated log-odds table from Lesson 2. The algorithm applies to either choice of additive scores.
 
-Before filling the table, we can certify the expected optimum. @exm-alignment-path has three matches and one gap, scoring $1-2+1+1=1$. No alignment has more than three letter pairs, each worth at most $+1$, and the length difference forces at least one gap worth $-2$. Thus no score exceeds 1, and the displayed alignment attains that bound.
+The earlier path placed C opposite a gap. The table must decide whether that choice beats pairing C with G and repairing the correspondence later. Each prefix gets its own optimum; a choice that wins for AC/AG may lose in the complete comparison.
 
 ::: {#exm-global-cell}
 ## Computing one cell
@@ -184,20 +184,22 @@ scores
 
 ```{.python .execute}
 #| label: fig-global-table
-#| fig-cap: "Global-alignment table for ACGT and AGT with match +1, mismatch -1, and gap -2. Three arrows show the candidates for the shaded cell, whose optimum comes from pairing C with G in these prefixes."
-#| fig-alt: "A five-by-four score table with three red arrows entering one shaded cell."
+#| fig-cap: "Global-alignment table for ACGT and AGT with match +1, mismatch -1, and gap -2. Three arrows show the candidates for the shaded AC/AG cell. The red optimal full path bypasses that cell, pairing C with a gap."
+#| fig-alt: "A five-by-four score table with three arrows entering cell (2,2), shaded gray, and red path cells (0,0), (1,1), (2,1), (3,2), (4,3)."
 #| fig-width: 4.5
 #| fig-height: 4
 fig, ax = plt.subplots()
 cf.dp_table(ax, list(x), list(y), scores,
-            highlight=[(2, 2)],
+            path=path_cells, highlight=[(2, 2)],
             arrows=[((1, 1), (2, 2)), ((1, 2), (2, 2)), ((2, 1), (2, 2))])
 plt.show()
 ```
 
-In @fig-global-table, the borders decrease by two each step and the A/A cell is 1. No interior cell can exceed the largest predecessor by more than the match reward, 1. These checks do not prove correctness, but each catches a common arithmetic or initialization error.
+In @fig-global-table, the borders decrease by two each step and the A/A cell is 1. No interior cell can exceed the largest predecessor by more than the match reward, 1.
 
-The final entry is $F(4,3)=1$, agreeing with our independent bound. For the gene comparison, this score measures the best correspondence under the chosen rewards and penalties; it does not establish a mutation history. Lesson 4 recovers the alignment and gives a full correctness proof.
+The final entry is $F(4,3)=1$. At $(3,2)$, pairing G/G extends the prefix AC/A, whose best alignment puts C opposite a gap. The winning full path therefore bypasses the shaded cell $(2,2)$: its mismatch was optimal for AC/AG, but those are not the prefixes used by the full optimum.
+
+We can now check the final answer independently. No alignment has more than three letter pairs, each worth at most $+1$, and the length difference forces at least one $-2$ gap. The score is at most $3-2=1$, attained by ACGT/A-GT. For the gene comparison, this optimum proposes a correspondence under our chosen scores. Lesson 4 recovers that correspondence from the table and proves the recurrence correct.
 
 ::: {#prp-global-fill-cost}
 ## Cost of filling the table
@@ -208,17 +210,9 @@ For $n,m\geq1$ and constant-time score lookup and arithmetic, the score table ta
 There are $(n+1)(m+1)$ cells. Each interior cell evaluates three candidates, and each boundary cell is set once.
 :::
 
-### Computing with two rows
+Each entry reads only the previous row and the current row. If only the score is needed, keeping these two rows reduces storage to $\mathcal O(m)$; reconstructing an alignment also requires retaining or recomputing the choices.
 
-To compute row $i$, the recurrence reads row $i-1$ and the entries already computed in row $i$. Older rows have no further role in the score calculation. We can therefore retain a previous row and a current row, replacing the previous row after each pass.
-
-In the ACGT/AGT example, the row for prefix AC is $(-4,-1,0,-2)$. To compute the row for ACG, initialize its boundary to $-6$. The first interior cell compares $-4-1$, $-1-2$, and $-6-2$, giving $-3$. The next cell compares $-1+1$, $0-2$, and $-3-2$, giving 0. The final cell is $-1$. We have recovered $(-6,-3,0,-1)$ without reading the rows for the empty prefix or A.
-
-The storage is now $2(m+1)$ numbers, or $\mathcal O(m)$, while the number of cell updates stays $nm$. This distinction matters: a memory improvement need not be a time improvement. For two strings of length 10,000, a full table has roughly $10^8$ cells; two rows have roughly $2\times10^4$ entries. Python containers have additional overhead, so cell counts are more portable than a byte estimate.
-
-The discarded rows matter if we later want the alignment itself. A rolling score calculation supplies the optimum value but loses the intermediate choices needed for ordinary traceback. Lesson 4 keeps those choices explicitly.
-
-### Maximization and edit distance
+:::: {.callout-note collapse="true" title="Going deeper: the same table for edit distance"}
 
 The same table shape can minimize a cost. If a match costs 0 and a substitution, insertion, or deletion costs 1, define $E(i,j)$ as the minimum edit cost between the two prefixes:
 $$
@@ -238,13 +232,9 @@ For ACGT/AGT, the path with A/A, C/-, G/G, T/T has global score $1-2+1+1=1$ and 
 :::
 
 Negating every column score converts maximization to an equivalent minimization problem. Changing the relative costs of substitutions and gaps changes the model. In either case, the proof considers the same exhaustive final-column cases.
+::::
 
-## Limitations
-
-1. **Scores remain assumptions.** The recurrence optimizes supplied scores; it does not validate them.
-2. **Both ends are charged.** Unrelated flanks can overwhelm a shared region. Lesson 5 changes this rule.
-3. **Linear gaps forget history.** A length-$k$ gap contributes $kg$. Lesson 6 adds state for gap opening.
-4. **The result is only a score.** Traceback in Lesson 4 recovers an alignment.
+The recurrence finds an exact optimum for its supplied scores. The output here is a score; recovering the corresponding letters requires traceback. The end-to-end requirement and per-character gap rule are modeling choices that later lessons will change.
 
 ## Exercises
 

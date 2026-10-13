@@ -21,7 +21,7 @@ import coursefigs as cf
 cf.use_style()
 ```
 
-## The table as a directed graph
+## What the score leaves unstated
 
 For the gene comparison from Lesson 3, the score 1 leaves the correspondence unstated. The alignment ACGT/A-GT places C opposite a gap and pairs the later G and T positions. That is a proposed difference between the records; without an ancestral sequence, it does not establish whether one lineage lost C or the other gained it. Traceback makes the proposed correspondence explicit, and ties reveal when the scoring model cannot locate a gap uniquely.
 
@@ -46,7 +46,9 @@ F(i-1,j)+g, & \text{letter of }x\text{ against a gap},\\
 F(i,j-1)+g, & \text{gap against a letter of }y.
 \end{cases}
 $$
-The boundaries are $F(0,0)=0$, $F(i,0)=ig$, and $F(0,j)=jg$. The claim is that these locally chosen maxima equal the best scores over all complete prefix alignments. The proof must establish both that no alignment beats the table value and that some alignment attains it.
+The boundaries are $F(0,0)=0$, $F(i,0)=ig$, and $F(0,j)=jg$. The maximum is over three *best prefix scores*, rather than three immediately available column scores. This distinction prevents a greedy error: a good next column can follow a poor earlier alignment.
+
+Why can a lower-scoring prefix never recover later? At the same $(i,j)$, two prefixes leave exactly the same letters unused. Every continuation adds the same column scores to either prefix, so the better prefix stays better. We can cut out the worse prefix and paste in the better one without changing the remainder. The proof formalizes this replacement argument and establishes both that no alignment beats the table value and that some alignment attains it.
 
 ::: {#thm-global-correctness}
 ## Correctness of the global-alignment recurrence
@@ -229,37 +231,13 @@ assert bottom.replace("-", "") == "AGT"
 
 Rescoring is independent of the table recurrence and can detect an omitted gap or a misplaced column. Agreement alone is insufficient: `ATGT/A-GT` also scores 1, but it does not align the input `ACGT`. The two gap-removal checks detect that wrong letter even though its score agrees. Score agreement and input reconstruction check different requirements.
 
-### Boundary and traceback tests
-
-::: {.callout-tip title="Check: boundaries, indices, and traceback"}
-Test "A" against the empty string to check boundary penalties. Test "A" against "A" to catch an off-by-one error between table index $i$ and string index $i-1$. Test "AA" against "A" to make sure traceback continues until both indices reach zero.
+::: {.callout-tip title="Check: unconsumed prefixes"}
+Traceback must continue while either index is positive. Stopping as soon as one index reaches zero drops the other string's remaining prefix. AA against A exposes this bug; an exact equal-length match may not.
 :::
-
-```{.python .execute}
-#| label: code-global-tests
-assert global_alignment("A", "")[0] == -2
-assert global_alignment("A", "A")[0] == 1
-score, top, bottom = global_alignment("AA", "A")
-assert score == -1
-assert top.replace("-", "") == "AA"
-assert bottom.replace("-", "") == "A"
-
-score, top, bottom = global_alignment("ACGT", "AGT")
-assert score_alignment(top, bottom) == score
-assert top.replace("-", "") == "ACGT"
-assert bottom.replace("-", "") == "AGT"
-```
-
-Stopping when $i=0$ *or* $j=0$ drops the unconsumed prefix. Initializing the borders to zero silently changes global alignment into a free-end variant. Both bugs can pass equal-length examples, so the tests include empty and unequal-length strings.
 
 ### Counting optimal alignments
 
-If biological ambiguity matters, storing one pointer is insufficient. A second table $C(i,j)$ counts optimal paths to $(i,j)$. For an interior cell, let $\operatorname{Pred}^*(i,j)$ contain those of its three predecessors whose candidate equals $F(i,j)$. Writing $w(p\to(i,j))$ for the corresponding substitution or gap score,
-$$
-\operatorname{Pred}^*(i,j)=\{p\in\{(i-1,j-1),(i-1,j),(i,j-1)\}:
-F(p)+w(p\to(i,j))=F(i,j)\},
-$$
-where $F(p)=F(i',j')$ for $p=(i',j')$. Then
+A tie can leave the score settled while the correspondence remains ambiguous. To count alternatives without printing them, let $C(i,j)$ count optimal paths to $(i,j)$ and let $\operatorname{Pred}^*(i,j)$ be the predecessors whose candidate scores attain $F(i,j)$. Sum their counts:
 $$
 C(i,j)=\sum_{(i',j')\in\operatorname{Pred}^*(i,j)}C(i',j'),\qquad
 C(i,0)=C(0,j)=1.
@@ -300,7 +278,7 @@ If $C(i,j)$ sums the counts of exactly those predecessors that attain $F(i,j)$, 
 Induct on $i+j$. Every optimal path reaches $(i,j)$ through one maximizing predecessor, and appending that final move to every optimal predecessor path produces every optimal path to $(i,j)$. Distinct final moves make the groups disjoint.
 :::
 
-A large count does not mean the score is uncertain. It means the scoring model cannot distinguish many explanations. Reporting one alignment without the count can hide that ambiguity.
+Reporting a single traceback can hide this ambiguity. A large count means many correspondences attain the same optimum; additional biological evidence or a different scoring model would be needed to distinguish them.
 
 ### Cost and memory
 
