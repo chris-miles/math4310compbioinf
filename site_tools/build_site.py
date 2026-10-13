@@ -344,6 +344,16 @@ def catalogs() -> dict[str, str]:
             rows.append(f'<tr class="module-heading" id="module-{module["id"]}"><th colspan="3">{html.escape(module["title"])}</th></tr>')
             current_module = module
         meeting_items = []
+        continuation = False
+
+        def append_week_row(items, continued):
+            row_class = "week-continuation" if continued else "week-row"
+            row_id = f'week-{week["week"]}' + ("-continued" if continued else "")
+            label = (f'<span class="week-number">{week["week"]:02}</span>'
+                     '<span class="week-continuation-label">continued</span>') if continued else week_label(week)
+            assignment = "" if continued else problem_set(week)
+            rows.append(f'<tr class="{row_class}" id="{row_id}"><th scope="row">{label}</th><td>{"".join(items)}</td><td>{assignment}</td></tr>')
+
         for meeting in week["meetings"]:
             day = date.fromisoformat(meeting["date"])
             date_label = f'{day:%a %b} {day.day}'
@@ -351,19 +361,22 @@ def catalogs() -> dict[str, str]:
                 n = meeting["lesson"]
                 meeting_module = next(m for m in schedule_data["modules"] if n in m["lessons"])
                 if meeting_module != current_module:
-                    meeting_items.append(
-                        f'<div class="module-heading" id="module-{meeting_module["id"]}">'
-                        f'{html.escape(meeting_module["title"])}</div>'
+                    if meeting_items:
+                        append_week_row(meeting_items, continuation)
+                        meeting_items = []
+                        continuation = True
+                    rows.append(
+                        f'<tr class="module-heading" id="module-{meeting_module["id"]}">'
+                        f'<th colspan="3">{html.escape(meeting_module["title"])}</th></tr>'
                     )
                     current_module = meeting_module
                 content = f'<span class="lesson-number">{n:02}</span>' + entry(lessons[n], "lessons")
             else:
                 content = '<span class="schedule-event">' + html.escape(meeting["event"]) + '</span>'
             meeting_items.append('<div class="schedule-item"><span class="meeting-date">' + date_label + '</span>' + content + '</div>')
-        lecture_list = "".join(meeting_items)
         if week.get("note"):
-            lecture_list += '<div class="calendar-note">' + html.escape(week["note"]) + '</div>'
-        rows.append(f'<tr class="week-row" id="week-{week["week"]}"><th scope="row">{week_label(week)}</th><td>{lecture_list}</td><td>{problem_set(week)}</td></tr>')
+            meeting_items.append('<div class="calendar-note">' + html.escape(week["note"]) + '</div>')
+        append_week_row(meeting_items, continuation)
         if week["assignment"]:
             assignment_items.append('<li><h2>Week ' + str(week["week"]) + ' · ' + html.escape(week["topic"]) + '</h2>' + problem_set(week) + '</li>')
     for module in schedule_data["modules"]:

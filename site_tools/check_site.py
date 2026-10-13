@@ -84,8 +84,10 @@ def main():
     weeks = schedule["weeks"]
     if home.count('class="module-heading"') != len(schedule["modules"]):
         errors.append("Expected one heading per broad module")
+    if len(re.findall(r'<tr class="module-heading"[^>]*>\s*<th colspan="3">', home)) != len(schedule["modules"]):
+        errors.append("Expected every module heading to span the full schedule width")
     if home.count('class="week-row"') != sum(bool(w['meetings']) for w in weeks):
-        errors.append("Expected one compact row per instructional week")
+        errors.append("Expected one starting row per instructional week")
     lesson_numbers = [n for week in weeks for n in week["lessons"]]
     if sorted(lesson_numbers) != list(range(1, 25)):
         errors.append("Expected each lecture in exactly one weekly row")
