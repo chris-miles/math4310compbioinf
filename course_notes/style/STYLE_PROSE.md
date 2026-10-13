@@ -20,23 +20,15 @@ Students should learn to identify the data, the question, the model, and the lim
 
 ## The reference and what to learn from it
 
-The writing reference is Peter Holderrieth and Ezra Erives, [*An Introduction to Flow Matching and Diffusion Models*, MIT 6.S184, 2026](https://diffusion.csail.mit.edu/2026/docs/lecture_notes.pdf). The following are observations about its exposition, translated into rules for this book. Section references identify passages worth studying; they do not make the diffusion material a prerequisite.
+The writing reference is Peter Holderrieth and Ezra Erives, [*An Introduction to Flow Matching and Diffusion Models*](https://arxiv.org/abs/2506.02070) (MIT 6.S184 notes); study §1.3, §2.1, and §§3.1 to 3.3. For biological motivation and algorithmic intuition, Compeau and Pevzner's *Bioinformatics Algorithms* (chapter 5 in particular) is the model. What makes both clear:
 
-| Reference passage | What makes it work | Apply it here |
-|---|---|---|
-| §1.3, generation as sampling | Familiar objects become numerical representations before the general sampling problem is stated. | Explain what a read, alignment, or expression matrix records before using it in a model. |
-| §2.1, flow models | The goal of random samples exposes a specific missing ingredient in a deterministic ODE: random initialization. | Let the desired output explain why a modeling choice is needed. |
-| §2.2, simulation of SDEs | A stochastic equation becomes an update that the reader can carry out. The earlier deterministic example remains available for comparison. | Give an unfamiliar object an operational meaning, and change one feature of a familiar example at a time. |
-| §§3.1 to 3.2, paths and vector fields | Choosing intermediate distributions still leaves the problem of producing those distributions. The next construction answers that problem. | Distinguish specifying the desired answer from having an algorithm that obtains it. |
-| §3.3, learning the vector field | An ideal loss is explained as a sequence of operations. Its inaccessible target motivates a computable alternative; a theorem explains why the replacement works. | Identify the exact computational obstacle before introducing a workaround, then justify what it preserves. |
-| §§4.2 to 4.3, stochastic sampling and score matching | Earlier constructions return with a specific change. The explanation distinguishes ideal dynamics from training and simulation error. | Recall the relevant result, identify the change, and separate a mathematical guarantee from an implementation's approximation. |
-| §5, guidance | A concrete change in the requested output motivates conditioning. Later, a practical shortcoming motivates a further modification. | A section can start from a new biological need as well as from a limitation of the previous method. |
-| §§6.1 to 6.2, architecture and latent space | Input and output shapes constrain the design; a numerical dimension count gives compression a purpose. | Make representations and costs concrete before presenting a more elaborate method. |
-| §7, discrete models | The data representation changes, while the earlier construction provides a recognizable plan. | Explain both the part of an analogy that carries over and the part that must be rebuilt. |
+- **Motivate before stating.** Compeau and Pevzner show that inserting gaps reveals conserved columns before naming alignment; Holderrieth and Erives raise the reader's doubt ("At first sight, a conditional vector field seems useless") before the theorem that resolves it.
+- **Say where the argument stands.** Each section says what has been built and what is still missing, including the exact computational obstacle ("we cannot compute it efficiently").
+- **Explain why, then digest.** A paragraph of intuition accompanies the proof, and formulas are read as operations ("First, draw a random time.... Second, ...").
+- **Draw why.** Their figures show objects behaving (paths, flows, a game played step by step), not only the data structures.
+- **Show what matters.** A few "Key Idea" boxes and section summaries separate the central moves from bookkeeping.
 
-The most useful feature is the attention to the reader's current question. The notes repeatedly explain what a construction accomplishes and what still needs to be done. They reuse the Gaussian example, translate formulas into operations, and place short explanations beside consequential algebraic steps. Their algorithms use the same quantities as the surrounding mathematics.
-
-Adopt these explanatory habits with judgment. This book has different prerequisites and a smaller lecture budget. The reference's promotional opening, emphatic adjectives, frequent boxes, and long technical proofs are not requirements. Its algorithm presentation is mainly mathematical pseudocode, with implementation work in accompanying labs. Our Python examples must additionally meet `STYLE_CODE.md`.
+Their promotional openings, emphatic adjectives, and long technical proofs are not models. Our Python examples must also meet `STYLE_CODE.md`.
 
 ## Consistency across lessons
 
@@ -46,7 +38,7 @@ Adopt these explanatory habits with judgment. This book has different prerequisi
 - Carry terminology and notation forward. Use the same name and symbol for the same object across lessons; explain any necessary change. Add shared notation to `course_notes/appendices/notation.md`.
 - Reuse established examples across connected lessons. Preserve their strings, scores, state names, and index conventions unless the lesson explicitly changes them. The example, code, and figure must describe the same instance.
 - Preserve the shared presentation: Core question, recognizable topic headings, numbered environments, proof placement, cross-references, executable code conventions, and end-of-lesson exercises. Use the common figure style and schematic helpers, including their established color meanings.
-- Read the transition from the preceding lesson and into the following one. Recall what students already have, and identify what this lesson adds. Avoid silently redefining a model or presenting an established result as new.
+- Read the transition from the preceding lesson and into the following one. Recall what students already have, and identify what this lesson adds. Avoid silently redefining a model or presenting an established result as new. Keep references to other lessons mostly in these bridges; a forward reference does not replace a local explanation.
 
 Section order may vary to explain the subject. Local formatting conventions should not. If an accepted lesson conflicts with a current style rule, follow the rule and address the inconsistency deliberately; do not copy the discrepancy into another lesson.
 
@@ -118,7 +110,7 @@ Short annotations beside a display can identify cases or operations. Split a lon
 
 Use one small running instance through the definition, calculation, code, and figure when possible. Reusing an instance lets the reader concentrate on the new idea. Change the instance when the change itself teaches something, and explain why.
 
-A worked example must expose a decision or calculation, not just report a result. Show one table entry, one update, or one competing pair of candidates in detail. Explain what the answer means in the example. Distinguish a computed score from evidence of biological function or history.
+A worked example must expose a decision or calculation, not just report a result. Show one table entry, one update, or one competing pair of candidates in detail. Keep instances small enough to trace by hand, but choose them so the new idea changes the answer; an example on which the old method already succeeds cannot show why the new one is needed. Explain what the answer means in the example, including what it supports biologically.
 
 Most hand examples should take about five minutes. A longer example is appropriate only when its successive steps teach distinct parts of the method; otherwise move it to a problem set. Include a boundary case or small counterexample when it reveals an assumption that a successful example would hide.
 
@@ -126,7 +118,7 @@ Most hand examples should take about five minutes. A longer example is appropria
 
 State claims precisely and justify them. Use numbered propositions or theorems for the central results. Default to a proof sketch containing the step on which correctness depends. For dynamic programming, saying "optimal substructure" is insufficient: explain why replacing a prefix by a better prefix would improve the whole solution. A short full proof belongs in the main text when that argument is the lesson. Put longer optional proofs in "Going deeper" blocks and identify any result used without proof.
 
-Keep the model, the algorithm, and the biological conclusion distinct. An exact optimum under a scoring rule need not be the true evolutionary history. A numerical approximation need not inherit every property of the exact equations. State the relevant qualification beside the claim, where it affects interpretation.
+Keep the model, the algorithm, and the biological conclusion distinct. An exact optimum under a scoring rule need not be the true evolutionary history. State such a qualification once, where it changes an interpretation, after saying what the result does support. A disclaimer after every result buries the claims it qualifies.
 
 Justify complexity by counting the operations that dominate the computation. For a table algorithm, give the number of entries and the work per entry; include storage when it matters. State a fixed-parameter or unit-cost assumption if the bound depends on it. Do not use "efficient" as a substitute for this explanation.
 
@@ -151,7 +143,7 @@ Code completes an explanation. Before the implementation, the reader should know
 
 Explain any difference between mathematical and programming conventions. For example, if `table[i][j]` stores the distance between prefixes of lengths $i$ and $j$, then the final letters of those prefixes are `x[i - 1]` and `y[j - 1]` in Python. That one sentence resolves a common obstacle more effectively than comments restating each assignment.
 
-Show a call on the running example and its actual output. Before running it, establish an expected value independently by a hand calculation, bound, or invariant. Afterward, interpret the output and state what the check supports. Agreement on one example checks that case; it does not prove the implementation correct on every input.
+Code should read as a summary of the algorithm. Show a call on the running example with its actual output and interpret it; when the hand calculation already gives the answer, note the agreement in a sentence. Use code to explore as well as check: simulate from the model, vary a parameter, or plot a behavior.
 
 Keep the essential algorithm visible. Put imports and drawing setup in setup chunks; use the shared figure helpers. Comments explain a modeling choice, an index convention, or the link to an equation. Do not bury the recurrence in a library call or turn the lesson into a tour of Python syntax. Introduce unfamiliar syntax only when students need it to understand or adapt the code.
 
@@ -229,18 +221,18 @@ Retain recognizable topic names: "Global Alignment," "Markov Chains," "Viterbi D
 
 ### Default budget
 
-Prepare roughly one hour of taught material within the scheduled meeting. This is a teaching-duration target, not an hour of reading or a word-count target. Lesson 1 is a useful depth benchmark and may be slightly short. Some existing lessons need more development to support that hour. Concise, self-contained notes must supply enough derivation, worked examples, biological interpretation, and practice for a full lesson; they must not become skeletal summaries. Estimate time for explanation, board work, tracing an algorithm, and student calculation as well as prose. Add material that advances the lesson's question, without padding. Four to six content sections are a useful starting structure, not a required quota.
+Prepare roughly one hour of taught material within the scheduled meeting. This is a teaching-duration target, not an hour of reading or a word-count target. Lesson 1 is a useful depth benchmark and may be slightly short. Some existing lessons need more development to support that hour. Concise, self-contained notes must supply enough derivation, worked examples, biological interpretation, and practice for a full lesson; they must not become skeletal summaries. Estimate time for explanation, board work, tracing an algorithm, and student calculation as well as prose. Add material that advances the lesson's question, without padding. Spend most of the lesson on its one or two central ideas; a side topic that would get only a paragraph is usually better cut or made an exercise.
 
 Use these ranges to keep the scale of lessons consistent. They are pacing defaults, not quotas or acceptance tests.
 
 | Element | Default per lesson |
 |---|---|
-| Numbered definitions | 3 to 5 |
+| Numbered definitions | 2 to 4; define minor terms in a sentence |
 | Numbered propositions or theorems | 1 or 2, each with justification |
 | Worked examples | 2 or 3 |
 | Code chunks | 2 or 3, short |
-| Figures | 0 or 1; add another when it answers a different necessary question |
-| Interruptive callouts | At most 2; numbered mathematical environments are not callouts |
+| Figures | 1 to 3; at least one shows the central idea at work, not only computed values |
+| Interruptive callouts | At most 2, including Key idea boxes; numbered environments are not callouts |
 | Exercises | 3 to 5 |
 | "Going deeper" blocks | 0 to 2, genuinely optional |
 
@@ -292,6 +284,7 @@ Unnumbered structure:
 | Markup | Use |
 |---|---|
 | `::: {.algorithm}` | Pseudocode. First line bold: `**Algorithm: fill the alignment table.**` No manual numbering; refer to algorithms by name. |
+| `::: {.callout-note title="Key idea"}` | One or two sentences stating a central idea of the lesson, placed where it has been earned. |
 | `::: {.biology}` | A brief biological background note. At most one or two per lesson. Motivation needed to follow the argument belongs in the main prose. |
 | `::: {.callout-warning title="..."}` | One misconception worth interrupting the page for. Discuss ordinary limitations in the main prose where they matter. |
 | `::: {.callout-note title="..."}` | A convention or assumption that does not deserve definition numbering. |
@@ -353,7 +346,7 @@ Remove promotional claims, vague attribution, and filler that does not explain t
 
 Do not force lists into groups of three, fragment connected reasoning into bullets, or stack callout boxes. Prefer periods and commas to repeated dashes. Avoid dramatic fragments and stock contrasts such as "not just X, but Y." Keep comparisons that distinguish quantities students might actually confuse.
 
-Remove generic motivation essays and closing praise. Keep concrete biological motivation, useful reminders, and short syntheses that help a reader follow the argument. Internal course logistics belong in the notes only when students need the information to act.
+Remove generic motivation essays and closing praise. Remove the filler that rules applied mechanically produce: a disclaimer after every result, statements of what a check does not prove, answers certified before the method computes them, and mid-paragraph pointers to other lessons. Keep concrete biological motivation, bridges that say where the argument stands, and short syntheses that help a reader follow the argument. Internal course logistics belong in the notes only when students need the information to act.
 
 When editing LLM drafts, invoke the `humanizer` skill. Removing verbal habits is a final editing pass; it cannot supply missing mathematical reasoning.
 
@@ -369,14 +362,14 @@ For an introductory problem set, aim for 3 or 4 problems and about one hour: sma
 
 ## Required review before accepting a lesson
 
-Review the reasoning before polishing individual sentences. A lesson is not ready if any applicable check below fails.
+Review the reasoning before polishing individual sentences. Revise by rewriting: cut what does not help a reader understand before adding anything. A lesson is not ready if any applicable check below fails.
 
-1. **Purpose:** Each substantial section has a concrete reason to exist, supplied locally or by its immediate context. The opening of the lesson connects the data to a biological question and a specific output.
+1. **Purpose:** Each substantial section has a concrete reason to exist, supplied locally or by its immediate context. The opening of the lesson connects the data to a biological question and a specific output. A reader can state the lesson's central idea in plain words and why it is needed.
 2. **Dependencies:** New objects are motivated and defined before use. The reader can follow the main argument with the stated prerequisites; necessary explanations are not hidden in optional material.
 3. **Reasoning and mathematical precision:** Important objectives, assumptions, models, recurrences, comparisons, and results have explicit mathematical statements where useful, with locally defined and consistent symbols. Every central equation has an interpretation. Derivations explain the consequential steps, and correctness and cost claims have justifications.
-4. **Examples:** At least one small instance shows the method in use. Its prose, mathematics, code, and figures agree. The interpretation explains what the answer establishes.
-5. **Code:** The implementation follows the mathematics, shows actual output, and includes an independently justified check. Executable chunks run under the conventions in `STYLE_CODE.md`.
-6. **Scope:** Assumptions and limitations appear where they affect conclusions. A model's answer is not presented as an unqualified biological fact.
+4. **Examples and figures:** At least one small instance shows the method making a decision that matters, and at least one figure shows the central idea at work. Prose, mathematics, code, and figures agree.
+5. **Code:** The implementation reads as a summary of the mathematics and shows actual output. Executable chunks run under the conventions in `STYLE_CODE.md`.
+6. **Scope:** Assumptions and limitations appear once, where they affect conclusions. A model's answer is not presented as an unqualified biological fact.
 7. **Continuity:** Terminology, notation, voice, example choices, and formatting agree with connected lessons and the shared guides. Bridges explain the relationship between topics.
 8. **Pacing and prose:** The material fits the meeting with time to work examples. Remove expendable topics and filler before removing explanations. Read the prose aloud for awkward sentences and ambiguous references.
 

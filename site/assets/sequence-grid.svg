@@ -2,24 +2,32 @@
   <title>Decorative nucleotide pattern</title>
   <g id="static"/>
   <style>
-    /* Two tiny, separate excursions with long quiet pauses. */
-    .drift-up { animation: drift-up 18s ease-in-out infinite; }
-    .drift-down { animation: drift-down 18s ease-in-out infinite; }
-    @keyframes drift-up {
-      0%, 20%, 28%, 100% { transform: translateY(0); }
-      24% { transform: translateY(-1.5px); }
+    /* A quiet left-to-right wave; tiles retain their nucleotide colors. */
+    .sequence-tiles > rect:not([opacity=".12"]) {
+      animation: column-highlight 7s ease-in-out infinite;
     }
-    @keyframes drift-down {
-      0%, 65%, 73%, 100% { transform: translateY(0); }
-      69% { transform: translateY(1.5px); }
+    .sequence-tiles > rect:nth-of-type(12n + 1) { animation-delay: -7.0s; }
+    .sequence-tiles > rect:nth-of-type(12n + 2) { animation-delay: -6.7s; }
+    .sequence-tiles > rect:nth-of-type(12n + 3) { animation-delay: -6.4s; }
+    .sequence-tiles > rect:nth-of-type(12n + 4) { animation-delay: -6.1s; }
+    .sequence-tiles > rect:nth-of-type(12n + 5) { animation-delay: -5.8s; }
+    .sequence-tiles > rect:nth-of-type(12n + 6) { animation-delay: -5.5s; }
+    .sequence-tiles > rect:nth-of-type(12n + 7) { animation-delay: -5.2s; }
+    .sequence-tiles > rect:nth-of-type(12n + 8) { animation-delay: -4.9s; }
+    .sequence-tiles > rect:nth-of-type(12n + 9) { animation-delay: -4.6s; }
+    .sequence-tiles > rect:nth-of-type(12n + 10) { animation-delay: -4.3s; }
+    .sequence-tiles > rect:nth-of-type(12n + 11) { animation-delay: -4.0s; }
+    .sequence-tiles > rect:nth-of-type(12n + 12) { animation-delay: -3.7s; }
+    @keyframes column-highlight {
+      0%, 32%, 100% { opacity: .24; }
+      16% { opacity: .55; }
     }
-    #static:target ~ g .drift-up,
-    #static:target ~ g .drift-down { animation: none; }
+    #static:target ~ .sequence-tiles > rect { animation: none; }
     @media (prefers-reduced-motion: reduce) {
-      .drift-up, .drift-down { animation: none; }
+      .sequence-tiles > rect:not([opacity=".12"]) { animation: none; }
     }
   </style>
-  <g font-family="Consolas, DejaVu Sans Mono, monospace" font-size="11" text-anchor="middle">
+  <g class="sequence-tiles" font-family="Consolas, DejaVu Sans Mono, monospace" font-size="11" text-anchor="middle">
     <rect x="6" y="9" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
     <text x="13" y="22" fill="#398B91">A</text>
     <rect x="22" y="9" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
@@ -58,10 +66,8 @@
     <text x="93" y="43" fill="#398B91">A</text>
     <rect x="102" y="30" width="14" height="18" rx="2" fill="#7E9C72" opacity=".24"/>
     <text x="109" y="43" fill="#7E9C72">C</text>
-    <g class="drift-up">
     <rect x="118" y="30" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
     <text x="125" y="43" fill="#B97D79">G</text>
-    </g>
     <rect x="134" y="30" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>
     <text x="141" y="43" fill="#398B91">A</text>
     <rect x="150" y="30" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
@@ -100,10 +106,8 @@
     <text x="29" y="85" fill="#7E9C72">C</text>
     <rect x="38" y="72" width="14" height="18" rx="2" fill="#B97D79" opacity=".24"/>
     <text x="45" y="85" fill="#B97D79">G</text>
-    <g class="drift-down">
     <rect x="54" y="72" width="14" height="18" rx="2" fill="#BF9955" opacity=".24"/>
     <text x="61" y="85" fill="#BF9955">T</text>
-    </g>
     <rect x="70" y="72" width="14" height="18" rx="2" fill="#929B9B" opacity=".12"/>
     <text x="77" y="85" fill="#929B9B">-</text>
     <rect x="86" y="72" width="14" height="18" rx="2" fill="#398B91" opacity=".24"/>

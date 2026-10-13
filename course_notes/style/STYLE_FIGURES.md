@@ -47,7 +47,7 @@ Sequential colormap: `viridis`. Diverging: `RdBu_r` (centered at 0). Never use `
 Set `fig-cap` in the chunk header — that is the caption mechanism. Every caption has two parts: (1) what the figure shows technically, (2) one short sentence on the biological or algorithmic takeaway. Also set `fig-alt` (accessibility) and `label: fig-{chapter}-{shortname}` for cross-references.
 
 ## When to Make a Figure
-Every figure must answer a specific question. Skip ornamentation. A DP-table heatmap is worth it; a generic "schematic of the pipeline" usually is not. Schematics that *are* worth it (HMM state diagrams, de Bruijn graphs) go through matplotlib + networkx, not external editors, so they regenerate from source. A figure is optional: use a hand table when it makes the computation clearer, and avoid adding a picture simply to meet a lesson quota.
+Every figure must answer a specific question. Skip ornamentation. A DP-table heatmap is worth it; a generic "schematic of the pipeline" usually is not. Schematics that *are* worth it (HMM state diagrams, de Bruijn graphs) go through matplotlib + networkx, not external editors, so they regenerate from source. The most valuable figure shows why something is true: a path through the table, evidence accumulating along a sequence, points projected onto an axis. A table of computed values shows the result, not the idea. Never add a picture for decoration.
 
 ## File Conventions
 - Figures generated inline in executable Markdown chunks; no committed PNG/PDF unless hand-drawn or third-party.

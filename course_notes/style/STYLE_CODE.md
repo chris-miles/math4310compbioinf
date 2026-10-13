@@ -43,4 +43,4 @@ Mark starter chunks students will modify:
 def viterbi(...):
     raise NotImplementedError
 ```
-Put incomplete starter functions and intentional bugs in nonexecuting code fences. Every executable block must run during a clean site build. Show expected and actual values for checks; avoid assertions that merely repeat the implementation.
+Put incomplete starter functions and intentional bugs in nonexecuting code fences. Every executable block must run during a clean site build. Lesson code should read as a summary of the algorithm, not a test suite: gather a few checks in one chunk showing expected and actual values, and leave edge-case testing to problem sets.

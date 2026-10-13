@@ -62,3 +62,9 @@ h3{margin:24px 0 10px}
 
 @media (prefers-reduced-motion: reduce){.home .page-heading::after{background-image:url("sequence-grid.svg#static")}}
 @media print{.home .page-heading::after{display:none}}
+
+.home .schedule-heading{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 24px;margin:21px 0 10px}
+.home .schedule-heading h2{margin:0}
+.course-overview-link{display:inline-flex;align-items:baseline;gap:7px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none}
+.course-overview-link span{color:var(--red)}
+.course-overview-link:hover,.course-overview-link:focus-visible{color:var(--red);text-decoration:underline}

@@ -8,8 +8,12 @@ toc: false
 <div><dt>Instructor</dt><dd><a class="instructor-name" href="https://profiles.faculty.utah.edu/u0881186">Chris Miles</a><small class="contact-email"><a class="email-address" href="mailto:chris.miles@utah.edu?subject=%5BMATH%204310%5D%20">chris.miles@utah.edu</a> <span class="contact-note">Use <span class="subject-tag">[MATH 4310]</span> in the subject line.</span></small></dd></div>
 </dl>
 
-[What is this course about?](about-course.html)
+::: {.schedule-heading}
 
 ## Course schedule
+
+<a class="course-overview-link" href="about-course.html">What is this course about? <span aria-hidden="true">→</span></a>
+
+:::
 
 <!-- WEEKLY_SCHEDULE -->
