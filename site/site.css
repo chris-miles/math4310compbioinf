@@ -49,9 +49,9 @@ h3{margin:24px 0 10px}
 .page-heading{margin-bottom:22px}
 .eyebrow{color:#be0000}
 .subtitle{font-size:18px}
-.home .page-heading{position:relative;padding:14px 190px 14px 18px;min-height:106px;margin-bottom:12px;background:#f3f3f3;border-left:4px solid #be0000}
+.home .page-heading{position:relative;padding:14px 208px 14px 18px;min-height:106px;margin-bottom:12px;background:#f3f3f3;border-left:4px solid #be0000}
 .home h1{font-size:36px;margin:8px 0 0;max-width:850px}
-.home .page-heading::after{content:"";background:url("sequence-grid.svg") center / contain no-repeat;display:block;position:absolute;right:12px;top:4px;width:165px;height:98px;pointer-events:none}
+.home .page-heading::after{content:"";background:url("sequence-grid.svg") center / contain no-repeat;display:block;position:absolute;right:12px;top:4px;width:183px;height:98px;pointer-events:none}
 .course-facts{font-size:15px;line-height:1.4;padding:12px 0;margin-bottom:18px}
 .home h2{font-size:22px;margin:21px 0 10px}
 .course-table .week-row:hover{background:#f7f7f7}
