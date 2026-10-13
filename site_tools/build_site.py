@@ -349,6 +349,13 @@ def catalogs() -> dict[str, str]:
             date_label = f'{day:%a %b} {day.day}'
             if "lesson" in meeting:
                 n = meeting["lesson"]
+                meeting_module = next(m for m in schedule_data["modules"] if n in m["lessons"])
+                if meeting_module != current_module:
+                    meeting_items.append(
+                        f'<div class="module-heading" id="module-{meeting_module["id"]}">'
+                        f'{html.escape(meeting_module["title"])}</div>'
+                    )
+                    current_module = meeting_module
                 content = f'<span class="lesson-number">{n:02}</span>' + entry(lessons[n], "lessons")
             else:
                 content = '<span class="schedule-event">' + html.escape(meeting["event"]) + '</span>'
@@ -400,6 +407,26 @@ def main() -> None:
     for page in pages:
         render(page, [p for p in lectures if p["meta"].get("published", True)])
         print("Built", page["route"], flush=True)
+    # Preserve links to lessons renumbered by the curriculum revision.
+    redirects = json.loads((ROOT / "site/lesson_redirects.json").read_text(encoding="utf-8"))
+    for old, new in redirects.items():
+        if Path(old).name != old or Path(new).name != new:
+            raise ValueError("Lesson redirects must use filenames within lessons/")
+        destination = OUT / "lessons" / old
+        if destination.exists():
+            raise ValueError(f"Lesson redirect would overwrite a current page: {old}")
+        target = OUT / "lessons" / new
+        if not target.is_file():
+            raise ValueError(f"Missing lesson redirect target: {new}")
+        url = html.escape(new, quote=True)
+        redirect = (
+            '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+            f'<script>location.replace({json.dumps(new)} + location.search + location.hash);</script>'
+            f'<noscript><meta http-equiv="refresh" content="0; url={url}"></noscript>'
+            '<title>Lesson moved</title></head><body><h1>Lesson moved</h1>'
+            f'<p><a href="{url}">Continue to the lesson</a>.</p></body></html>'
+        )
+        destination.write_text(redirect, encoding="utf-8")
     search = [{"title": p["title"], "url": p["route"], "text": re.sub(r"\s+", " ", plain(p["doc"]["blocks"]))} for p in pages if p["meta"].get("published", True) and p["meta"].get("search", True)]
     (OUT / "search-index.json").write_text(json.dumps(search, ensure_ascii=False), encoding="utf-8")
     (OUT / ".nojekyll").touch()

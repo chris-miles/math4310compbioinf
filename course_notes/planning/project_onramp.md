@@ -1,10 +1,10 @@
-# Final Project On-Ramp
+# Optional Project On-Ramp
 
-Status: exploratory internal planning. This document gives options for making the final project workable, but the student-facing syllabus should stay more flexible until the project format settles.
+Status: optional project ideas. Projects remain undecided; this public document establishes no deliverables, grade weight, team requirement, or timetable.
 
 ## The Problem
 
-A 30% final project is only fair if students can begin before the last third of the course. But students do not know HMMs, PCA, FDR, phylogenetics, or ODEs at the start. If the project begins only after those topics are taught, the project becomes rushed. If it begins too early, students are choosing methods they do not yet understand.
+If a substantial final project is adopted, it is only fair if students can begin before the last third of the course. But students do not know HMMs, PCA, FDR, phylogenetics, or ODEs at the start. If the project begins only after those topics are taught, the project becomes rushed. If it begins too early, students are choosing methods they do not yet understand.
 
 The solution is to separate project work into stages:
 
@@ -32,179 +32,11 @@ Each project starter should specify:
 
 This lets students start with problem/data orientation while the technical method is still being taught.
 
-## Project Timeline
+## Timing if projects are adopted
 
-### Week 1: Project Gallery, Not Project Selection
+Orientation can begin before a method is taught, but implementation must follow its lesson. No project checkpoints, presentation meetings, or finals-week submission dates are scheduled. April 26 remains Flex.
 
-Goal:
-
-- Let students see where the course is going without asking them to commit.
-
-In class:
-
-- Show 6-8 one-slide project examples.
-- For each example, name the mathematical object: string pair, graph, hidden-state model, tree, matrix, test list, ODE system.
-- Emphasize that final projects will use curated starter datasets and course methods.
-
-Deliverable:
-
-- None, or a one-question exit ticket: "Which project type looked most interesting, and why?"
-
-### Week 3 or 4: Method Card 1
-
-Goal:
-
-- After alignment and assembly, students can already understand some viable projects.
-
-Short assignment or in-class activity:
-
-- Students complete one "method card" for either alignment or assembly.
-
-Method card fields:
-
-- What is the input?
-- What is the output?
-- What mathematical object does the method optimize or construct?
-- What assumption can fail?
-- What would be a small validation check?
-
-Deliverable:
-
-- Ungraded or 1-point completion.
-
-### Week 6 or 7: Project Starter Menu Released
-
-Goal:
-
-- Give students enough information to form preferences before teams form.
-
-Release:
-
-- A curated list of project tracks.
-- One-page starter sheet for each track.
-- Tiny example data for each track.
-- Expected baseline and extension options.
-
-Deliverable:
-
-- Individual preference form ranking three tracks.
-
-### Week 8: Individual Project Triage Memo
-
-Goal:
-
-- Make students think before teams form.
-
-Prompt:
-
-- Pick two possible project tracks.
-- For each, identify the input data, method, baseline output, validation check, and likely failure mode.
-- Say what background you still need from the course.
-
-Deliverable:
-
-- One-page individual memo.
-- Counts lightly as project-preparation credit or participation.
-
-### Spring Break / Week 9: Team Formation
-
-Goal:
-
-- Teams form with some project preferences already visible.
-
-Process:
-
-- Instructor forms teams using preference forms, or students self-form within project tracks.
-- Teams choose one track plus a backup.
-- Teams do not yet need a polished research question.
-
-Deliverable:
-
-- Team and track declaration.
-
-### Week 10: Project Contract
-
-Goal:
-
-- Convert the selected track into a concrete scope.
-
-In class:
-
-- Short project clinic after Short Midterm Exam 2 or during the next meeting.
-- Each team fills a project contract.
-
-Contract fields:
-
-- Dataset.
-- Course method.
-- Baseline deliverable.
-- Validation check.
-- Division of labor.
-- One likely limitation.
-- One optional extension, explicitly marked optional.
-
-Deliverable:
-
-- Contract draft, used to prepare Checkpoint 1.
-
-### Week 11: Checkpoint 1
-
-Goal:
-
-- Lock project scope.
-
-Deliverable:
-
-- One-page proposal.
-- Repository skeleton.
-- Data source/provenance.
-- Planned validation check.
-- Minimal run instructions.
-
-### Week 12 or 13: Micro-Demo
-
-Goal:
-
-- Prevent silent failure.
-
-Deliverable:
-
-- A tiny run of the method on toy data or the first 5-10 samples/sequences.
-- One screenshot, table, or output file.
-- One paragraph: what failed or changed.
-
-This can be an in-class check rather than a formal graded checkpoint.
-
-### Week 14: Checkpoint 2
-
-Goal:
-
-- Ensure preliminary results exist before finals week.
-
-Deliverable:
-
-- Preliminary result.
-- README draft.
-- Validation check result or validation plan.
-- Limitation/failure-mode paragraph.
-
-### Finals Week: Final Repository
-
-Goal:
-
-- Cumulative assessment.
-
-Deliverable:
-
-- Reproducible repository.
-- README.
-- Code.
-- Data provenance.
-- Validation check.
-- Team contributions paragraph.
-- Revision memo.
-
-## Recommended Project Tracks
+## Possible Project Tracks
 
 ### Track A: Alignment and Homology
 
@@ -280,7 +112,7 @@ Out of scope:
 
 When students can start:
 
-- Week 7, after Viterbi and forward-backward.
+- Week 8, after Viterbi and forward-backward.
 
 Course method:
 
@@ -316,7 +148,7 @@ Out of scope:
 
 When students can start:
 
-- Week 8.
+- After Lessons 13–14 (March 3 and March 15).
 
 Course method:
 
@@ -352,7 +184,7 @@ Out of scope:
 When students can start:
 
 - Week 6 for data orientation.
-- Week 10 or 11 for serious method work.
+- Lessons 15–17 for PCA and single-feature comparisons; Lesson 18 on March 29 before an FDR analysis.
 
 Course method:
 
@@ -391,7 +223,7 @@ Out of scope:
 
 When students can start:
 
-- Week 10 after PCA begins.
+- After Lesson 19 (April 5) for clustering.
 
 Course method:
 
@@ -425,7 +257,7 @@ Out of scope:
 
 When students can start:
 
-- Week 13, so this should not be a default project track unless heavily scaffolded.
+- Week 14 for ODEs and switches; Week 15 for noisy measurements. This late material requires substantial scaffolding if used in a project.
 
 Course method:
 
@@ -536,7 +368,7 @@ Suggested first three tasks:
 
 ## Practical Advice
 
-Make early project work individual, then make final project work team-based.
+If a team project is adopted, individual exploration before team formation can help students choose a track. Individual and team formats remain options.
 
 Reason:
 
@@ -565,9 +397,9 @@ Every project should have:
 
 Allow controlled pivots.
 
-Checkpoint 1 should permit a team to switch from one track to a closely related fallback if the data or implementation is failing. After Checkpoint 1, pivots should require instructor approval.
+If checkpoints are adopted, an early scope review can permit a switch to a closely related fallback when data or implementation fails. Decide any later scope-change policy with the project format.
 
-## Bottom Line
+## Design criteria if adopted
 
 The project should start early as orientation and scoping, not as full implementation.
 
@@ -577,4 +409,4 @@ Students can start before knowing the whole course if:
 - Datasets are curated.
 - Baseline deliverables are explicit.
 - Early tasks focus on inputs, outputs, assumptions, and validation.
-- Teams form only after students have completed individual project triage.
+- If teams are used, students have a chance to explore preferences before forming them.

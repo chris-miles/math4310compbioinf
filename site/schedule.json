@@ -10,33 +10,33 @@
         4,
         5,
         6,
-        7,
-        8
+        7
       ]
     },
     {
       "id": "probabilistic-models",
       "title": "Probabilistic Models for Genomics",
       "lessons": [
+        8,
         9,
         10,
         11,
-        12,
-        13
+        12
       ]
     },
     {
       "id": "phylogenetics",
       "title": "Phylogenetics",
       "lessons": [
-        14,
-        15
+        13,
+        14
       ]
     },
     {
       "id": "omics",
       "title": "Mathematics for High-Dimensional Omics",
       "lessons": [
+        15,
         16,
         17,
         18,
@@ -49,14 +49,15 @@
       "title": "Models of Biological Systems",
       "lessons": [
         21,
-        22
+        22,
+        23
       ]
     },
     {
       "id": "synthesis",
       "title": "Synthesis",
       "lessons": [
-        23
+        24
       ]
     }
   ],
@@ -92,7 +93,11 @@
       "lessons": [
         3
       ],
-      "assignment": null,
+      "assignment": {
+        "id": "ps02-global-alignment",
+        "label": "Problem set 2",
+        "due": "2027-02-03"
+      },
       "date_start": "2027-01-18",
       "date_end": "2027-01-22",
       "note": "Jan 18: Martin Luther King Jr. Day; no class",
@@ -105,16 +110,12 @@
     },
     {
       "week": 3,
-      "topic": "Traceback and local alignment",
+      "topic": "Local alignment and sequence search",
       "lessons": [
         4,
         5
       ],
-      "assignment": {
-        "id": "ps02-global-alignment",
-        "label": "Problem set 2",
-        "due": "2027-02-03"
-      },
+      "assignment": null,
       "date_start": "2027-01-25",
       "date_end": "2027-01-29",
       "meetings": [
@@ -130,7 +131,7 @@
     },
     {
       "week": 4,
-      "topic": "Sequence search and assembly",
+      "topic": "Genome assembly",
       "lessons": [
         6,
         7
@@ -155,7 +156,7 @@
     },
     {
       "week": 5,
-      "topic": "Assembly and probability models",
+      "topic": "Probability models and CpG islands",
       "lessons": [
         8,
         9
@@ -180,7 +181,7 @@
     },
     {
       "week": 6,
-      "topic": "CpG islands",
+      "topic": "Hidden Markov models",
       "lessons": [
         10
       ],
@@ -197,7 +198,7 @@
     },
     {
       "week": 7,
-      "topic": "Hidden Markov models and Midterm 1",
+      "topic": "Viterbi decoding and Midterm 1",
       "lessons": [
         11
       ],
@@ -215,13 +216,13 @@
         },
         {
           "date": "2027-02-24",
-          "event": "Midterm 1: Lessons 1–8"
+          "event": "Midterm 1: Lessons 1–7"
         }
       ]
     },
     {
       "week": 8,
-      "topic": "Genome labels and uncertainty",
+      "topic": "HMM uncertainty and evolutionary distances",
       "lessons": [
         12,
         13
@@ -255,7 +256,7 @@
     },
     {
       "week": 10,
-      "topic": "Phylogenetics",
+      "topic": "Parsimony and gene expression",
       "lessons": [
         14,
         15
@@ -280,7 +281,7 @@
     },
     {
       "week": 11,
-      "topic": "Gene expression and PCA",
+      "topic": "PCA and biological comparisons",
       "lessons": [
         16,
         17
@@ -319,7 +320,7 @@
         },
         {
           "date": "2027-03-31",
-          "event": "Midterm 2: Lessons 9–15"
+          "event": "Midterm 2: Lessons 8–14"
         }
       ]
     },
@@ -350,7 +351,7 @@
     },
     {
       "week": 14,
-      "topic": "Gene regulation",
+      "topic": "Gene regulation and biological switches",
       "lessons": [
         21,
         22
@@ -375,9 +376,10 @@
     },
     {
       "week": 15,
-      "topic": "Modern frontiers and project presentations",
+      "topic": "Noisy dynamics and modern frontiers",
       "lessons": [
-        23
+        23,
+        24
       ],
       "assignment": null,
       "date_start": "2027-04-19",
@@ -389,13 +391,13 @@
         },
         {
           "date": "2027-04-21",
-          "event": "Project presentations"
+          "lesson": 24
         }
       ]
     },
     {
       "week": 16,
-      "topic": "Project presentations",
+      "topic": "Flex",
       "lessons": [],
       "assignment": null,
       "date_start": "2027-04-26",
@@ -403,7 +405,7 @@
       "meetings": [
         {
           "date": "2027-04-26",
-          "event": "Project presentations"
+          "event": "Flex"
         }
       ]
     }

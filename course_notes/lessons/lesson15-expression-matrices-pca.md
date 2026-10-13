@@ -1,14 +1,14 @@
 ---
 published: true
 title: "Gene Expression and PCA"
-subtitle: "Lesson 16 · 2027-03-22 · Week 11"
+subtitle: "Lesson 15 · 2027-03-17 · Week 10"
 nocite: |
   @holmeshuber2019
 ---
 
 ## Core question
 
-How can we summarize coordinated differences among samples using many gene measurements, and what does PCA preserve?
+How do samples differ in their patterns of RNA abundance?
 
 ```{.python .execute}
 #| label: setup
@@ -25,13 +25,31 @@ cf.use_style()
 
 ## From RNA reads to a measurement matrix
 
-Cells copy portions of DNA into RNA molecules called transcripts. Their abundances differ across cell types and conditions. In a typical RNA-sequencing workflow, RNA is collected from each sample and copied into complementary DNA (cDNA); fragments of this DNA are sequenced. Matching those reads to genes gives a count table. A row such as `(120, 40, 0)` for three genes records how many reads were assigned to each gene in that sample. These counts measure sampled RNA through an experimental pipeline; they are not direct counts of proteins or a complete measure of gene activity [@holmeshuber2019, secs. 7.2, 8.2].
+Two samples can contain the same genes yet use them differently. Cells copy portions of DNA into RNA molecules called *transcripts*, and the abundance of these molecules can differ across cell types or after a treatment. We want to know whether several genes change together, giving samples a shared expression pattern. Here *gene expression* refers to measured RNA abundance [@holmeshuber2019].
 
-We use **samples as rows and genes as columns**. Many RNA-seq files use the opposite orientation, so check the row and column names before transposing. The biological question is whether samples differ through coordinated changes in several genes. For example, a change in cell proliferation can affect many genes together [@holmeshuber2019, sec. 7.2]. Looking at one gene at a time can miss that shared pattern. We want a few coordinates per sample that retain as much of the measured variation as possible.
+In a typical RNA-sequencing workflow, RNA is collected from each sample and copied into complementary DNA (cDNA); fragments of this DNA are sequenced. Matching those reads to known gene sequences gives a count table [@holmeshuber2019, secs. 7.2, 8.2]. In @fig-expression-reads-to-counts, six short read records produce the row `(4, 2, 0)` for three genes. Each entry counts assigned reads from one sample. These sampled counts are not direct counts of proteins or a complete measure of gene activity.
 
-Raw counts depend on sequencing depth and have strongly unequal scales. Today the input is an explicitly supplied, normalized and transformed numerical matrix $X\in\mathbb R^{n\times p}$, with $n\ge2$ samples and $p$ genes. Lesson 17 examines the preprocessing choices. We hold them fixed here to understand the mathematical summary. The entries need not be integers or remain nonnegative after centering.
+```{.python .execute}
+#| label: fig-expression-reads-to-counts
+#| echo: false
+#| fig-width: 6
+#| fig-height: 3.4
+#| fig-cap: "Six toy cDNA reads aligned to distinct reference gene segments produce one count-table row: four reads for gene 1, two for gene 2, and zero for gene 3. Zero means no read was assigned to that gene in this sample; it does not establish that the cell contained no corresponding RNA."
+#| fig-alt: "Three reference cDNA segments labeled gene 1, gene 2, and gene 3. Four short reads appear at their matching offsets under gene 1, two under gene 2, and none under gene 3. Arrows lead to the count row 4, 2, 0."
+gene_segments = {"gene 1": "ACGTTACG", "gene 2": "GGATCCGA",
+                 "gene 3": "CTTAAGGC"}
+read_records = ["ACGT", "CGTT", "TTAC", "TACG", "GGAT", "ATCC"]
+assigned_genes = ["gene 1", "gene 1", "gene 1", "gene 1", "gene 2", "gene 2"]
+fig, ax = plt.subplots()
+cf.read_assignment(ax, gene_segments, read_records, assigned_genes)
+plt.show()
+```
 
-Principal component analysis (PCA) constructs those coordinates by combining genes. We first need to specify which combinations count as good summaries.
+We use **samples as rows and genes as columns**. Many RNA-seq files use the opposite orientation, so check the row and column names before transposing. A change in cell proliferation can affect many genes together [@holmeshuber2019, sec. 7.2]. We want a few coordinates per sample that retain as much of the measured variation as possible.
+
+Raw counts depend on *sequencing depth*, the number of reads recorded per sample, and have strongly unequal scales. Today the input is an explicitly supplied, normalized and transformed numerical matrix $X\in\mathbb R^{n\times p}$, with $n\ge2$ samples and $p$ genes. Lesson 16 examines how those steps put measurements on comparable scales. We hold them fixed here to understand the mathematical summary. The entries need not be integers or remain nonnegative after centering.
+
+For example, if two genes tend to increase together, their combined abundance may describe a sample contrast better than either alone. *Principal component analysis* (PCA) constructs sample coordinates from weighted combinations of genes. We first need to specify what those weights should preserve, so the mathematical summary answers the question about coordinated variation.
 
 ## Centering and a direction in gene space
 
@@ -68,6 +86,28 @@ $$
 \|Z\|_F^2=\|Zv\|_2^2+\|Z-(Zv)v^\top\|_F^2,
 $$
 where $\|M\|_F^2=\sum_{i,j}M_{ij}^2$ is the squared Frobenius norm. Rotating the line redistributes a fixed total: a direction with more spread along it has less squared distance left perpendicular to it. Thus the line that maximizes score variance also minimizes reconstruction error [@holmeshuber2019, sec. 7.3.2]. PCA's two descriptions, a direction of large spread and a line that fits the samples well, solve the same problem.
+
+For a preview, take the first two genes of the four-sample example developed below. Their centered measurements are $(-2,-1)$, $(-1,-2)$, $(1,2)$, and $(2,1)$. Both genes tend to be below their means in s1 and s2 and above their means in s3 and s4. @fig-pca-score-projection compares two ways to summarize that coordinated variation: using gene 1 alone or combining the genes along their shared direction. The retained sum of squares rises from 10 to 18, and the residual falls from 10 to 2. Their total remains 20.
+
+```{.python .execute}
+#| label: fig-pca-score-projection
+#| echo: false
+#| fig-cap: "The first two centered genes projected onto a single-gene axis and onto their joint PCA direction. Red crosses mark reconstructed points and grey segments mark residuals. A shared expression direction retains more spread with less reconstruction error."
+#| fig-alt: "Two panels show points at minus2,minus1; minus1,minus2; 1,2; and 2,1. Left projections lie on the horizontal axis; right projections lie on the diagonal, with shorter perpendicular residuals."
+#| fig-width: 6
+#| fig-height: 3.3
+two_genes = np.array([[-2, -1], [-1, -2], [1, 2], [2, 1]], dtype=float)
+fig, axes = plt.subplots(1, 2)
+cf.pca_projection(axes[0], two_genes, [1, 0], ["s1", "s2", "s3", "s4"])
+cf.pca_projection(axes[1], two_genes, [1, 1], ["s1", "s2", "s3", "s4"])
+axes[0].set_title("Gene 1: retained 10, residual 10")
+axes[1].set_title("PC1: retained 18, residual 2")
+for ax, label in zip(axes, ["A", "B"]):
+    ax.text(-0.12, 1.04, label, transform=ax.transAxes,
+            fontsize=11, fontweight="bold")
+axes[1].set_ylabel("")
+plt.show()
+```
 
 ## Why an eigenvector solves the problem
 
@@ -149,28 +189,6 @@ $$
 =\frac{6}{6+4/3+2/3}=\frac34=75\%.
 $$
 "Explained" means retained squared spread of these transformed measurements. To relate the separation to a condition, we would need sample metadata.
-
-@fig-pca-score-projection shows the same samples using only genes 1 and 2. Projecting onto the first gene discards all variation in the second. Rotating toward their shared direction keeps more of both genes: the retained sum of squares rises from 10 to 18, and the residual falls from 10 to 2. Their total remains 20.
-
-```{.python .execute}
-#| label: fig-pca-score-projection
-#| echo: false
-#| fig-cap: "The first two centered genes projected onto a single-gene axis and onto their joint PCA direction. Red crosses mark reconstructed points and grey segments mark residuals. A shared expression direction retains more spread with less reconstruction error."
-#| fig-alt: "Two panels show points at minus2,minus1; minus1,minus2; 1,2; and 2,1. Left projections lie on the horizontal axis; right projections lie on the diagonal, with shorter perpendicular residuals."
-#| fig-width: 6
-#| fig-height: 3.3
-two_genes = np.array([[-2, -1], [-1, -2], [1, 2], [2, 1]], dtype=float)
-fig, axes = plt.subplots(1, 2)
-cf.pca_projection(axes[0], two_genes, [1, 0], ["s1", "s2", "s3", "s4"])
-cf.pca_projection(axes[1], two_genes, [1, 1], ["s1", "s2", "s3", "s4"])
-axes[0].set_title("Gene 1: retained 10, residual 10")
-axes[1].set_title("PC1: retained 18, residual 2")
-for ax, label in zip(axes, ["A", "B"]):
-    ax.text(-0.12, 1.04, label, transform=ax.transAxes,
-            fontsize=11, fontweight="bold")
-axes[1].set_ylabel("")
-plt.show()
-```
 
 ## SVD computes scores and loadings together
 
@@ -264,7 +282,7 @@ A dense reduced SVD costs roughly $\mathcal O(np\min(n,p))$ operations. When gen
 
 Centering defines differences from a common baseline. Orthogonal projection divides their squared spread into retained variation and residual error. The eigenvector argument selects the best directions, and SVD computes their loadings, scores, and reconstruction errors together.
 
-Those guarantees concern the matrix supplied to PCA. Without centering, the squared spread includes the common mean profile. Rescaling genes changes which differences count most. Lesson 17 examines these choices, sequencing depth, and sample metadata.
+Those guarantees concern the matrix supplied to PCA. Without centering, the squared spread includes the common mean profile. Rescaling genes changes which differences count most. Lesson 16 examines these choices, sequencing depth, and sample metadata.
 
 PCA retains directions with large squared spread; a technical batch or an outlier can supply that spread. A high loading identifies a gene contributing to a direction on the chosen scale, without establishing a causal role. The biological inference comes from relating these gene patterns and sample coordinates to the experiment.
 

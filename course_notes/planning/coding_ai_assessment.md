@@ -32,13 +32,15 @@ Students should implement core ideas from scratch when implementation forces the
 | Seed-and-extend | Implement a tiny seed index or search demonstration. |
 | de Bruijn assembly | Implement graph construction and simple path/contig logic on toy reads. |
 | Markov chains | Implement sequence likelihood and likelihood-ratio classification. |
-| HMM/Viterbi | Implement Viterbi in log space, preferably as the triad assignment. |
+| HMM/Viterbi | Implement Viterbi in log space, with a small independent hand check. |
 | Forward-backward | Implement a small forward algorithm or posterior table, or trace by hand plus partial code. |
 | Phylogenetics | Implement UPGMA or Fitch scoring on small examples. |
 | PCA/SVD | Use `numpy.linalg.svd` or equivalent; implement centering, projection, and interpretation checks. |
+| Comparing conditions | Compute one effect and enumerate a tiny label-permutation null; explain biological replication. |
 | FDR | Implement Benjamini-Hochberg from scratch. |
 | t-SNE/UMAP | Do not implement from scratch; interpret and critique outputs. |
 | ODEs | Use a solver or simple Euler method; focus on model behavior and assumptions. |
+| Noisy dynamics | Interpret supplied trajectories and observations; avoid a new stochastic simulator at the end of term. |
 
 ## What To Scaffold
 
@@ -179,7 +181,7 @@ Exam questions should ask students to:
 - Find a bug in pseudocode.
 - Interpret a tiny output table.
 - Explain a boundary condition.
-- Compute one step of Viterbi, forward, UPGMA, Fitch, PCA, or BH.
+- Compute one step of Viterbi, forward, UPGMA, or Fitch within the scheduled exam coverage. PCA, permutation comparisons, and BH receive independent checks in later homework and class practice.
 
 This keeps the course honest: students can use modern tools on homework, but still need enough fluency to verify output independently.
 

@@ -1,14 +1,14 @@
 ---
 published: true
 title: "CpG Islands and Likelihood Ratios"
-subtitle: "Lesson 10 · 2027-02-17 · Week 6"
+subtitle: "Lesson 9 · 2027-02-10 · Week 5"
 nocite: |
   @durbin1998
 ---
 
 ## Core question
 
-How can two sequence models classify a genomic window?
+Which stretches of DNA retain unusually many neighboring CG pairs?
 
 ```{.python .execute}
 #| label: setup
@@ -26,19 +26,21 @@ cf.use_style()
 
 ## CpG islands
 
-Sequencing measurements are converted to A, C, G, T base calls and assembled into genomic sequence. Our input is a contiguous interval of that DNA string, called a *window*, with its position in the genome. We want to identify windows whose sequence resembles a CpG island, a region retaining many adjacent CG pairs. Many such regions lie near *promoters*, DNA regions where transcription can begin [@durbin1998]. Candidate locations can guide further study of gene regulation.
+Many genes have nearby *promoters*, DNA regions where the cell's machinery can begin copying DNA into RNA. Some promoters lie in *CpG islands*, stretches of DNA that retain many adjacent CG pairs compared with the surrounding genome [@durbin1998]. If we have the genome sequence but no map of these regions, where should we look?
 
-CpG denotes C followed by G on the same strand; it is a *dinucleotide*, or pair of neighboring bases. The p denotes their phosphate connection, distinguishing this pair from C paired with G across the two strands. In vertebrate DNA, cytosine in a CpG is often *methylated*, meaning that a methyl group is chemically attached to it. Methylated cytosine can undergo deamination, a chemical change that converts it to thymine, contributing to CpG depletion over evolutionary time. Regions around many promoters are less depleted and often remain unmethylated [@durbin1998].
+Sequencing measurements are converted to A, C, G, T base calls and assembled into genomic sequence. Our input is a contiguous interval of that DNA string, called a *window*, with its position in the genome. A record might contain `CGTA` and the coordinates of its four bases. We want to score how closely such a window resembles an island rather than surrounding sequence, then mark candidates for further study of gene regulation.
+
+CpG means C followed by G on the same strand, a neighboring pair rather than a base pair across the two DNA strands. Why is this pair unusual? In vertebrate DNA, C at a CpG often carries a chemical modification called *methylation*. The modified C is more prone to conversion to T, depleting CG pairs over evolutionary time. Many promoter regions escape this depletion [@durbin1998].
 
 An ordinary DNA letter string does not record attached methyl groups or gene activity. We predict a sequence feature, rather than measure methylation or establish that a promoter is active. Today's output is a window score and a threshold decision. It does not locate an island's exact boundaries.
 
-A CpG island is not simply a GC-rich string. The order matters: `GCTA` and `CGTA` have the same base composition, but only the second contains `CG`. A first-order chain is the smallest model that can assign different probabilities to these two strings.
+A CpG island is not simply a GC-rich string. The order matters: `GCTA` and `CGTA` have the same base composition, but only the second contains `CG`. An independent-base model gives these strings the same probability. A first-order Markov chain can distinguish them by using the previous base when assigning the next-base probability. We fit one chain to island sequence and another to background sequence, then compare their explanations of the observed window.
 
 ## Two models and one window
 
 For training, suppose a separate annotation lists genomic intervals labeled island or background. Extracting their DNA strings gives two collections of labeled sequence. We fit a first-order Markov chain to each collection, then compare the island model $M_+$ and background model $M_-$ on a new window $x=x_1\ldots x_n$. The annotation defines the target we learn; it is not a methylation measurement supplied by the DNA letters.
 
-As in Lesson 9, each chain has an initial distribution $q^\pm$ and a transition matrix $A^\pm$. Initial probabilities sum to one, and each transition row sums to one. We assume every parameter is strictly positive so both window likelihoods and their logarithms are defined.
+As in Lesson 8, each chain has an initial distribution $q^\pm$ and a transition matrix $A^\pm$. Initial probabilities sum to one, and each transition row sums to one. We assume every parameter is strictly positive so both window likelihoods and their logarithms are defined.
 
 ::: {#def-cpg-classification-problem}
 ## CpG window classification
@@ -127,6 +129,33 @@ S(\texttt{CGTA})=2.322-0.585-0.585=1.152.
 $$
 At threshold zero, the first window is background-like and the second island-like under these models. Their 2.737-bit score difference comes entirely from order because their base counts agree. The classifications describe which synthetic model better fits each window.
 :::
+
+@fig-cpg-order-evidence separates the contributions of the three neighboring pairs. Both windows contain one of each base, but putting G after C supplies a large positive contribution in the second window. The model therefore distinguishes a neighboring-base pattern that a base-count comparison misses.
+
+```{.python .execute}
+#| label: fig-cpg-order-evidence
+#| echo: false
+#| fig-width: 6
+#| fig-height: 3
+#| fig-cap: "Pair contributions for GCTA and CGTA under the synthetic island and background chains. The red CG bar contributes log2(5) bits; changing order reverses the total score even though the two windows have identical base counts."
+#| fig-alt: "Two bar plots with a shared bit scale. GCTA has contributions 0.585, minus1.585, minus0.585 for GC, CT, TA; CGTA has 2.322, minus0.585, minus0.585 for CG, GT, TA."
+pair_ratios = {"GC": 1.5, "CT": 1 / 3, "TA": 2 / 3,
+               "CG": 5, "GT": 2 / 3}
+fig, axes = plt.subplots(1, 2, sharey=True)
+for ax, window in zip(axes, ["GCTA", "CGTA"]):
+    pairs = [window[i:i + 2] for i in range(len(window) - 1)]
+    contributions = [math.log2(pair_ratios[pair]) for pair in pairs]
+    colors = [cf.EMPHASIS if pair == "CG" else "C0" for pair in pairs]
+    ax.bar(pairs, contributions, color=colors)
+    ax.axhline(0, color=cf.RULE, linewidth=0.8)
+    ax.set(xlabel="Neighboring pair", ylim=(-2, 2.7))
+    ax.set_title(f"{window}: total {sum(contributions):.3f} bits")
+axes[0].set_ylabel("Island-versus-background evidence (bits)")
+for ax, label in zip(axes, ["A", "B"]):
+    ax.text(-0.12, 1.04, label, transform=ax.transAxes,
+            fontsize=11, fontweight="bold")
+plt.show()
+```
 
 ::: {#exm-cpg-threshold}
 ## The threshold changes the decision

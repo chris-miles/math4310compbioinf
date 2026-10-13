@@ -68,3 +68,6 @@ h3{margin:24px 0 10px}
 .course-overview-link{display:inline-flex;align-items:baseline;gap:7px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none}
 .course-overview-link span{color:var(--red)}
 .course-overview-link:hover,.course-overview-link:focus-visible{color:var(--red);text-decoration:underline}
+
+/* A subject can begin at the second meeting of a calendar week. */
+.course-table div.module-heading{margin:8px 0 6px;padding:5px 8px;border-left:3px solid var(--red);background:#f1f1f1;font-weight:600;font-size:13px}

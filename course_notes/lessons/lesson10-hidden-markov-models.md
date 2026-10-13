@@ -1,14 +1,14 @@
 ---
 published: true
 title: "Hidden Markov Models"
-subtitle: "Lesson 11 · 2027-02-22 · Week 7"
+subtitle: "Lesson 10 · 2027-02-17 · Week 6"
 nocite: |
   @durbin1998, @compeau2015
 ---
 
 ## Core question
 
-How can a sequence model represent a region label that we cannot observe directly?
+Where do island-like regions begin and end along the DNA?
 
 ```{.python .execute}
 #| label: setup
@@ -25,18 +25,37 @@ cf.use_style()
 
 ## Observations and hidden states
 
-Sliding a window along a genome gives overlapping decisions, and neighboring windows may disagree about the same bases. Choosing a window size also fixes how sharply a boundary can be located. Instead, we can model the sequence as alternating hidden regions and let the labels persist or change from one position to the next.
+The window classifier from Lesson 9 tells us whether a chosen stretch of DNA looks island-like. To make a map along a chromosome, we also need to locate where each region begins and ends. Sliding a window along the assembled DNA gives overlapping decisions: a window crossing a boundary mixes island and background bases, and neighboring windows may disagree about the same positions. Choosing a window size also limits how sharply a boundary can be located [@durbin1998].
 
-The input is a DNA sequence; the unknown output is a region label at each position. A single C or G could belong to either region, so a letter cannot reveal its state. Neighboring letters can supply evidence because regions tend to persist. We need a model that assigns probabilities to complete sequences of labels and observations.
+The input is the same kind of data, a DNA letter string with genomic coordinates. The desired output is a region label at each position; a consecutive run of island labels becomes a predicted interval. A single C or G could belong to either region, so a letter cannot reveal its label. Neighboring letters can supply evidence because a region extends across several bases. We model that persistence by allowing the unobserved label to stay the same or change between positions.
 
-To keep the arithmetic short, collapse the DNA alphabet into $S$ for $C$ or $G$ and $W$ for $A$ or $T$. This collapse preserves GC enrichment but discards the distinction between CG and GC. The two-state example teaches hidden-region inference; it does not reproduce the dinucleotide classifier from Lesson 10.
+To keep the arithmetic short, collapse the DNA alphabet into $S$ for $C$ or $G$ and $W$ for $A$ or $T$. This collapse preserves GC enrichment but discards the distinction between CG and GC. The two-state example teaches hidden-region inference; it does not reproduce the dinucleotide classifier from Lesson 9.
 
 ::: {#def-hmm-data}
 ## Observed sequence and hidden path
 An observed sequence is $x=x_1\ldots x_n$ over an alphabet $\Sigma$. A hidden path is $\pi=\pi_1\ldots\pi_n$ over a finite state set $Q$. State $\pi_i$ is the unobserved label associated with observation $x_i$.
 :::
 
-Our state set is $Q=\{B,I\}$: background and island. The observation $x=\texttt{SSW}$ might have hidden path $\pi=\texttt{IIB}$.
+Our state set is $Q=\{B,I\}$: background and island-like sequence. For example, DNA `CGA` becomes the observation $x=\texttt{SSW}$. A proposed path $\pi=\texttt{IIB}$ assigns its first two bases to an island and its third to background; $\texttt{BBB}$ proposes no island. Both paths can produce the same letters. A *hidden Markov model* assigns probabilities to these competing explanations, using how often each region emits S or W and how often the region changes.
+
+@fig-hidden-markov-model-observed-hidden keeps the recorded bases separate from the proposed region labels. Converting C/G to S is a known recoding step. Choosing between I and B is an inference: the same observed row is compatible with both proposed maps.
+
+```{.python .execute}
+#| label: fig-hidden-markov-model-observed-hidden
+#| echo: false
+#| fig-width: 6
+#| fig-height: 2.8
+#| fig-cap: "Recorded DNA, its S/W recoding, and two proposed region maps at the same three positions. The red I cells mark a candidate island; those labels are an explanation of the letters, not an additional sequencing measurement."
+#| fig-alt: "Four aligned rows: recorded DNA C G A, recoded observations S S W, candidate map I I B, and alternative map B B B. The first two I cells in the candidate map are red."
+fig, ax = plt.subplots()
+cf.sequence_tracks(
+    ax,
+    {"Recorded DNA": "CGA", "Recoded letters": "SSW",
+     "Candidate map": "IIB", "Alternative map": "BBB"},
+    highlighted_row="Candidate map", highlighted_positions=[0, 1],
+)
+plt.show()
+```
 
 ## The B/I hidden Markov model
 
@@ -45,7 +64,7 @@ Our state set is $Q=\{B,I\}$: background and island. The observation $x=\texttt{
 A hidden Markov model (HMM) consists of initial probabilities $p_k=P(\pi_1=k)$, transition probabilities $a_{k\ell}=P(\pi_i=\ell\mid\pi_{i-1}=k)$, and emission probabilities $e_k(b)=P(x_i=b\mid\pi_i=k)$. The hidden states form a first-order Markov chain, and conditional on the entire hidden path, the observations are independent, and the distribution of $x_i$ depends only on $\pi_i$.
 :::
 
-We use these illustrative parameters through Lessons 11 to 13:
+We use these illustrative parameters through Lessons 10 to 12:
 $$
 p_B=p_I=0.5,
 \qquad
@@ -68,7 +87,9 @@ The emission table says that $S$ is more common in islands. The transition table
 
 ```{.python .execute}
 #| label: fig-hidden-markov-model-diagram
-#| fig-cap: "The B/I hidden Markov model used in Lessons 11 to 13. Transitions describe region changes; emission tables describe the observed symbol within each region."
+#| code-fold: true
+#| code-summary: "Draw the hidden-region model"
+#| fig-cap: "The B/I hidden Markov model used in Lessons 10 to 12. Transitions describe region changes; emission tables describe the observed symbol within each region."
 #| fig-alt: "Two circular states labeled B and I with self-loops and arrows in both directions; beneath each state is a table of S and W emission probabilities."
 #| fig-width: 5
 #| fig-height: 3
@@ -279,7 +300,7 @@ $$
 $$
 The annotation source defines what the model learns to call an island. Labels based on a sequence-composition rule teach that rule; they do not by themselves establish a gene-regulatory function.
 
-The path contains transitions $II,IB,BB,BB$, giving $\widehat a_{II}=\widehat a_{IB}=1/2$ and $\widehat a_{BB}=1$. These exact zeros and ones reflect a tiny sample, not biological certainty. Pseudocounts prevent these small-sample estimates from ruling out unobserved events, as in Lesson 9.
+The path contains transitions $II,IB,BB,BB$, giving $\widehat a_{II}=\widehat a_{IB}=1/2$ and $\widehat a_{BB}=1$. These exact zeros and ones reflect a tiny sample, not biological certainty. Pseudocounts prevent these small-sample estimates from ruling out unobserved events, as in Lesson 8.
 :::
 
 The two-state S/W model represents GC enrichment and persistence. To retain the CpG transition signal as well, a state can include both the region label and the current DNA base. The eight states $B_A,B_C,B_G,B_T,I_A,I_C,I_G,I_T$ then distinguish, for example, a C-to-G transition inside an island from the same transition in background [@durbin1998]. The two-state simplification lets us study hidden paths without that additional bookkeeping.

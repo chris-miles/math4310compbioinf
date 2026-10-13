@@ -1,14 +1,14 @@
 ---
 published: true
 title: "Viterbi Decoding"
-subtitle: "Lesson 12 · 2027-03-01 · Week 8"
+subtitle: "Lesson 11 · 2027-02-22 · Week 7"
 nocite: |
   @durbin1998, @compeau2015
 ---
 
 ## Core question
 
-What is the most likely hidden path through an HMM?
+Which map of island-like regions best explains the observed DNA?
 
 ```{.python .execute}
 #| label: setup
@@ -26,9 +26,11 @@ cf.use_style()
 
 ## The decoding problem
 
-A hidden-region model assigns a probability to every possible annotation, but a genome browser needs a concrete set of intervals. We therefore want one complete path of labels through the sequence. Deciding each label from its base alone would ignore the model's preference for regions that continue across neighboring positions.
+An assembled DNA sequence supplies letters and positions, but no island labels. Suppose the observed stretch is `CGAC`. Under the model from Lesson 10, one possible annotation puts its first two bases in an island and the last two in background; another puts all four in an island. Which complete annotation is better supported? We want one label per base, so consecutive equal labels can be combined into intervals on a genome map.
 
-We retain the model from Lesson 11. Observations are $S$ for C or G and $W$ for A or T; hidden labels are background $B$ and island $I$, so $Q=\{B,I\}$ and the number of states is $K=2$. This simplified alphabet records GC enrichment, not the dinucleotide dependence used in the earlier CpG classifier. Viterbi decoding chooses the most probable complete path, balancing emissions against state transitions. Its output is an annotation under this model, rather than a confidence value for each base.
+The hidden-region model assigns a probability to every such explanation. Deciding each label from its base alone would ignore the model's preference for regions that continue across neighboring positions. We must compare whole paths, including the changes of region that each explanation requires.
+
+We retain the model from Lesson 10. Observations are $S$ for C or G and $W$ for A or T, so `CGAC` becomes $x=\texttt{SSWS}$. Hidden labels are background $B$ and island-like $I$, so $Q=\{B,I\}$ and the number of states is $K=2$. This simplified alphabet records GC enrichment, not the dinucleotide dependence used in the earlier CpG classifier. *Viterbi decoding* chooses the most probable complete path, balancing emissions against state transitions. Its output is an annotation under this model, rather than a confidence value for each base.
 
 Recall the fixed illustrative parameters:
 $$
@@ -92,7 +94,7 @@ A backpointer records which $\ell$ attained the maximum. The final maximum gives
 
 ## A four-position trellis
 
-Use the unchanged B/I model from Lesson 11 and observation $x=\texttt{SSWS}$.
+Use the unchanged B/I model from Lesson 10 and observation $x=\texttt{SSWS}$.
 
 ::: {#exm-viterbi-table}
 ## Filling the Viterbi table

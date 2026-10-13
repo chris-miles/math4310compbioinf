@@ -1,14 +1,14 @@
 ---
 published: true
 title: "Reads, k-mers, and de Bruijn Graphs"
-subtitle: "Lesson 7 · 2027-02-03 · Week 4"
+subtitle: "Lesson 6 · 2027-02-01 · Week 4"
 nocite: |
   @compeau2015, @pevzner2001
 ---
 
 ## Core question
 
-How can a collection of short DNA fragments determine a much longer sequence?
+How can overlapping DNA fragments reveal a genome sequence?
 
 ```{.python .execute}
 #| label: setup
@@ -23,9 +23,32 @@ cf.use_style()
 
 ## Reads and coverage
 
-Read mapping in Lesson 5 assumed a reference sequence to supply coordinates. For a newly sampled organism without a suitable reference, sequencing still gives reads, but their order must be inferred from overlaps with one another. This is *de novo assembly*. Repeated DNA makes placement ambiguous even before sequencing errors enter: a shared word can come from the same genomic location or from two copies of a repeat.
+Suppose we sequence DNA from a bacterium without a suitable reference genome. The instrument gives a collection of reads, each a string of base calls along a fragment. Their genomic positions are missing. Placing these reads against a reference would require the sequence we are trying to discover; instead, we must use overlaps among the reads themselves. Reconstructing sequence this way is *de novo assembly*.
 
-We begin with the reads as a collection of strings, then isolate a simpler problem: reconstruct one string from its exact short-word counts. That idealization makes the graph construction visible. Comparing the two kinds of counts will show which assumptions separate the toy problem from an actual assembly.
+For a toy example, the reads `TACG` and `ACGA` suggest the longer string `TACGA`: the final ACG of the first read matches the initial ACG of the second. @fig-reads-records-to-overlaps uses four reads to show the distinction between input records and a proposed placement. Their record names identify fragments, not genomic positions. The overlaps suggest `TACGACG` as a candidate sequence.
+
+```{.python .execute}
+#| label: fig-reads-records-to-overlaps
+#| code-fold: true
+#| code-summary: "Compare unordered read records with proposed overlapping placements"
+#| fig-cap: "The same four read records listed independently (left) and placed beneath candidate sequence TACGACG (right). Their overlaps supply the proposed order; several reads observe the same genomic bases, so observation counts differ from genome-copy counts."
+#| fig-alt: "Left panel lists r1 CGAC, r2 TACG, r3 GACG, and r4 ACGA without genomic offsets. Right panel staggers those same reads beneath TACGACG at starts two, zero, three, and one respectively."
+#| fig-width: 6
+#| fig-height: 3
+read_records = ["CGAC", "TACG", "GACG", "ACGA"]
+record_names = ["r1", "r2", "r3", "r4"]
+fig, axes = plt.subplots(1, 2)
+cf.read_layout(axes[0], read_records, labels=record_names)
+cf.read_layout(axes[1], read_records, starts=[2, 0, 3, 1],
+               reference="TACGACG", labels=record_names)
+axes[0].set_title("Input: fragment records")
+axes[1].set_title("Proposed overlapping placements")
+plt.show()
+```
+
+A shared word supplies a possible join, but a repeated word elsewhere in the genome can supply the same apparent join. We need a representation that retains the alternatives rather than committing to the first overlap we find.
+
+We begin with the read collection, then isolate a simpler reconstruction problem: find one string with a supplied multiset of exact short words. Those words become edges in a graph, and their overlaps determine which edges can follow one another. Comparing read-derived counts with exact genomic counts will show which assumptions make this ideal problem different from an actual assembly.
 
 Let $G$ be a genome string. An *ideal read* is a substring of $G$ or its reverse complement. Observed reads can differ from these substrings because of sequencing errors. Sequencing data are a multiset $R=\{\!\{r_1,\ldots,r_m\}\!\}$ because identical read sequences may be observed more than once.
 
@@ -43,7 +66,7 @@ For the toy examples, all reads have already been oriented to the same strand. R
 ## Coverage counts observations
 Let $G=\texttt{TACGACG}$ and take every length-4 substring:
 $$R=\{\!\{\texttt{TACG},\texttt{ACGA},\texttt{CGAC},\texttt{GACG}\}\!\}.$$
-Here $C=16/7$. End bases occur in one read and the central base occurs in four, even though starts are perfectly regular.
+Here $C=16/7$. In @fig-reads-records-to-overlaps, end bases occur in one read and the central base occurs in four, even though starts are perfectly regular. The word CGA at genome positions 3 through 5 lies in both r1 and r4; it occurs once in the genome but is observed twice.
 :::
 
 ### Read boundaries and overlap
@@ -218,7 +241,7 @@ A walk of $q$ edges in $D(K)$ spells a string of length $q+k-1$. Its $i$th $k$-m
 Sketch. Start with the first node, which contributes $k-1$ symbols. An edge labeled $w$ has source $w_1\cdots w_{k-1}$ and target $w_2\cdots w_k$. Appending the target's last symbol therefore makes the latest $k$ symbols exactly $w$. Each of the $q$ edges appends one symbol, giving length $k-1+q$. For example, `TA → AC` appends C to TA and records the 3-mer TAC. Neighboring node labels overlap in $k-2$ symbols, while neighboring edge words overlap in $k-1$.
 :::
 
-Construction takes $\mathcal O(|K|)$ time for fixed $k$ and stores $|K|$ edges. Reconstruction now asks for a walk using every edge occurrence once. Lesson 8 supplies that algorithm.
+Construction takes $\mathcal O(|K|)$ time for fixed $k$ and stores $|K|$ edges. Reconstruction now asks for a walk using every edge occurrence once. Lesson 7 supplies that algorithm.
 
 ## What changes with k
 
@@ -233,7 +256,7 @@ At $k=4$, the missing edge `ACG → CGA` breaks the route through the graph. At 
 
 For a DNA model with independent, equally likely bases, a particular k-mer has probability $4^{-k}$ at any position. This rough calculation explains why longer words are less likely to match by accident. Genomes are not random, and repeats violate the calculation badly, but it gives the direction of the tradeoff. Increasing k separates more repeated contexts while requiring longer error-free coverage.
 
-We can compare graphs at several $k$ values rather than assume one choice is always adequate. Our theorem in Lesson 8 applies to each fixed graph. Deciding which graph best represents the reads is a separate statistical question.
+We can compare graphs at several $k$ values rather than assume one choice is always adequate. Our theorem in Lesson 7 applies to each fixed graph. Deciding which graph best represents the reads is a separate statistical question.
 
 :::: {.callout-note collapse="true" title="Going deeper: count words in a reference genome"}
 The [phiX174 reference](../data/phix174-NC_001422.1.fasta) gives us a small real sequence on which to check the same counting code. Download the repository to run this block from the lesson folder. FASTA's first line names the record; its remaining lines hold one continuous sequence.

@@ -1,14 +1,14 @@
 ---
 published: true
 title: "Evolutionary Distances and UPGMA"
-subtitle: "Lesson 14 · 2027-03-15 · Week 10"
+subtitle: "Lesson 13 · 2027-03-03 · Week 8"
 nocite: |
   @compeau2015, @durbin1998
 ---
 
 ## Core question
 
-How can differences between aligned sequences tell us which samples share a more recent ancestor?
+Which samples share a more recent ancestor?
 
 ```{.python .execute}
 #| label: setup
@@ -26,7 +26,7 @@ cf.use_style()
 
 ## From sampled sequences to shared ancestry
 
-Sequencing turns DNA from a sample into a string of base calls. Suppose we have sequences of the same gene from several species, or the same genomic region from several viral samples. Which samples share a more recent ancestor? A *phylogeny*, or evolutionary tree, describes this pattern of shared ancestry. Its branches can also represent the amount of sequence change along each lineage.
+Suppose we have DNA from several organisms or viral samples and want to know which are more closely related. Their common ancestors are usually unavailable to sequence. We instead compare the descendants: sequencing gives a DNA letter string from each sample, and substitutions accumulated since their ancestors can leave different letters at corresponding positions. A *phylogeny*, or evolutionary tree, describes the inferred pattern of shared ancestry. Its branches can also represent the amount of sequence change along each lineage.
 
 During the 2003 SARS investigation, researchers compared coronavirus sequences sampled from humans and other animals to investigate their evolutionary relationships [@compeau2015]. Sequence relatedness can help assess an origin hypothesis. A tree of sampled sequences alone does not identify a direct transmission event or prove which animal infected a particular person. Here we develop the distance-based inference using synthetic DNA examples.
 

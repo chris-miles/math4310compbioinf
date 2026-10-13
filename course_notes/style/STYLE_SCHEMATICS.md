@@ -53,7 +53,7 @@ These are fixed so that the same picture means the same thing in every lesson. T
 
 **Graphs** (`digraph`). Nodes are white circles with ink outlines and monospace labels. Edges are grey with arrowheads; parallel edges are drawn as separate arcs because multiplicity is the point in a de Bruijn graph. Highlight one path or one node in red. Neighborhood graphs pass `directed=False`. Fix `pos` by hand for small graphs so the layout matches how the instructor draws it on the board; use the returned positions for a second panel of the same graph.
 
-**HMM state diagrams** (`state_diagram`). States in a row, self-loops above, emission tables below in monospace, transition probabilities on the arcs. The same B/I toy model is used from Lesson 11 through Lesson 13 and its diagram is identical on all three pages.
+**HMM state diagrams** (`state_diagram`). States in a row, self-loops above, emission tables below in monospace, transition probabilities on the arcs. The same B/I toy model is used from Lesson 10 through Lesson 12 and its diagram is identical on all three pages.
 
 **Trees** (`tree`). Root at the left, leaves at the right in the order given, branch lengths as horizontal extent so that an ultrametric tree visibly lines its leaves up. Highlight a leaf or clade in red when the lesson is about it. Internal node names, if any, are small and grey.
 
@@ -71,7 +71,7 @@ Same rule as data plots: the caption says what the figure shows and then, in one
 
 ## Same instance, everywhere
 
-A lesson's figure draws the instance the prose is working through, with the same strings, scores, and indices. Do not invent a second instance for the picture. Across lessons, reuse instances deliberately: the `ACGT`/`AGT` table from Lesson 3 is traced back in Lesson 4; the B/I HMM is defined in Lesson 11, decoded in Lesson 12, and given posteriors in Lesson 13. The example banks in `planning/source_digests/` list which instances are shared.
+A lesson's figure draws the instance the prose is working through, with the same strings, scores, and indices. Do not invent a second instance for the picture. Across lessons, reuse instances deliberately: the `ACGT`/`AGT` table in Lesson 3 is also traced back there; the B/I HMM is defined in Lesson 10, decoded in Lesson 11, and given posteriors in Lesson 12. The example banks in `planning/source_digests/` list which instances are shared.
 
 ## Checklist before a figure ships
 

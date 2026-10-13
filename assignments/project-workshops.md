@@ -3,9 +3,11 @@ published: false
 title: "Project Workshops"
 ---
 
+Project format remains undecided. These are optional workshop ideas, not assigned deliverables or scheduled meetings.
+
 ## Workshop 1: Proposal and Repository Skeleton
 
-Planned deliverables:
+Possible deliverables if adopted:
 
 - Biological question.
 - Course method.
@@ -14,11 +16,11 @@ Planned deliverables:
 - Validation check.
 - Repository skeleton.
 
-Use this workshop to convert a starter track into a concrete plan. Teams should be able to say what mathematical object they are building, what input it takes, what output it produces, and how they will know whether the output is plausible.
+Use this workshop to convert a starter track into a concrete plan. Students should be able to say what mathematical object they are building, what input it takes, what output it produces, and how they will know whether the output is plausible.
 
 ## Workshop 2: Preliminary Results and Limitation Audit
 
-Planned deliverables:
+Possible deliverables if adopted:
 
 - One result produced by code that runs on a small input.
 - README draft.

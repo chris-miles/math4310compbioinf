@@ -1,14 +1,14 @@
 ---
 published: true
 title: "Local Alignment"
-subtitle: "Lesson 5 · 2027-01-27 · Week 3"
+subtitle: "Lesson 4 · 2027-01-25 · Week 3"
 nocite: |
   @smith1981, @durbin1998, @compeau2015
 ---
 
 ## Core question
 
-How do we find a strong shared region without paying for unrelated flanks?
+Which regions of two proteins have similar sequences?
 
 ```{.python .execute}
 #| label: setup
@@ -23,9 +23,25 @@ cf.use_style()
 
 ## Substrings instead of whole strings
 
-After translating a predicted coding sequence, we may compare the resulting amino-acid string with a characterized protein. A *domain* is a region of a protein that often folds as a unit and carries a particular activity, such as binding another molecule [@ebi-domains]. Two proteins may share a domain while having different regions around it. Requiring an end-to-end alignment can bury the domain match under penalties for those flanks; local alignment lets the shared region determine its own endpoints.
+Suppose a DNA assembly contains a predicted gene whose protein function is unknown. Reading its coding sequence in three-base groups gives the predicted protein's amino-acid string, which we can compare with a protein whose function has been studied. A *domain* is a protein region that often folds as a unit and carries a particular activity, such as binding another molecule [@ebi-domains]. Finding a shared domain can suggest an activity to test, even when the proteins have different regions around it.
 
-Our input remains two strings and column scores. The change is which letters the output must use: we may now leave prefixes and suffixes outside the alignment. The Smith-Waterman algorithm makes that change precise with one extra recurrence candidate and new traceback rules.
+Global alignment requires every letter in both records. Its penalties for those surrounding regions can outweigh the evidence in the shared domain. For a short calculation, use DNA strings $x=\texttt{TTACGCC}$ and $y=\texttt{GGACGAA}$ with match $+1$, mismatch $-1$, and gap $-2$. The whole-string alignment scores $-1$, while the interior ACG/ACG scores 3. The same issue arises with amino-acid strings: the useful correspondence may cover only part of each record.
+
+```{.python .execute}
+#| label: fig-local-whole-versus-region
+#| code-fold: true
+#| code-summary: "Compare the whole strings with their shared region"
+#| fig-cap: "The toy DNA strings paired end to end (left) and restricted to their shared ACG region (right). Four flank mismatches cancel the full alignment's three match rewards; selecting the interior retains the shared-region score of 3."
+#| fig-alt: "TTACGCC over GGACGAA has mismatches at the first two and last two positions. A second pair of rows contains only ACG over ACG, with three match marks."
+#| fig-width: 6
+#| fig-height: 1.8
+fig, axes = plt.subplots(1, 2)
+cf.alignment(axes[0], "TTACGCC", "GGACGAA")
+cf.alignment(axes[1], "ACG", "ACG")
+plt.show()
+```
+
+Our input remains two strings and column scores. We now seek both the best correspondence and the start and end of its region in each string, allowing unused prefixes and suffixes. This is *local alignment*. The Smith-Waterman algorithm lets a promising region start after a poor prefix and end before poor trailing columns; its table finds those endpoints along with the score.
 
 Which letters must appear in the answer depends on the biological task:
 
@@ -47,6 +63,8 @@ Given strings $x$ and $y$ and additive column scores, find substrings of $x$ and
 Allowing the empty alignment means the answer is never negative. More importantly, it lets a poor prefix be discarded before a promising region begins.
 
 The start of the shared region is unknown. At a fixed endpoint $(i,j)$, its part in $x$ could begin at any position up to $i$, and likewise in $y$. Those choices are precisely the suffixes of $x_1\cdots x_i$ and $y_1\cdots y_j$. Let $H(i,j)$ store the best alignment score over all such suffix pairs, including the empty alignment. One entry therefore summarizes many possible starts. Taking the largest entry will also choose the endpoint.
+
+Recall the global traceback: choose a maximizing predecessor, emit its column, and reverse the collected columns. Here the correspondence must also tell us where a shared region starts and ends. The restart candidate, best endpoint, and stopping rule change together.
 
 ## The Smith-Waterman recurrence
 
@@ -210,6 +228,8 @@ Every pair of substrings has an endpoint $(i,j)$, so the largest cell considers 
 
 A length-$n$ string has $n(n+1)/2$ nonempty substrings, so separately aligning every substring pair would consider on the order of $n^2m^2$ pairs. Restarting within a shared table avoids those separate searches. The algorithm fills $(n+1)(m+1)$ cells with constant work per cell and traces at most $n+m$ moves. For positive $n,m$ and constant-time arithmetic, its time and memory costs are $\mathcal O(nm)$.
 
+:::: {.callout-note collapse="true" title="Going deeper: free ends and fitting an entire read"}
+
 ### Free-end alignment variants
 
 The recurrence, borders, answer cell, and stopping rule act together. Start from the three-way global recurrence, without a zero candidate in interior cells. Zero borders and a required bottom-right answer allow free leading ends but charge trailing ends. Global borders and an answer taken from the last row or last column instead charge leading ends and allow free trailing ends. These are free-end variants; neither permits the arbitrary internal restart used by local alignment.
@@ -227,6 +247,8 @@ For read $\texttt{AC}$ and reference $\texttt{TTACGG}$, using match $+1$, mismat
 
 These boundary choices express a biological requirement in the table. Before modifying an alignment routine, state which input letters the output must consume, then choose its initialization and endpoint to enforce that requirement.
 
+::::
+
 ## Scoring and region length
 
 The restart rule relies on the scoring choice from Lesson 2. A calibrated log-odds table has negative expected score under its background model, so extending an unselected alignment through unrelated sequence tends to decrease its score. This makes the edges of a shared region detectable. If background columns instead have positive average score, the algorithm is rewarded for extending into unrelated material and the selected region expands. A zero mismatch score does not by itself force the whole sequence into the answer, but it can make neutral columns free and produce long, poorly localized optima.
@@ -242,7 +264,7 @@ Smith-Waterman finds the best region under its score. It does not supply a proba
 1. **Only the best region is returned.** Two disjoint domains require repeated searches or methods designed for multiple hits.
 2. **The score controls length.** Weak mismatch or gap penalties allow unrelated columns to join nearby good regions.
 3. **Low complexity creates strong accidental matches.** Repetitive composition violates the simple background model.
-4. **Quadratic time remains.** Exact local alignment against every database record is too costly at database scale. Lesson 6 introduces seed-and-extend search.
+4. **Quadratic time remains.** Exact local alignment against every database record is too costly at database scale. Lesson 5 introduces seed-and-extend search.
 
 ## Exercises
 

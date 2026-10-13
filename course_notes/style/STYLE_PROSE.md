@@ -18,6 +18,8 @@ The target is a first careful treatment of the theory: complexity, noise, dimens
 
 Students should learn to identify the data, the question, the model, and the limits of an answer. Develop those habits through the calculations and examples. Do not repeatedly announce them as the course's philosophy.
 
+This may be a student's only course in computational bioinformatics methods. As a general design consideration, favor examples that give practice with ideas and technical skills transferable to other biological problems as tools change. When it helps the lesson, connect that practice to judging AI-assisted analyses: understanding inputs, checking assumptions and outputs, and interpreting evidence. Neither transfer nor AI needs an explicit discussion in every lesson; avoid forced connections and claims that a method is future-proof.
+
 ## The reference and what to learn from it
 
 The writing reference is Peter Holderrieth and Ezra Erives, [*An Introduction to Flow Matching and Diffusion Models*](https://arxiv.org/abs/2506.02070) (MIT 6.S184 notes); study §1.3, §2.1, and §§3.1 to 3.3. For biological motivation and algorithmic intuition, Compeau and Pevzner's *Bioinformatics Algorithms* (chapter 5 in particular) is the model. What makes both clear:
@@ -49,6 +51,8 @@ Section order may vary to explain the subject. Local formatting conventions shou
 **Required: set the stage before introducing the mathematical method.** Explain which experiment or technology supplies the available data and what a record literally looks like: for example, measured bases become letter strings, reads are fragments without genomic coordinates, and an expression matrix records measurements for named genes across samples or cells. State the biological question and the inference we want, then translate it into a concrete mathematical problem with explicit inputs, desired output, and assumptions. Solve that problem and interpret what the result supports biologically. Explain only the technological and biological details needed for this chain of reasoning; a continuing lesson may recall an established setup instead of rebuilding it.
 
 Use this progression in the lesson's main explanation, not solely in a biology callout. "Sequence analysis is important in modern biology" gives the reader no problem to solve. Mathematical definitions and algorithms should answer a question the reader already understands.
+
+Use Lesson 1's sequencing-to-read comparison as the clarity benchmark throughout the book. At a topic's first appearance, briefly explain what the technology measures, show what one resulting record looks like, and state what we want to learn biologically. Terms such as read, reference, alignment, expression count, and reporter need that orientation before they can carry an explanation. A continuing lesson can recall the established data and pose its new question. Keep the Core question understandable before the lesson's technical definitions, and use a small sketch or comparison when it can show the problem more clearly than another paragraph.
 
 **Required: keep the biological meaning connected to the work throughout when informative.** Explain how modeling choices represent the data, why a computational obstacle matters for the inference, what an algorithm's behavior means for the biological question, and what results and limitations allow us to conclude. An opening motivation followed by mathematics with no return to that question is insufficient. Do not force a biological aside into every algebraic step; place these connections where they help the reader understand a choice or an answer.
 
@@ -205,7 +209,7 @@ The new question motivates a different computation without suggesting that Viter
 
 Write self-contained lecture notes with recognizable sections, concise prose, and clearly marked definitions, examples, and results. A reader scanning the headings should see what the lesson covers. A reader studying the argument should find the explanations needed to reconstruct it after class.
 
-Each numbered lesson corresponds to one 80-minute meeting, including board work and discussion. Use the actual dates in `site/schedule.json` and `course_notes/planning/lesson_calendar.md`; count holidays, exams, and project sessions before assigning lessons.
+Each numbered lesson corresponds to one 80-minute meeting, including board work and discussion. Use the actual dates in `site/schedule.json` and `course_notes/planning/lesson_calendar.md`; count holidays, exams, and the flex meeting before assigning lessons.
 
 Begin with a one-sentence **Core question** under the title. The opening should establish the biological or computational purpose, the observed data, and the output the lesson will develop. Usually one or two paragraphs suffice. A continuing lesson can recall the existing setup and explain the new question.
 
@@ -245,7 +249,7 @@ If a lesson is too long, remove a secondary topic or move a technical extension 
 ```yaml
 ---
 published: true
-title: "Recovering an Alignment: Traceback"
+title: "Local Alignment"
 subtitle: "Lesson 4 · 2027-01-25 · Week 3"
 nocite: |
   @durbin1998, @compeau2015

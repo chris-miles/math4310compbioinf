@@ -51,6 +51,94 @@ def use_style() -> None:
     plt.style.use(STYLE_PATH)
 
 
+def sequence_tracks(
+    ax: plt.Axes,
+    rows: dict[str, str],
+    *,
+    highlighted_row: str | None = None,
+    highlighted_positions: Sequence[int] = (),
+    show_positions: bool = True,
+) -> None:
+    """Align observed symbols and proposed labels at the same sequence positions."""
+    _bare(ax)
+    lengths = {len(sequence) for sequence in rows.values()}
+    if len(lengths) != 1 or not rows:
+        raise ValueError("Sequence tracks need nonempty rows of equal length.")
+    length = lengths.pop()
+    highlighted_positions = set(highlighted_positions)
+    for row, (label, sequence) in enumerate(rows.items()):
+        y = -row
+        ax.text(-0.7, y, label, ha="right", va="center", fontsize=10)
+        for i, symbol in enumerate(sequence):
+            selected = label == highlighted_row and i in highlighted_positions
+            if selected:
+                ax.add_patch(mpatches.Rectangle(
+                    (i - 0.36, y - 0.32), 0.72, 0.64,
+                    facecolor=EMPHASIS, edgecolor="none", zorder=1,
+                ))
+            ax.text(i, y, symbol, ha="center", va="center", fontsize=11,
+                    family=MONO, color=PAPER if selected else INK, zorder=2)
+    if show_positions:
+        for i in range(length):
+            ax.text(i, 0.75, str(i + 1), ha="center", va="center", fontsize=9)
+        ax.text(-0.7, 0.75, "Position", ha="right", va="center", fontsize=9)
+    ax.set_xlim(-3.5, max(1, length - 0.4))
+    ax.set_ylim(-len(rows) + 0.4, 1.2 if show_positions else 0.6)
+
+
+def read_assignment(
+    ax: plt.Axes,
+    references: dict[str, str],
+    reads: Sequence[str],
+    assignments: Sequence[str],
+) -> None:
+    """Show exact toy cDNA-read matches and the resulting sample-by-gene count row."""
+    _bare(ax)
+    if len(reads) != len(assignments) or not references:
+        raise ValueError("Supply a gene assignment for every read.")
+    grouped = {gene: [] for gene in references}
+    for read, gene in zip(reads, assignments):
+        if gene not in references or read not in references[gene]:
+            raise ValueError("Every assigned read must match its reference segment.")
+        grouped[gene].append(read)
+    pitch = 0.24
+    width = max(len(sequence) for sequence in references.values()) * pitch
+    spacing = width + 0.9
+    max_reads = max(1, max(len(group) for group in grouped.values()))
+    count_y = -max_reads - 1.1
+    ax.text(-0.55, 0, "Reference\ncDNA segments", ha="right",
+            va="center", fontsize=10)
+    ax.text(-0.55, -(max_reads + 1) / 2, "Read records\nfrom sample s1",
+            ha="right", va="center", fontsize=10)
+    ax.text(-0.55, count_y, "Count row s1", ha="right", va="center", fontsize=10)
+    for column, (gene, sequence) in enumerate(references.items()):
+        start = column * spacing
+        center = start + (len(sequence) - 1) * pitch / 2
+        ax.text(center, 0.9, gene, ha="center", va="center", fontsize=10)
+        for i, base in enumerate(sequence):
+            ax.text(start + pitch * i, 0, base, ha="center", va="center",
+                    family=MONO, fontsize=10)
+        for row, read in enumerate(grouped[gene]):
+            offset = sequence.index(read)
+            for i, base in enumerate(read):
+                ax.text(start + pitch * (offset + i), -row - 1.1, base,
+                        ha="center", va="center", family=MONO, fontsize=10)
+        if not grouped[gene]:
+            ax.text(center, -1.1, "no assigned reads", ha="center",
+                    va="center", fontsize=9)
+        ax.annotate("", xy=(center, count_y + 0.45),
+                    xytext=(center, -max_reads - 0.35),
+                    arrowprops=dict(arrowstyle="->", color=RULE, lw=1))
+        ax.add_patch(mpatches.Rectangle(
+            (center - 0.42, count_y - 0.32), 0.84, 0.64,
+            facecolor=LIGHT, edgecolor=RULE, linewidth=0.8,
+        ))
+        ax.text(center, count_y, str(len(grouped[gene])), ha="center",
+                va="center", fontsize=11, color=INK)
+    ax.set_xlim(-2.5, (len(references) - 1) * spacing + width + 0.25)
+    ax.set_ylim(count_y - 0.7, 1.4)
+
+
 def pca_projection(
     ax: plt.Axes,
     points: np.ndarray,
@@ -213,7 +301,7 @@ def digraph(
     edges: Sequence[tuple[str, str]],
     pos: dict[str, tuple[float, float]] | None = None,
     edge_labels: dict[tuple[str, str], str] | None = None,
-    highlight_edges: Iterable[tuple[str, str]] = (),
+    highlight_edges: Iterable[tuple[str, str] | tuple[str, str, int]] = (),
     highlight_nodes: Iterable[str] = (),
     node_size: int = 900,
     directed: bool = True,
@@ -222,8 +310,9 @@ def digraph(
 
     Directed by default, with arrowheads; pass `directed=False` for a kNN or
     similarity graph. Repeated edges in `edges` are drawn as parallel arcs.
-    Highlighted edges and nodes use the emphasis color. Returns the node
-    positions so a second panel can reuse the same layout.
+    Highlighted edges and nodes use the emphasis color. A highlight (u, v)
+    selects all parallel copies; (u, v, key) selects one copy, numbered from
+    zero in input order for that pair. Returns node positions for reuse.
     """
     _bare(ax)
     graph = nx.MultiDiGraph() if directed else nx.MultiGraph()
@@ -251,7 +340,9 @@ def digraph(
         rad = 0.18 * (count + (1 if reverse else 0))
         if u == v:
             rad = 0.0
-        on = (u, v) in highlight_edges or (not directed and (v, u) in highlight_edges)
+        on = (u, v) in highlight_edges or (u, v, key) in highlight_edges
+        if not directed:
+            on = on or (v, u) in highlight_edges or (v, u, key) in highlight_edges
         color = EMPHASIS if on else RULE
         width = 1.8 if on else 1.2
         nx.draw_networkx_edges(graph, pos, ax=ax, edgelist=[(u, v, key)],
@@ -330,36 +421,42 @@ def tree(
     root: dict,
     highlight: Iterable[str] = (),
     show_lengths: bool = False,
+    highlight_edges: Iterable[tuple[str, str]] = (),
 ) -> None:
     """Draw a rooted tree with branch lengths as horizontal extent.
 
     `root` is a nested dict: {"name": str, "length": float, "children": [...]}.
     Leaves are drawn at the right, in the order they appear. Names of nodes
-    in `highlight` are colored with the emphasis color.
+    in `highlight` are colored with the emphasis color. Directed parent-child
+    name pairs in `highlight_edges` emphasize the corresponding branches.
     """
     _bare(ax)
     highlight = set(highlight)
+    highlight_edges = set(highlight_edges)
     leaf_y: dict[int, float] = {}
     counter = [0]
 
-    def place(node: dict, x0: float) -> tuple[float, float]:
+    def place(node: dict, x0: float, parent: str = "") -> tuple[float, float]:
         x1 = x0 + node.get("length", 0.0)
         children = node.get("children", [])
+        name = node.get("name", "")
+        branch_color = EMPHASIS if (parent, name) in highlight_edges else RULE
         if not children:
             y = -counter[0]
             counter[0] += 1
-            ax.plot([x0, x1], [y, y], color=RULE, lw=1.2, solid_capstyle="butt")
+            ax.plot([x0, x1], [y, y], color=branch_color, lw=1.2,
+                    solid_capstyle="butt")
             name = node.get("name", "")
             ax.text(x1 + 0.03, y, name, ha="left", va="center", fontsize=10,
                     color=EMPHASIS if name in highlight else INK)
             return x1, y
         ys = []
         for child in children:
-            _, cy = place(child, x1)
+            _, cy = place(child, x1, name)
             ys.append(cy)
         y = float(np.mean(ys))
         ax.plot([x1, x1], [min(ys), max(ys)], color=RULE, lw=1.2)
-        ax.plot([x0, x1], [y, y], color=RULE, lw=1.2)
+        ax.plot([x0, x1], [y, y], color=branch_color, lw=1.2)
         name = node.get("name", "")
         if name:
             ax.text(x1 - 0.03, y + 0.15, name, ha="right", va="bottom", fontsize=8,
@@ -407,6 +504,176 @@ def alignment(
     ax.set_ylim(-2, 2)
 
 
+def sequence_windows(
+    ax: plt.Axes,
+    sequence: str,
+    *,
+    word: str,
+    label: str = "x",
+) -> None:
+    """Print a sequence and underline every occurrence of a word, including overlaps."""
+    if not word:
+        raise ValueError("The highlighted word must not be empty.")
+    _bare(ax)
+    for i, base in enumerate(sequence):
+        ax.text(i, 0, base, ha="center", va="center", fontsize=11,
+                family=MONO, color=INK)
+    ax.text(-1, 0, label, ha="right", va="center", fontsize=10, color=INK)
+
+    # Overlapping words need separate lanes so each occurrence stays visible.
+    lane_ends = []
+    for start in range(len(sequence) - len(word) + 1):
+        if sequence[start:start + len(word)] != word:
+            continue
+        lane = 0
+        while lane < len(lane_ends) and lane_ends[lane] >= start:
+            lane += 1
+        end = start + len(word) - 1
+        if lane == len(lane_ends):
+            lane_ends.append(end)
+        else:
+            lane_ends[lane] = end
+        height = -0.4 - 0.3 * lane
+        ax.plot([start - 0.25, start - 0.25, end + 0.25, end + 0.25],
+                [height + 0.1, height, height, height + 0.1],
+                color=EMPHASIS, linewidth=1.5)
+    ax.set_xlim(-2, max(1, len(sequence)))
+    ax.set_ylim(-0.8 - 0.3 * max(0, len(lane_ends) - 1), 0.6)
+
+
+def replicate_sampling(
+    ax: plt.Axes,
+    biological_values: Sequence[float],
+    technical_values: Sequence[float],
+    culture_labels: Sequence[str],
+) -> None:
+    """Contrast assays of three independent cultures with three assays of one."""
+    if len(biological_values) != 3 or len(technical_values) != 3:
+        raise ValueError("This comparison shows three measurements per panel.")
+    if len(culture_labels) != 3:
+        raise ValueError("Supply a name for each independent culture.")
+    _bare(ax)
+    ax.set_xlim(0, 10.3)
+    ax.set_ylim(-0.8, 4.8)
+    ax.text(2.3, 4.5, "Separate cultures", ha="center", fontsize=10)
+    ax.text(7.6, 4.5, "Repeated assays", ha="center", fontsize=10)
+
+    def dish(x: float, y: float, label: str, emphasize: bool = False) -> None:
+        """Draw the physical source of a measurement as a small culture dish."""
+        ax.add_patch(mpatches.Circle((x, y), 0.38, facecolor=PAPER,
+                                    edgecolor=EMPHASIS if emphasize else RULE))
+        for dx, dy in ((-0.15, 0.08), (0.12, 0.12), (0.02, -0.13)):
+            ax.add_patch(mpatches.Ellipse((x + dx, y + dy), 0.16, 0.07,
+                                         angle=25, facecolor=RULE))
+        ax.text(x, y - 0.6, label, ha="center", fontsize=9)
+
+    def measurement(x: float, y: float, value: float) -> None:
+        """Draw one assay result, without treating its box as a biological unit."""
+        ax.add_patch(mpatches.Rectangle((x - 0.7, y - 0.28), 1.4, 0.56,
+                                        facecolor=LIGHT, edgecolor=RULE))
+        ax.text(x, y, f"{value:g}", ha="center", va="center", fontsize=10)
+
+    ax.text(3.5, 4.0, "Measured value", ha="center", fontsize=9)
+    ax.text(9.0, 4.0, "Measured value", ha="center", fontsize=9)
+    dish(6.3, 2.0, culture_labels[0], emphasize=True)
+    for i, y in enumerate((3.5, 2.0, 0.5)):
+        dish(1.1, y, culture_labels[i])
+        measurement(3.5, y, biological_values[i])
+        measurement(9.0, y, technical_values[i])
+        ax.annotate("", xy=(2.7, y), xytext=(1.55, y),
+                    arrowprops={"arrowstyle": "->", "color": RULE, "lw": 1})
+        ax.annotate("", xy=(8.2, y), xytext=(6.75, 2.0),
+                    arrowprops={"arrowstyle": "->", "color": RULE, "lw": 1})
+    ax.text(2.3, -0.6, "3 independent cultures", ha="center", fontsize=10)
+    ax.text(7.6, -0.6, "1 independent culture", ha="center", fontsize=10)
+
+
+def cell_barcode_records(
+    ax: plt.Axes,
+    counts: Sequence[Sequence[int]],
+    *,
+    cells: Sequence[str],
+    genes: Sequence[str],
+    barcodes: Sequence[str],
+) -> None:
+    """Connect two cells' captured RNA, mixed tagged records, and count rows.
+
+    This small conceptual diagram omits capture chemistry. Each record is one
+    distinct captured molecule after duplicate handling, not one raw read.
+    """
+    counts = np.asarray(counts)
+    if counts.shape != (2, 2) or len(cells) != 2 or len(genes) != 2:
+        raise ValueError("Use two cells and two genes for this small schematic.")
+    if len(barcodes) != 2 or len(set(barcodes)) != 2:
+        raise ValueError("Each cell needs a distinct barcode.")
+    if np.any(counts < 0) or np.any(counts != counts.astype(int)):
+        raise ValueError("Molecule counts must be nonnegative integers.")
+    if np.any(counts.sum(axis=1) > 6) or counts.sum() == 0:
+        raise ValueError("Draw at most six captured molecules per cell.")
+    _bare(ax)
+    ax.set_xlim(-0.2, 12.1)
+    ax.set_ylim(-1.1, 5.1)
+    ax.text(1.1, 4.7, "RNA in separate droplets", ha="center", fontsize=10)
+    ax.text(5.9, 4.7, "Mixed molecule records", ha="center", fontsize=10)
+    ax.text(10.2, 4.7, "Counts by cell", ha="center", fontsize=10)
+
+    records = []
+    for i, center_y in enumerate((3.2, 0.7)):
+        ax.add_patch(mpatches.Circle((1.1, center_y), 0.8,
+                                    edgecolor=RULE, facecolor=PAPER))
+        molecule_genes = []
+        for j in range(2):
+            molecule_genes.extend([j] * int(counts[i, j]))
+        cell_records = []
+        for number, gene in enumerate(molecule_genes):
+            x = 0.58 + 0.55 * (number % 2)
+            y = center_y + 0.32 - 0.31 * (number // 2)
+            strand_x = np.linspace(x, x + 0.43, 25)
+            strand_y = y + 0.045 * np.sin(np.linspace(0, 4 * np.pi, 25))
+            ax.plot(strand_x, strand_y, color=(SECOND, THIRD)[gene], lw=1.5,
+                    linestyle=("-", "--")[gene])
+            cell_records.append((barcodes[i], genes[gene], f"m{number + 1}"))
+        records.append(cell_records)
+        ax.text(1.1, center_y - 1.0, f"{cells[i]}: tag {barcodes[i]}",
+                ha="center", fontsize=9)
+        ax.annotate("", xy=(3.7, 2.1), xytext=(2.0, center_y),
+                    arrowprops={"arrowstyle": "->", "color": RULE, "lw": 1})
+
+    mixed = []
+    for number in range(max(map(len, records))):
+        for row in records:
+            if number < len(row):
+                mixed.append(row[number])
+    ax.text(4.2, 4.2, "cell tag", ha="center", fontsize=8)
+    ax.text(5.8, 4.2, "gene", ha="center", fontsize=8)
+    ax.text(7.2, 4.2, "molecule", ha="center", fontsize=8)
+    for y, (barcode, gene, molecule) in zip(np.linspace(3.8, 0.0, len(mixed)), mixed):
+        ax.add_patch(mpatches.Rectangle((3.8, y - 0.14), 0.8, 0.28,
+                                        facecolor=PAPER, edgecolor=EMPHASIS))
+        ax.text(4.2, y, barcode, ha="center", va="center", family=MONO,
+                fontsize=9)
+        ax.text(5.8, y, gene, ha="center", va="center", fontsize=9)
+        ax.text(7.2, y, molecule, ha="center", va="center", family=MONO,
+                fontsize=9)
+    ax.annotate("", xy=(8.5, 2.1), xytext=(7.8, 2.1),
+                arrowprops={"arrowstyle": "->", "color": RULE, "lw": 1})
+
+    for j, gene in enumerate(genes):
+        ax.text(10.0 + j * 1.3, 3.6, gene, ha="center", fontsize=9)
+    for i, y in enumerate((2.9, 1.2)):
+        ax.text(8.6, y + 0.45, f"{cells[i]} ({barcodes[i]})", fontsize=9)
+        for j in range(2):
+            x = 10.0 + j * 1.3
+            ax.add_patch(mpatches.Rectangle((x - 0.5, y - 0.3), 1, 0.6,
+                                            facecolor=LIGHT, edgecolor=RULE))
+            ax.text(x, y, str(int(counts[i, j])), ha="center", va="center",
+                    fontsize=10)
+    for j, gene in enumerate(genes):
+        ax.plot([0.0, 0.45], [-0.85 + j * 0.27] * 2,
+                color=(SECOND, THIRD)[j], linestyle=("-", "--")[j], lw=1.5)
+        ax.text(0.55, -0.85 + j * 0.27, gene, va="center", fontsize=8)
+
+
 # --- Phase planes ------------------------------------------------------------
 
 def phase_plane(
@@ -445,3 +712,77 @@ def phase_plane(
     ax.set_ylim(*ylim)
     ax.set_xlabel(labels[0])
     ax.set_ylabel(labels[1])
+
+
+def read_layout(
+    ax: plt.Axes,
+    reads: Sequence[str],
+    *,
+    starts: Sequence[int] | None = None,
+    reference: str | None = None,
+    labels: Sequence[str] | None = None,
+) -> None:
+    """Draw read records alone or at proposed starts beneath a candidate sequence."""
+    if not reads:
+        raise ValueError("A read layout needs at least one read.")
+    if labels is None:
+        labels = [f"r{i + 1}" for i in range(len(reads))]
+    if len(labels) != len(reads):
+        raise ValueError("Supply one label per read.")
+    if starts is None:
+        if reference is not None:
+            raise ValueError("A candidate sequence requires proposed read starts.")
+        starts = [0] * len(reads)
+    if len(starts) != len(reads) or any(start < 0 for start in starts):
+        raise ValueError("Supply one nonnegative start per read.")
+    if reference is not None:
+        for read, start in zip(reads, starts):
+            if reference[start:start + len(read)] != read:
+                raise ValueError("Each proposed read must match the candidate sequence.")
+
+    _bare(ax)
+    rows = []
+    if reference is not None:
+        rows.append(("candidate", reference, 0))
+    rows.extend(zip(labels, reads, starts))
+    for row, (label, sequence, start) in enumerate(rows):
+        ax.text(-0.8, -row, label, ha="right", va="center",
+                fontsize=9, color=INK)
+        for offset, base in enumerate(sequence):
+            ax.text(start + offset, -row, base, ha="center", va="center",
+                    fontsize=11, family=MONO, color=INK)
+    extent = max(start + len(sequence) for _, sequence, start in rows)
+    ax.set_xlim(-3.4, extent - 0.3)
+    ax.set_ylim(-len(rows) + 0.4, 0.7)
+
+
+def independent_pair_area(
+    ax: plt.Axes,
+    probability: float,
+    *,
+    base: str = "A",
+) -> None:
+    """Show a matching pair as the intersection of two independent base draws."""
+    if not 0 < probability < 1:
+        raise ValueError("The base probability must lie strictly between zero and one.")
+    if len(base) != 1:
+        raise ValueError("Use a one-letter base label.")
+    _bare(ax)
+    ax.add_patch(mpatches.Rectangle((0, 0), 1, 1, facecolor=PAPER,
+                                   edgecolor=RULE, linewidth=0.8))
+    ax.add_patch(mpatches.Rectangle((0, 0), probability, probability,
+                                   facecolor=EMPHASIS, edgecolor=RULE,
+                                   linewidth=0.8))
+    ax.plot([probability, probability], [0, 1], color=RULE, linewidth=0.8)
+    ax.plot([0, 1], [probability, probability], color=RULE, linewidth=0.8)
+    for midpoint, label in [(probability / 2, base),
+                            ((1 + probability) / 2, "other")]:
+        ax.text(midpoint, -0.06, label, ha="center", va="top", fontsize=9)
+        ax.text(-0.06, midpoint, label, ha="right", va="center", fontsize=9)
+    ax.text(0.5, -0.2, "First base", ha="center", va="top", fontsize=10)
+    ax.text(-0.35, 0.5, "Second base", ha="center", va="center",
+            rotation=90, fontsize=10)
+    ax.text(probability / 2, probability / 2, base + "/" + base,
+            ha="center", va="center", color=PAPER, fontsize=9)
+    ax.set_xlim(-0.45, 1.05)
+    ax.set_ylim(-0.3, 1.08)

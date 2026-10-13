@@ -1,14 +1,14 @@
 ---
 published: true
 title: "PCA in Practice"
-subtitle: "Lesson 17 · 2027-03-24 · Week 11"
+subtitle: "Lesson 16 · 2027-03-22 · Week 11"
 nocite: |
   @holmeshuber2019
 ---
 
 ## Core question
 
-What can a PCA plot tell us, and what can it hide?
+Does a separation in a PCA plot reflect biology or how the samples were measured?
 
 ```{.python .execute}
 #| label: setup
@@ -26,9 +26,11 @@ cf.use_style()
 
 ## Which matrix describes the experiment?
 
-Lesson 16 found directions of maximum variance in a supplied numerical matrix. In an RNA-sequencing experiment, the available data begin earlier in the pipeline: RNA is sampled, copied into DNA, sequenced in fragments, and the reads are matched to genes. The count $C_{ij}$ records reads assigned to gene $j$ in sample $i$. It measures RNA through sampling and processing, rather than directly counting proteins or measuring a gene's function [@holmeshuber2019]. We retain samples as rows and genes as columns.
+Suppose treated samples lie on one side of a PCA plot and controls on the other. That could reflect a shared RNA response to treatment. It could also reflect the experiment: one set of samples may have more sequenced reads, or may have been processed differently. PCA finds the largest variation in the numbers it receives; deciding what produced that variation requires the count table and the sample records [@holmeshuber2019].
 
-Suppose we want to investigate whether treated samples have a coordinated expression pattern different from controls. Sample identity, condition, and processing batch belong in a separate metadata table. A *batch* is a group processed together, perhaps on the same day or instrument. A shared processing difference can affect many genes and create large variance without representing the treatment response.
+In an RNA-sequencing experiment, RNA is sampled, copied into DNA, sequenced in fragments, and the reads are matched to genes. The count $C_{ij}$ records reads assigned to gene $j$ in sample $i$. We retain samples as rows and genes as columns. Lesson 15 held a transformed matrix fixed to study the PCA optimization; here we ask which representation makes the samples comparable and how to interpret the resulting coordinates.
+
+The aim is to investigate whether treated samples have a coordinated expression pattern different from controls. Sample identity, condition, and processing batch belong in a separate *metadata* table, meaning records that describe each sample alongside its gene measurements. A *batch* is a group processed together, perhaps on the same day or instrument. A shared processing difference can affect many genes and create large variance without representing the treatment response. These records help us relate PCA directions to possible biological or technical causes [@holmeshuber2019].
 
 Write $C\in\mathbb Z_{\geq0}^{n\times p}$ for counts from $n\geq2$ samples and $p$ genes. For a synthetic example, keep metadata separate from the numeric counts:
 
@@ -76,7 +78,7 @@ For large $R_{ij}$, doubling it adds approximately one to $X_{ij}$, so multiplic
 3. Apply $\log_2(1+R)$, then retain a stated set of genes.
 4. Subtract each retained gene's mean across samples. Optionally divide by its standard deviation if unit-variance weighting is the intended objective.
 
-For each representation, fit PCA using the Lesson 16 algorithm: center the columns, compute the SVD, and return scores $T=ZV$, loadings $V$, and component variances $d_k^2/(n-1)$. Record which matrix was supplied to each fit.
+For each representation, fit PCA using the Lesson 15 algorithm: center the columns, compute the SVD, and return scores $T=ZV$, loadings $V$, and component variances $d_k^2/(n-1)$. Record which matrix was supplied to each fit.
 :::
 
 ```{.python .execute}
@@ -168,7 +170,7 @@ $$
 $$
 Each difference is measured in units of that gene's standard deviation. A change of one standard deviation contributes one to the squared distance, whatever the original units. Thus scaling changes the weighting of gene differences and the directions PCA prefers. It can expose a coordinated pattern or amplify unreliable low-count measurements. Filtering should have a stated measurement-based purpose, such as excluding genes with too little coverage; choosing genes because they already separate the plotted conditions makes that separation partly a selection artifact.
 
-### Revisit the Lesson 16 matrix
+### Revisit the Lesson 15 matrix
 
 Use the same supplied transformed values:
 $$
@@ -341,7 +343,7 @@ The reported component variances describe how the chosen matrix's spread is dist
 
 Sample labels and metadata help ask whether an unusual score follows treatment, batch, sequencing depth, or another measured feature. Loadings show which genes contribute to that direction. Refit under scientifically plausible preprocessing choices to see which relationships persist; changing an analysis until the desired groups separate is not validation [@holmeshuber2019].
 
-The two central decisions precede the plot: which representation should define sample differences, and which experimental comparisons separate biology from processing. PCA summarizes the resulting variation through scores and loadings. The next lesson asks a different question, testing gene-level differences while accounting for the number of simultaneous tests.
+The two central decisions precede the plot: which representation should define sample differences, and which experimental comparisons separate biology from processing. PCA summarizes the resulting variation through scores and loadings. The next lesson asks a different question, comparing biological conditions for one gene, with an effect size and a null model for sampling variation.
 
 ## Exercises
 

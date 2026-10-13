@@ -58,7 +58,7 @@ Use for:
 
 Best fit:
 
-- Weeks 2-7 and Week 9.
+- Alignment in Weeks 2–3; probabilistic models in Weeks 5–8; phylogenetics in Weeks 8 and 10.
 
 Useful chapters:
 
@@ -88,15 +88,15 @@ Use for:
 
 Best fit:
 
-- Weeks 10-12.
+- Omics in Weeks 10–13, including the comparison-to-FDR bridge.
 
 Useful chapters:
 
-- Chapter 7: testing.
-- Chapter 8: multivariate analysis.
-- Chapter 9: high-throughput count data and generalized linear models.
-- Chapter 10: multivariate methods for heterogeneous data.
-- Chapter 11: networks and trees, selectively.
+- Chapter 6: testing, including permutation comparisons and multiple testing.
+- Chapter 7: multivariate analysis.
+- Chapter 8: high-throughput count data and generalized linear models.
+- Chapter 9: multivariate methods for heterogeneous data.
+- Chapter 10: networks and trees, selectively.
 
 Notes:
 
@@ -118,7 +118,7 @@ Use for:
 
 Best fit:
 
-- Week 13 only.
+- Lessons 21–23 (Weeks 14–15), selectively.
 
 Notes:
 

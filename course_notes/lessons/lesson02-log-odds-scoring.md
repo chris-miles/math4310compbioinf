@@ -8,7 +8,7 @@ nocite: |
 
 ## Core question
 
-How can an alignment score measure evidence for relatedness rather than just count matches?
+How much evidence does a match provide when matching bases can occur by chance?
 
 ```{.python .execute}
 #| label: setup
@@ -24,11 +24,29 @@ import coursefigs as cf
 cf.use_style()
 ```
 
-## Matches and background composition
+## Matches can occur by chance
 
-Two DNA fragments have eight A/A matches and two mismatches in ten paired positions. If A is rare, those matches are striking. If both fragments come from A-rich sequence, unrelated fragments often agree this way. We need a score that measures agreement relative to the background composition.
+Suppose we have DNA sequences from two organisms and want to know whether their agreement supports descent from a common ancestral sequence. Sequencing and assembly supply the base strings. For now, take two equal-length segments whose positions have already been paired, with no gaps. A match count summarizes that pairing, but it does not say how much agreement unrelated sequences would produce.
 
-The data today are two equal-length strings with their positions already paired. We want a numerical score for that fixed, ungapped alignment. Lesson 1 supplied several ways to count differences; here we ask which differences should carry the most evidence. Finding the best placement of gaps comes in Lesson 3.
+For example, suppose ten paired positions contain eight A/A matches and two mismatches. If both sequences come from A-rich DNA, many A/A pairs can occur by chance. @fig-log-odds-chance-pair shows this for one column: each axis represents an independent base draw, and the red area contains pairs where both draws give A. With A frequency $1/4$ in each draw, that area is $(1/4)^2=1/16$; with frequency $0.8$, it is $0.8^2=0.64$. The same matching letters therefore need different scores in those two settings.
+
+```{.python .execute}
+#| label: fig-log-odds-chance-pair
+#| code-fold: true
+#| code-summary: "Show how independent base draws create chance matches"
+#| fig-cap: "Each square represents all outcomes of two independent base draws; red marks A/A outcomes. Raising the A frequency from one quarter to 0.8 enlarges the chance-match area from one sixteenth to 0.64, so an A/A match carries less evidence against an A-rich background."
+#| fig-alt: "Two unit squares divided into A and other outcomes along each axis. The red lower-left A/A area occupies one sixteenth of the left square and 64 percent of the right square."
+#| fig-width: 6
+#| fig-height: 3
+fig, axes = plt.subplots(1, 2)
+cf.independent_pair_area(axes[0], 0.25)
+cf.independent_pair_area(axes[1], 0.8)
+axes[0].set_title("A frequency 1/4: chance A/A = 1/16")
+axes[1].set_title("A frequency 0.8: chance A/A = 0.64")
+plt.show()
+```
+
+We will assign probabilities to each possible paired column under two explanations: shared ancestry and independent background sequence. Comparing those probabilities gives a score that measures which explanation better predicts the observed pairs. The input is a fixed alignment and supplied model probabilities; the output is its evidence score. Searching for the best gap placement is a separate computation in Lesson 3.
 
 ::: {#def-aligned-pair-data}
 ## Aligned pair data

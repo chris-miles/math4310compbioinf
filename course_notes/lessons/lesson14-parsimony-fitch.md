@@ -1,14 +1,14 @@
 ---
 published: true
 title: "Parsimony and Fitch's Algorithm"
-subtitle: "Lesson 15 · 2027-03-17 · Week 10"
+subtitle: "Lesson 14 · 2027-03-15 · Week 10"
 nocite: |
   @durbin1998, @compeau2015, @felsenstein1978
 ---
 
 ## Core question
 
-Given aligned DNA sequences and a candidate tree, what is the fewest substitutions needed to explain the observed bases?
+Which evolutionary tree explains the observed bases with the fewest changes?
 
 ```{.python .execute}
 #| label: setup
@@ -24,9 +24,9 @@ cf.use_style()
 
 ## From sequences to ancestral changes
 
-Sequencing gives present-day DNA strings. To compare a gene across organisms, we align corresponding sequences: each row belongs to a sampled organism and each column represents a proposed corresponding position. A column is also called a *site*, and its base is a *character state*. The alignment is an input today; inferring the alignment and checking whether positions really correspond are separate tasks.
+Sequencing gives present-day DNA strings, while the ancestral sequences that connect them are usually unknown. Suppose two sampled organisms carry A and two carry G at a corresponding position. Did one change between A and G separate two ancestral groups, or did the same change occur on different branches? The answer depends on the evolutionary tree and the bases assigned to its ancestors.
 
-Lesson 14 reduced sequence differences to pairwise distances. Here we retain the bases at each site. Suppose two organisms carry A and two carry G at a corresponding position. One evolutionary explanation puts the A-bearing organisms together and needs one change between A and G. Another arrangement may need two changes. The question concerns both relationships and the changes that could have occurred along them [@compeau2015, ch. 7, pp. 35–38].
+To compare a gene across organisms, we use a supplied alignment of corresponding sequences: each row belongs to a sampled organism and each column represents a proposed corresponding position. A column is also called a *site*, and its base is a *character state*. Lesson 13 reduced these observations to pairwise distances. Here we retain the letters at each site and ask how many changes are needed to explain them on a candidate tree [@compeau2015].
 
 We observe the leaf sequences, not the sequences at ancestral branching points. For a candidate tree, we will assign bases to its internal nodes to minimize the number of changes across edges. This is the *fixed-tree* or *small parsimony* problem. Comparing the best scores across different trees is a second problem. Keeping them separate lets us understand what the algorithm guarantees [@durbin1998, pp. 174–176].
 
@@ -44,6 +44,51 @@ Use this synthetic two-site alignment throughout:
 A *taxon* here is simply one named sampled organism or group. The short rows are teaching data, not a claim about particular species. We assume every entry is an unambiguous DNA base; gaps and uncertain bases are excluded from this example.
 
 The candidate tree pairs a with b and c with d. Write it as $ ((a,b),(c,d)) $. Let u join a and b, v join c and d, and r join u and v. This specifies the *topology*, or branching pattern. No numerical evolutionary branch lengths are supplied.
+
+@fig-fitch-competing-ancestors shows why both the tree and the ancestral assignments matter. At site 1, pairing the two A-bearing samples together and the two G-bearing samples together admits one change. Pairing each A-bearing sample with a G-bearing sample requires at least one change in each pair. We first solve the ancestral-assignment problem for a supplied tree, then use its score to compare these arrangements.
+
+```{.python .execute}
+#| label: fig-fitch-competing-ancestors
+#| echo: false
+#| fig-width: 6
+#| fig-height: 3
+#| fig-cap: "Two candidate trees explaining site 1, where a and b carry A and c and d carry G. Red branches join different ancestral or observed bases: one change when equal bases stay together, two when they are separated across the pairs. Internal labels give one minimum-change assignment; branch extents are drawing coordinates."
+#| fig-alt: "Left tree pairs a A with b A under an A ancestor and c G with d G under a G ancestor; the branch from the A root to the G ancestor is red. Right tree pairs a A with c G and b A with d G; both terminal branches to G are red."
+def ancestral_tree(pairs: list[tuple[str, str]], states: list[str]) -> dict:
+    """Build drawing labels for a supplied site-1 ancestral assignment."""
+    observed = {"a": "A", "b": "A", "c": "G", "d": "G"}
+    branches = []
+    for pair, state, name in zip(pairs, states, ["u", "v"]):
+        tips = []
+        for taxon in pair:
+            tips.append({"name": f"{taxon}: {observed[taxon]}", "length": 1,
+                         "state": observed[taxon]})
+        branches.append({"name": f"{name}: {state}", "length": 1,
+                         "state": state, "children": tips})
+    return {"name": "r: A", "length": 0, "state": "A", "children": branches}
+
+
+def substitution_edges(node: dict) -> list[tuple[str, str]]:
+    """Identify branches whose shown parent and child bases differ."""
+    changed = []
+    for child in node.get("children", []):
+        if child["state"] != node["state"]:
+            changed.append((node["name"], child["name"]))
+        changed.extend(substitution_edges(child))
+    return changed
+
+fig, axes = plt.subplots(1, 2)
+candidate_trees = [ancestral_tree([("a", "b"), ("c", "d")], ["A", "G"]),
+                   ancestral_tree([("a", "c"), ("b", "d")], ["A", "A"])]
+for ax, candidate in zip(axes, candidate_trees):
+    cf.tree(ax, candidate, highlight_edges=substitution_edges(candidate))
+axes[0].set_title("ab | cd: one change")
+axes[1].set_title("ac | bd: two changes")
+for ax, label in zip(axes, ["A", "B"]):
+    ax.text(-0.05, 1.04, label, transform=ax.transAxes,
+            fontsize=11, fontweight="bold")
+plt.show()
+```
 
 ::: {#def-parsimony-score}
 ## Equal-cost parsimony

@@ -1,14 +1,14 @@
 ---
 published: true
 title: "Eulerian Paths, Repeats, and Assembly Errors"
-subtitle: "Lesson 8 · 2027-02-08 · Week 5"
+subtitle: "Lesson 7 · 2027-02-03 · Week 4"
 nocite: |
   @compeau2015, @pevzner2001
 ---
 
 ## Core question
 
-When does a de Bruijn graph determine a genome, and what do repeats and errors do to that answer?
+Do a genome's short words determine its full sequence?
 
 ```{.python .execute}
 #| label: setup
@@ -22,13 +22,42 @@ cf.use_style()
 
 ## Eulerian paths
 
-The graph from Lesson 7 records which short words can follow one another. To reconstruct a genome, we must choose an order that uses the observed word occurrences. The edges specify which words must be used; their shared endpoints specify which orders are allowed.
+Assembly starts with overlapping reads whose positions in the genome are unknown. Lesson 6 represented their short words in a de Bruijn graph: each word supplies an edge, and matching suffixes and prefixes allow edges to follow one another. For the ideal 3-mer multiset of `TACGACG`, those edges must be ordered to use TAC once, ACG twice, CGA once, and GAC once. Following that order spells a candidate DNA sequence.
 
-Our input is an ideal genomic k-mer multiset and its directed graph. Here "ideal" means that each valid k-mer start position in the genome contributes exactly one occurrence. We seek a walk that uses every edge occurrence once, then ask a separate question: could another complete walk spell a different sequence? The repeated-region example will distinguish an algorithmic failure from information missing in the data.
+Our first task is to find such an ordering without repeatedly guessing at branches. We use the ideal genomic multiset, meaning that each valid genome start position contributes exactly one k-mer occurrence. A complete reconstruction must use each edge occurrence once. This is an *Eulerian path* problem, with degree conditions that tell us whether a solution exists and an algorithm that constructs one.
+
+Finding one complete path answers the computational question. It leaves a biological question: do the words force that sequence, or could another path spell a different one? Repeats can leave the data compatible with several assemblies. We will compare complete paths and then return to observed reads, where uneven coverage and sequencing errors add further branches or missing edges.
+
+For example, `ACGTCGACG` and `ACGACGTCG` contain exactly the same 3-mers with the same counts. @fig-euler-repeat-graph shows their shared graph and the two different orders of its closed routes. Finding a route through the graph can therefore give a valid reconstruction without identifying which sequence supplied the words.
+
+```{.python .execute}
+#| label: fig-euler-repeat-graph
+#| fig-cap: "The same graph permits two orders of its closed excursions from CG. Each panel highlights the excursion taken first and names the different string spelled by the completed traversal."
+#| fig-alt: "Two copies of the same directed multigraph. The upper panel highlights CG to GT to TC to CG and is labeled ACGTCGACG; the lower highlights CG to GA to AC to CG and is labeled ACGACGTCG."
+#| fig-width: 6
+#| fig-height: 5.5
+#| code-fold: true
+#| code-summary: "Compare two reconstructions from the same short words"
+repeat_edges = [("AC", "CG"), ("AC", "CG"), ("CG", "GT"),
+                ("GT", "TC"), ("TC", "CG"), ("CG", "GA"), ("GA", "AC")]
+positions = {"AC": (0, 0), "CG": (1.6, 0), "GT": (3, .9),
+             "TC": (4.2, .2), "GA": (2.5, -1.1)}
+first_excursions = [
+    [("CG", "GT"), ("GT", "TC"), ("TC", "CG")],
+    [("CG", "GA"), ("GA", "AC"), ("AC", "CG", 0)],
+]
+fig, axes = plt.subplots(2, 1)
+for ax, excursion, spelling in zip(
+    axes, first_excursions, ["ACGTCGACG", "ACGACGTCG"]
+):
+    cf.digraph(ax, repeat_edges, pos=positions, highlight_edges=excursion)
+    ax.set_title("Complete traversal spells " + spelling)
+plt.show()
+```
 
 Recall that $\operatorname{Comp}_k(x)$ lists the length-$k$ substrings of $x$, including repeated occurrences. In $D(K)$, each word in the multiset $K$ supplies an edge from its length-$(k-1)$ prefix to its length-$(k-1)$ suffix. Identical words supply parallel edges. Following an edge appends its last base to the sequence spelled so far.
 
-The multiplicities here are genomic occurrences, as in Lesson 7. Read abundance will return when we consider errors and contigs.
+The multiplicities here are genomic occurrences, as in Lesson 6. Read abundance will return when we consider errors and contigs.
 
 ::: {#def-eulerian-trail}
 ## Eulerian path and cycle
@@ -172,31 +201,7 @@ Reversing the output gives $A,B,A,C$, which uses every edge once. The earlier de
 
 For `ACGTCGACG` at $k=3$,
 $$K=\{\!\{\texttt{ACG},\texttt{ACG},\texttt{CGT},\texttt{GTC},\texttt{TCG},\texttt{CGA},\texttt{GAC}\}\!\}.$$
-The node `CG` occurs three times in the genome. Between those visits lie two closed excursions: `CG → GT → TC → CG`, which appends `TCG`, and `CG → GA → AC → CG`, which appends `ACG`. The graph records both excursions but loses their order.
-
-```{.python .execute}
-#| label: fig-euler-repeat-graph
-#| fig-cap: "The same graph permits two orders of its closed excursions from CG. Each panel highlights the excursion taken first and names the different string spelled by the completed traversal."
-#| fig-alt: "Two copies of the same directed multigraph. The upper panel highlights CG to GT to TC to CG and is labeled ACGTCGACG; the lower highlights CG to GA to AC to CG and is labeled ACGACGTCG."
-#| fig-width: 6
-#| fig-height: 5.5
-#| code-fold: true
-repeat_edges = [("AC", "CG"), ("AC", "CG"), ("CG", "GT"),
-                ("GT", "TC"), ("TC", "CG"), ("CG", "GA"), ("GA", "AC")]
-positions = {"AC": (0, 0), "CG": (1.6, 0), "GT": (3, .9),
-             "TC": (4.2, .2), "GA": (2.5, -1.1)}
-first_excursions = [
-    [("CG", "GT"), ("GT", "TC"), ("TC", "CG")],
-    [("CG", "GA"), ("GA", "AC"), ("AC", "CG")],
-]
-fig, axes = plt.subplots(2, 1)
-for ax, excursion, spelling in zip(
-    axes, first_excursions, ["ACGTCGACG", "ACGACGTCG"]
-):
-    cf.digraph(ax, repeat_edges, pos=positions, highlight_edges=excursion)
-    ax.set_title("Complete traversal spells " + spelling)
-plt.show()
-```
+The node `CG` occurs three times in the genome. Between those visits lie two closed excursions: `CG → GT → TC → CG`, which appends `TCG`, and `CG → GA → AC → CG`, which appends `ACG`. The graph records both excursions but loses their order. These are the two routes highlighted in @fig-euler-repeat-graph.
 
 ::: {#exm-repeat-ambiguity}
 ## Two strings with one composition

@@ -60,6 +60,16 @@ Symbols are defined when they first appear in a lesson. Some letters have differ
 | $\rho_{ij}$ | Probability that a sampled RNA-seq read in sample i is assigned to gene j |
 | $C_{ij}$, $L_i$, $R_{ij}$ | Assigned RNA-seq read count, sample's total assigned count, and counts per million |
 | $\sigma_j$, $W=ZG^{-1}$ | Gene's sample standard deviation and standardized matrix, with $G=\operatorname{diag}(\sigma_j)$ |
+| $\Delta_j$, $\widehat\Delta_j$ | Population mean contrast between treatment and control for feature $j$, and its observed estimate |
+| $\mathcal A$, $S(a)$ | Allowed label assignments and the comparison statistic under assignment $a$ |
+| $p_j$ | Calibrated p-value for feature $j$ in the testing lessons |
+| $V$, $R$, $\mathrm{FDP}=V/\max(R,1)$ | False rejections, total rejections, and realized false discovery proportion |
+| $\mathrm{FDR}=E[\mathrm{FDP}]$ | Expected false discovery proportion |
+| $x(t)$, $\beta$, $\alpha$ | Gene-product abundance, production rate, and removal-rate constant in the scalar ODE |
+| $x^*=\beta/\alpha$ | Steady abundance for constant production and removal |
+| $x_k$, $y_k$ | Hidden abundance and its recorded observation at time $t_k$ |
+| $F_h(x)$, $h$ | Deterministic state update across an observation interval, and that interval's duration |
+| $w_k$, $v_k$ | Process disturbance and measurement error in the noisy-dynamics lesson |
 
 In the toy HMM, state $B$ denotes background and state $I$ denotes an island-like region. Observation $S$ groups C/G and observation $W$ groups A/T. These observation symbols are distinct from the window score $S(x)$.
 

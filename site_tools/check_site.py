@@ -45,10 +45,12 @@ def main():
         if page.h1 != 1:
             errors.append(f"{name}: expected one main heading, found {page.h1}")
         text = path.read_text(encoding="utf-8")
-        if re.search(r"@(def|thm|prp|exm|exr|fig|eq|tbl)-[\w-]+", text):
+        if re.search(r"@(def|thm|lem|cor|prp|exm|exr|fig|eq|tbl)-[\w-]+", text):
             errors.append(f"{name}: unresolved cross-reference")
-        if re.search(r"\{#(?:eq|fig|tbl)-", text):
+        if re.search(r"\{#(?:eq|fig|tbl|def|thm|lem|cor|prp|exm|exr)-", text):
             errors.append(f"{name}: unprocessed label")
+        if re.search(r"<p>\s*:{3,}", text):
+            errors.append(f"{name}: unprocessed fenced-div markup")
         for link in page.links:
             url = urlsplit(link)
             if url.scheme or url.netloc:
@@ -85,11 +87,28 @@ def main():
     if home.count('class="week-row"') != sum(bool(w['meetings']) for w in weeks):
         errors.append("Expected one compact row per instructional week")
     lesson_numbers = [n for week in weeks for n in week["lessons"]]
-    if sorted(lesson_numbers) != list(range(1, 24)):
+    if sorted(lesson_numbers) != list(range(1, 25)):
         errors.append("Expected each lecture in exactly one weekly row")
+    sources = list((ROOT / "course_notes/lessons").glob("lesson*.md"))
+    source_numbers = [int(re.match(r"lesson(\d+)", p.name)[1]) for p in sources]
+    if sorted(source_numbers) != list(range(1, 25)):
+        errors.append("Expected one source file for each of the 24 lessons")
+    scheduled = {m["lesson"]: (m["date"], w["week"])
+                 for w in weeks for m in w["meetings"] if "lesson" in m}
+    for source, number in zip(sources, source_numbers):
+        if number not in scheduled:
+            continue
+        day, week_number = scheduled[number]
+        expected = f"Lesson {number} · {day} · Week {week_number}"
+        body = source.read_text(encoding="utf-8")
+        if not re.search(r'^subtitle:\s*"' + re.escape(expected) + r'"\s*$', body, re.M):
+            errors.append(f"Lesson subtitle disagrees with calendar: {source.name}")
     module_lessons = [n for module in schedule["modules"] for n in module["lessons"]]
-    if sorted(module_lessons) != list(range(1, 24)):
+    if sorted(module_lessons) != list(range(1, 25)):
         errors.append("Expected each lecture in exactly one module")
+    for module in schedule["modules"]:
+        if home.count(f'id="module-{module["id"]}"') != 1:
+            errors.append("Expected one schedule heading for module " + module["id"])
     for week in weeks:
         if f'id="week-{week["week"]}"' not in home:
             errors.append("Missing schedule week " + str(week["week"]))
@@ -129,10 +148,10 @@ def main():
         if any(not week["date_start"] <= m["date"] <= week["date_end"] for m in week["meetings"]):
             errors.append("Meeting lies outside its calendar week")
     events = [m for m in meetings if "event" in m]
-    if len(events) != 4 or sum("Midterm" in m["event"] for m in events) != 2:
-        errors.append("Expected two midterms and two presentation meetings")
-    if [m["date"] for m in events if m["event"] == "Project presentations"] != ["2027-04-21", "2027-04-26"]:
-        errors.append("Expected presentations on April 21 and April 26")
+    if len(events) != 3 or sum("Midterm" in m["event"] for m in events) != 2:
+        errors.append("Expected two midterms and one flex meeting")
+    if [m["date"] for m in events if m["event"] == "Flex"] != ["2027-04-26"]:
+        errors.append("Expected Flex on April 26")
     if 'href="appendices/computing-math-reference.html">Reference</a>' not in home:
         errors.append("Missing reference page in main navigation")
     if errors:

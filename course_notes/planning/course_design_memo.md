@@ -17,59 +17,28 @@ This is appropriate for a mathematics department because the recurring objects a
 
 ## Audience
 
+For some students, this may be their only course in computational bioinformatics methods. When choosing examples and allocating time, favor ideas and technical practice that can carry to other biological problems as technologies change: representing data, formulating a model or objective, deriving a computation, and checking what its result supports. A specific biological problem gives those ideas something concrete to explain.
+
+Where useful, connect that practice to working with AI-assisted analysis: students still need to understand the inputs, examine assumptions, validate outputs, and judge biological evidence when software generates code or proposes a method. These are guiding considerations, not required themes for every lesson or promises that a particular algorithm will remain current.
+
 Expected students:
 
-- Bioinformatics BS students with genetics and some programming.
+- Bioinformatics BS students with basic cell biology and programming.
 - Mathematics or applied mathematics students interested in biological data.
 - CS students who want a mathematically grounded introduction to computational biology.
 - Biology students with enough programming maturity to write small scripts.
 
 The course should not assume students already know command-line bioinformatics workflows, Bioconductor, scikit-learn, BLAST internals, RNA-seq pipelines, or machine learning. Those can be referenced, but they should not be the instructional core. The BIOL 3150 syllabus suggests that local students may already see IGV, BLAST, Colab/Python, pandas, variant analysis, RNA-seq, GWAS, and visualization in an applied genomics setting; MATH 4310 should complement that course by emphasizing the mathematical mechanisms rather than repeating the workflow training.
 
-## Prerequisite Recommendation
+## Prerequisites and scaffolding
 
-The current proposed prerequisites are:
+The student-facing prerequisites are MATH 2270, CS 1410, and BIOL 2020 or BIOL 2021. Plan for basic computational linear algebra and programming, basic cell biology, and little or no bioinformatics. Formal probability, statistics, algorithms, and genetics are not assumed.
 
-- MATH 2270 Linear Algebra.
-- CS 2420 Algorithms and Data Structures.
-- BIOL 2030 Genetics.
-
-That is academically clean but probably too restrictive if the goal is to serve the new bioinformatics major and math students. A better catalog stance would be:
-
-Required:
-
-- MATH 2270, or equivalent linear algebra.
-- BIOL 2030, or equivalent genetics / molecular biology.
-- CS 1410, or equivalent programming experience.
-
-Recommended:
-
-- CS 2420.
-- BIOL 3150.
-- One prior probability or statistics course.
-
-Rationale:
-
-- MATH 2270 should stay required. PCA/SVD and high-dimensional geometry need real linear algebra.
-- BIOL 2030 should stay required or be replaceable by instructor consent. Students need sequence, gene, transcription, mutation, and inheritance vocabulary.
-- CS 2420 is helpful but not essential if the course scaffolds dynamic programming, graph traversal, and dictionary/list-based implementations carefully.
-- A probability/statistics prerequisite would be useful but may block too many students. The plan includes a probability ramp in Weeks 5-7 and a statistics ramp in Weeks 10-11.
-
-If CS 2420 is relaxed, the course needs a Week 1 programming and algorithmic-thinking diagnostic. The diagnostic should check whether students can:
-
-- Write a function.
-- Loop over a string.
-- Use a dictionary or map.
-- Build and index a 2D table.
-- Explain the difference between O(n), O(nm), and exponential search.
-
-Students who cannot do these should be directed to a bootcamp handout or office-hour support before the first dynamic-programming assignment.
-
-This diagnostic should be short. It is a readiness screen and support trigger, not a replacement for BIOL 3150's introductory genomic data science material.
+Introduce the biological vocabulary and probability or statistical ideas needed for each method locally. Students already know matrix multiplication and loops; use those skills rather than reteaching them. A short readiness check can identify who needs help with functions, string indexing, dictionaries, and table indexing before the first dynamic-programming assignment. It is a support tool, not an additional graded assessment.
 
 ## Topic Balance
 
-The current syllabus has the right major topics. The main revision is weighting.
+The allocation keeps foundational methods central while making room for biological comparison and noisy dynamics.
 
 Keep as central:
 
@@ -88,9 +57,9 @@ Expand slightly:
 - Count matrices, normalization, and batch effects.
 - FDR as a core omics method, not a final-week afterthought.
 
-Compress:
+Dynamics scope:
 
-- Gene regulation ODEs, Hill functions, and toggle switches. Keep one week. This is valuable mathematics, but it is closer to mathematical biology / systems biology than to the core bioinformatics theory spine.
+- Retain three dynamics lessons: production/degradation ODEs, biological switches and cell states, and biological dynamics with noisy measurements. Separate process and measurement noise; introduce a state-space bridge without Kalman filtering.
 
 Mention but do not deeply teach:
 
@@ -101,18 +70,18 @@ Mention but do not deeply teach:
 - Deep learning.
 - Pangenome graphs.
 
-These are good synthesis or project topics. They should not displace the foundational methods.
+These are useful synthesis or optional enrichment topics. They should not displace the foundational methods.
 
-## Recommended Module Order
+## Module Order
 
-The current syllabus order places ODEs before phylogenetics and omics. I recommend this order instead:
+The approved lesson order is:
 
 1. Sequence algorithms and graph assembly.
 2. Probabilistic sequence models.
 3. Phylogenetics.
 4. Omics linear algebra and statistics.
 5. Compact systems-biology modeling.
-6. Synthesis and project work.
+6. Modern Frontiers and a Flex meeting.
 
 This order lets the first half build a coherent "sequences as structured strings" story. The second half then moves from trees to matrices to models.
 
@@ -129,9 +98,11 @@ By the end, a strong student should be able to:
 - Explain why posterior decoding and Viterbi decoding can disagree.
 - Construct a simple phylogenetic tree by distance or parsimony.
 - Center an expression matrix and interpret PCA through SVD.
+- Compare biological conditions using effect size, independent replication, and a permutation null.
 - Apply Benjamini-Hochberg and explain what FDR controls.
 - Read an embedding or clustering plot skeptically.
-- Simulate a simple ODE model and identify where mechanistic assumptions enter.
+- Simulate a simple ODE model and interpret stability and biological switches.
+- Distinguish biological process variability from noisy measurement in a dynamical model.
 - Choose an appropriate method for a small biological-data problem and name likely failure modes.
 
 ## Main Design Risks
@@ -152,26 +123,16 @@ Risk: math students lack biological intuition.
 
 Control: every module starts with a biological question and a toy dataset. Failure-mode reflections should force students to connect assumptions to real data.
 
-Risk: final projects sprawl.
+Risk: an optional project, if adopted, sprawls.
 
-Control: require one course method, one documented dataset, one validation check, and one limitation. Keep project grading focused on reproducibility and explanation.
+Control if adopted: bound the project to one course method, one documented dataset, one validation check, and one limitation. Define grading and workload before assigning it.
 
-## Assessment Model Update
+## Current lesson allocation and assessment decisions
 
-The better assessment structure is probably two shorter midterms plus a final project, with no cumulative final exam.
+There are 24 lessons: alignment/scoring 5, assembly 2, Markov chains/HMMs 5, phylogenetics 2, omics 6, biological dynamics 3, and Modern Frontiers 1. Two midterms and an April 26 Flex day complete the 27 meetings.
 
-Recommended weights:
+Lesson 17, Comparing Biological Conditions, uses expression measurements to teach one-feature effect size, biological replication and variability, a null hypothesis, and label permutation. Lesson 18 begins where that ends: simultaneous discoveries, FDP/FDR, and Benjamini–Hochberg. Neither lesson requires a full differential-expression assay workflow.
 
-- Problem sets and project workshops: 40%.
-- Short Midterm 1: 15%.
-- Short Midterm 2: 15%.
-- Final project: 30%.
+Lesson 21 develops gene-regulation ODEs. Lesson 22 connects nonlinear feedback, stability, and switches to cell states. Lesson 23 distinguishes process noise and measurement noise, briefly separates intrinsic from extrinsic biological variability, and connects hidden dynamics to noisy observations through a state-space formulation. Kalman filtering is outside scope. Lesson 24 retains Modern Frontiers.
 
-This is better aligned than a midterm plus final exam because the final project is the real cumulative task. Students must choose a mathematical object, apply a course method to biological data, validate the result, and communicate assumptions and failure modes. A timed cumulative final would likely either overemphasize early DP/HMM mechanics or become a shallow survey of late-semester topics.
-
-Recommended exam placement:
-
-- Short Midterm 1 after the sequence-algorithms and assembly block.
-- Short Midterm 2 after probabilistic models and phylogenetics, optionally including PCA if it has already been introduced.
-
-See `assessment_model.md` for details.
+Ten problem sets and two midterms are scheduled. Midterm 1 covers Lessons 1–7 and Midterm 2 covers Lessons 8–14. Projects, assessment weights, and any final assessment remain undecided; no presentation days are reserved. See `lesson_calendar.md` and `assessment_model.md`.

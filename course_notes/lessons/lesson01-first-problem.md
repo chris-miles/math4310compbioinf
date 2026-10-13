@@ -8,7 +8,7 @@ nocite: |
 
 ## Core question
 
-When are two DNA sequences similar, and what does the answer depend on?
+How can we compare a DNA fragment with a known sequence when their letters differ?
 
 ```{.python .execute}
 #| label: setup
@@ -26,9 +26,24 @@ cf.use_style()
 
 ## Why compare sequences
 
-In 1983, sequence comparisons revealed a close relationship between platelet-derived growth factor, a human protein that stimulates cell growth, and the protein encoded by *v-sis*, an oncogene of simian sarcoma virus [@doolittle1983; @waterfield1983]. The observed data were amino-acid sequences. Their similarity suggested a biological hypothesis: a viral protein might promote cell growth through a mechanism related to a normal growth signal. Sequence comparison supplied a connection to investigate; it did not by itself establish the mechanism of cancer.
+Suppose we want to find DNA differences between a bacterial sample and a previously studied bacterium. *DNA sequencing* estimates the order of bases in a DNA molecule. An instrument measures signals along DNA fragments, and software converts those signals into ordered A, C, G, T letters, called *reads*. Each read records part of a DNA molecule without its position in the genome. A *reference sequence* is a previously recorded genome that supplies candidate locations for comparison.
 
-A newly obtained sequence can likewise be compared with sequences whose functions have been studied. The desired output is a correspondence between their letters and a measure of how well they agree. That correspondence matters: insertions and deletions can place related residues at different positions. A convincing match can support common ancestry and suggest a function to test, but unrelated sequences can also match by chance [@durbin1998]. Before interpreting a match, we need to specify which changes our comparison allows and how it counts them. Today develops those choices on short DNA strings; Lessons 2 to 6 develop scoring and algorithms for longer comparisons.
+Suppose a read is `ACGTT` and one candidate reference segment is `ACTT`. Pairing G with a gap lets the final TT bases line up (@fig-first-problem-read-reference). We need a rule for deciding which letters correspond and how much their differences count. This lesson compares rules that allow different kinds of changes.
+
+```{.python .execute}
+#| label: fig-first-problem-read-reference
+#| code-fold: true
+#| code-summary: "Draw the read/reference correspondence"
+#| fig-cap: "A proposed correspondence between the toy read ACGTT and reference segment ACTT. The gap preserves the pairing of the final TT bases and identifies an extra G in the read relative to this segment."
+#| fig-alt: "ACGTT in the upper row and AC-TT in the lower row, with matching A, C, T, and T columns and a gap opposite G."
+#| fig-width: 4
+#| fig-height: 1.6
+fig, ax = plt.subplots()
+cf.alignment(ax, "ACGTT", "AC-TT", labels=("read", "ref"))
+plt.show()
+```
+
+The gap proposes an extra G in this read relative to the candidate segment. Other reads and their measurement quality help determine whether that difference is real. First we need to make the comparison itself precise.
 
 ## Sequences as strings
 
@@ -39,13 +54,9 @@ An *alphabet* $\Sigma$ is a finite set of symbols. A *sequence* over $\Sigma$ is
 
 For DNA, $\Sigma = \{A, C, G, T\}$; for proteins, the twenty amino-acid letters. The string keeps the order of the bases and discards everything else: the second strand, the three-dimensional structure, which stretches are genes.
 
-::: {.biology}
-Sequencing begins with DNA molecules extracted from a sample and prepared for an instrument; it produces measurements from which software infers base sequences, called *reads*. In sequencing by synthesis, an instrument images fluorescent signals as a copied DNA strand grows one base per cycle; in nanopore sequencing, it measures changes in electrical current as a strand passes through a pore [@illumina-sbs; @nanopore-technology].
-:::
+The conversion from instrument signals to letters is called *basecalling*. Some instruments measure light as a copied strand grows, and others measure electrical current as DNA passes through a pore [@illumina-sbs; @nanopore-technology]. Both give an inferred base string. Exact matching to a reference can fail because of a true sequence difference or a basecalling error. An *alignment* proposes a correspondence while allowing mismatches and gaps; we define it precisely after comparing two ways to count changes.
 
-The conversion from signal to letters is called *basecalling*. A read records sequence along a fragment, but does not arrive with its position in a chromosome. To compare a sample with a known reference genome, we must locate the read and decide which of its bases correspond to reference bases. Exact matching can fail because of a true sequence difference or a measurement error. Alignment allows mismatches and gaps while proposing that correspondence. A reference provides coordinates for comparison; it is not a claim that every sample should have the reference sequence [@nhgri-variation].
-
-For example, suppose a read is $\texttt{ACGTT}$ and a candidate reference segment is $\texttt{ACTT}$. A gap can place the final TT pairs together, suggesting an extra G in the read relative to this segment. The alignment alone cannot tell whether that G is biological or a basecalling error. We first need a precise comparison rule, then evidence from the measurements and other reads to interpret the difference.
+The read/reference comparison in @fig-first-problem-read-reference is one candidate pairing. Before choosing among candidates, we need a precise rule for counting their differences.
 
 DNA reads can come from either strand. Read mapping therefore also considers the *reverse complement*, formed by reversing the string and exchanging A with T and C with G; for example, GAG becomes CTC. Our examples assume the orientation has already been chosen.
 
@@ -126,7 +137,7 @@ To compare strings whose corresponding bases may have shifted, we allow insertio
 An *edit* is a substitution of one symbol for another, an insertion of a symbol at any position, or a deletion of a symbol. The *edit distance* $d_E(x, y)$ is the minimum number of edits that transforms $x$ into $y$.
 :::
 
-Every allowed edit costs one in this definition. The minimum does not distinguish a likely substitution from an unlikely one, or a sequencing error from a true variant. Lesson 2 derives letter-pair scores by comparing related-sequence and background models; Lesson 6 treats gap runs separately.
+Every allowed edit costs one in this definition. The minimum does not distinguish a likely substitution from an unlikely one, or a sequencing error from a true variant. Lesson 2 derives letter-pair scores by comparing related-sequence and background models; Lesson 5 treats gap runs separately.
 
 ::: {#exm-edit-distance}
 ## Edit distance on $x$, $y$, $z$
@@ -226,7 +237,7 @@ cf.dp_table(ax, ["$x_1$", "$x_2$", "$x_3$"], ["$y_1$", "$y_2$", "$y_3$"], table,
 plt.show()
 ```
 
-The first output is 3, agreeing with our one-letter enumeration. Two five-letter strings already have $1{,}683$ alignments; two of length 20 have more than $10^{14}$. Computing a count does not enumerate those objects: the table has only $(n+1)(m+1)$ entries and uses three previous counts per interior entry. Lesson 3 uses the same prefix decomposition to compute a minimum cost, with a cost for each final column instead of counting each extension. That gives edit distance in $\mathcal{O}(nm)$ time under a unit-cost arithmetic assumption.
+The first output is 3, agreeing with our one-letter enumeration. Two five-letter strings already have $1{,}683$ alignments; two of length 20 have more than $10^{14}$. Computing a count does not enumerate those objects: the table has only $(n+1)(m+1)$ entries and uses three previous counts per interior entry. Lesson 3 uses the same prefix decomposition to maximize an alignment score, adding a score for each final column instead of counting each extension. It computes that optimum in $\mathcal{O}(nm)$ time under a unit-cost arithmetic assumption; an optional extension applies the table to edit distance.
 
 ## k-mer composition
 

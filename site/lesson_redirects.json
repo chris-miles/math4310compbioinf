@@ -1,0 +1,17 @@
+{
+  "lesson04-global-alignment-correctness.html": "lesson03-recurrences-and-alignment.html",
+  "lesson05-local-alignment.html": "lesson04-local-alignment.html",
+  "lesson06-affine-gaps-seed-extend.html": "lesson05-affine-gaps-seed-extend.html",
+  "lesson07-reads-kmers-de-bruijn.html": "lesson06-reads-kmers-de-bruijn.html",
+  "lesson08-eulerian-paths-repeats.html": "lesson07-eulerian-paths-repeats.html",
+  "lesson09-probability-markov-chains.html": "lesson08-probability-markov-chains.html",
+  "lesson10-cpg-likelihood-ratios.html": "lesson09-cpg-likelihood-ratios.html",
+  "lesson11-hidden-markov-models.html": "lesson10-hidden-markov-models.html",
+  "lesson12-viterbi-decoding.html": "lesson11-viterbi-decoding.html",
+  "lesson13-forward-backward.html": "lesson12-forward-backward.html",
+  "lesson14-distances-upgma.html": "lesson13-distances-upgma.html",
+  "lesson15-parsimony-fitch.html": "lesson14-parsimony-fitch.html",
+  "lesson16-expression-matrices-pca.html": "lesson15-expression-matrices-pca.html",
+  "lesson17-pca-in-practice.html": "lesson16-pca-in-practice.html",
+  "lesson23-modern-frontiers.html": "lesson24-modern-frontiers.html"
+}

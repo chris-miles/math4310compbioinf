@@ -1,14 +1,14 @@
 ---
 published: true
 title: "Probability and Markov Chains for DNA"
-subtitle: "Lesson 9 · 2027-02-10 · Week 5"
+subtitle: "Lesson 8 · 2027-02-08 · Week 5"
 nocite: |
   @durbin1998
 ---
 
 ## Core question
 
-What is the probability of a sequence under a stated model?
+When do neighboring DNA bases matter for a sequence model?
 
 ```{.python .execute}
 #| label: setup
@@ -26,11 +26,25 @@ cf.use_style()
 
 ## Sequences as random variables
 
-Sequencing measures DNA bases; assembly puts overlapping reads into longer strings. An assembled record might contain `ACGCGT`: each letter names one base along one strand, and `CG` means a C immediately followed by a G, not bases paired across the two strands. In many vertebrate genomic regions CG neighbors are depleted, partly because chemical modification of C makes its conversion to T more likely over evolutionary time. Some regions near gene starts retain more CG neighbors [@durbin1998, pp. 48–49].
+Sequencing and assembly give DNA strings whose adjacent letters represent neighboring bases along one strand. We can use that order to look for regions with distinctive sequence patterns. In many vertebrate genomic regions, C followed by G occurs less often than base composition alone would suggest. Chemical modification of C and its subsequent conversion to T contribute to that depletion; some regions near gene starts retain more CG neighbors [@durbin1998, pp. 48–49].
 
-Does a region have unusual neighboring-base structure, or merely many C and G bases? To distinguish those explanations, we need a background model that assigns probabilities to strings. Today we compare independent-base and neighboring-base models; a later lesson uses such models to classify regions.
+Does a region contain many CG neighbors simply because it contains many C and G bases, or does their order supply additional evidence? Consider the toy strings `ACGCG` and `AGCCG`. Each contains one A, two C bases, and two G bases, but the first has two CG pairs and the second has one. A model that uses only individual base frequencies assigns them the same probability. A model that uses the preceding base can distinguish them.
 
-Our input is contiguous assembled DNA. Its adjacent letters describe neighboring genomic bases; joining separate reads would invent neighbors the experiment did not observe. We assign the same observed string a probability under each model, and use simulation to see which patterns the models reproduce.
+```{.python .execute}
+#| label: fig-probability-same-counts-neighbors
+#| code-fold: true
+#| code-summary: "Mark neighboring CG pairs"
+#| fig-cap: "Two strings have identical base counts but different numbers of adjacent CG pairs, marked by underlines. Base composition alone loses the order that a neighboring-base model needs."
+#| fig-alt: "ACGCG has underlines below positions two to three and four to five; AGCCG has one underline below positions four to five."
+#| fig-width: 6
+#| fig-height: 1.8
+fig, axes = plt.subplots(1, 2)
+cf.sequence_windows(axes[0], "ACGCG", word="CG", label="x")
+cf.sequence_windows(axes[1], "AGCCG", word="CG", label="y")
+plt.show()
+```
+
+Our input is contiguous assembled DNA. Joining separate reads would invent neighbors that the experiment did not observe. We want to assign a probability to an observed string under explicit assumptions, then ask which model reproduces its patterns. Independent-base models supply a starting point; first-order Markov chains retain dependence on the preceding base. Simulation will help us see the difference before the next lesson uses two fitted chains to classify genomic regions.
 
 A genome file contains one observed string. A probability model describes a collection of strings that could have been observed and assigns a probability to each one. The model lets us ask whether an observed pattern is ordinary or surprising under specific assumptions.
 

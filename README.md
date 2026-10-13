@@ -8,7 +8,7 @@ Course materials for **MATH 4310 Computational Bioinformatics** at the Universit
 
 - [Lecture sources](course_notes/lessons/) — editable Markdown with math and Python examples.
 - [Reference pages](course_notes/appendices/) — computing conventions, math refreshers, and notation.
-- [Assignments](assignments/) — problem sets and project workshops; unreleased drafts are marked in front matter but remain public in this repository.
+- [Assignments](assignments/) — problem sets and exploratory project workshop ideas; unreleased drafts are marked in front matter but remain public in this repository.
 - [Data](data/) — small public datasets for lessons and assignments.
 
 The website groups lectures and assignments by week. Unreleased material appears as a muted title until it is ready.

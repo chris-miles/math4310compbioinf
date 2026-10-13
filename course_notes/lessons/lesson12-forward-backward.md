@@ -1,14 +1,14 @@
 ---
 published: true
 title: "Uncertainty in HMMs: Forward-Backward"
-subtitle: "Lesson 13 · 2027-03-03 · Week 8"
+subtitle: "Lesson 12 · 2027-03-01 · Week 8"
 nocite: |
   @durbin1998
 ---
 
 ## Core question
 
-Given an observed sequence, how much support does each position have for each hidden label?
+How much support does each base have for belonging to an island-like region?
 
 ```{.python .execute}
 #| label: setup
@@ -25,9 +25,11 @@ cf.use_style()
 
 ## Genome labels and uncertainty
 
-A genome annotation marks intervals as belonging to one kind of region or another. Near a boundary, several placements can explain the same bases almost equally well. A single decoded path gives coordinates but hides that uncertainty. We want a probability for each label at each position, using the entire observed sequence.
+Lesson 11 chose one complete annotation of the assembled DNA: for `CGAC`, the model's best path put the first two bases in an island-like region and the last two in background. That gives a proposed boundary after base 2. How strongly do the letters support it? Other paths can explain the same sequence, including a path that puts all four bases in the island. Selecting the best path alone does not tell us how much support these alternatives share.
 
-Keep the B/I hidden Markov model from Lessons 11 and 12. The observations are $S$ for C/G and $W$ for A/T; the hidden labels are background $B$ and island-like $I$. This reduced alphabet describes GC enrichment, not the CG-pair signal itself. All calculations condition on the model and a fixed sequence length, with no end-state probability.
+The input is still the DNA sequence and the fixed region model. We now want a probability for each label at each position, using all the observed bases. Such probabilities can identify an uncertain boundary or a weakly supported interval before we treat the decoded map as evidence about a genomic region [@durbin1998].
+
+Keep the B/I hidden Markov model from Lessons 10 and 11. The observations are $S$ for C/G and $W$ for A/T; the hidden labels are background $B$ and island-like $I$. This reduced alphabet describes GC enrichment, not the CG-pair signal itself. All calculations condition on the model and a fixed sequence length, with no end-state probability.
 
 $$
 p_B=p_I=0.5,\qquad
@@ -55,7 +57,7 @@ $$
 The output is one probability distribution over states for every position.
 :::
 
-For $\texttt{SSWS}$, Viterbi returns $\texttt{IIBB}$ with joint probability $0.0129024$. That establishes the best *complete path*. To assess the final label, we must add the probabilities of all paths ending in $I$ and compare that sum with all paths ending in $B$.
+The DNA `CGAC` gives $x=\texttt{SSWS}$. Viterbi returns $\texttt{IIBB}$ with joint probability $0.0129024$, establishing the best *complete path*. To assess the final label, we must add the probabilities of all paths ending in $I$ and compare that sum with all paths ending in $B$. This changes the operation we need: retain the combined probability of alternative explanations rather than just the largest one.
 
 ## The forward algorithm
 
@@ -178,6 +180,35 @@ Choosing the largest posterior at each position gives $\texttt{IIBI}$. Viterbi g
 :::
 
 A 0.516 posterior is weak support for that last island label. Reporting the probability makes this visible. It is also conditional on our chosen emissions and transition probabilities; it does not measure uncertainty about whether those assumptions are right.
+
+@fig-forward-backward-path-groups shows the comparison responsible for the disagreement. The largest individual path belongs to the B-ending group, but the I-ending paths have slightly more probability when added together. Summing several explanations answers a different question from selecting one explanation.
+
+```{.python .execute}
+#| label: fig-forward-backward-path-groups
+#| echo: false
+#| fig-width: 6
+#| fig-height: 2.8
+#| fig-cap: "Conditional probability mass of SSWS paths grouped by their final label. The red segment is the best complete path IIBB, while all I-ending paths together have slightly greater mass. A best path ending in B can coexist with a weak posterior preference for I at the final base."
+#| fig-alt: "Two horizontal probability bars: B-ending paths total 0.484, including a red IIBB segment of 0.213; I-ending paths total 0.516. A vertical reference at 0.5 falls between the bar endpoints."
+sequence_probability = 0.060576
+best_path_mass = 0.0129024 / sequence_probability
+end_B_mass = 0.0293184 / sequence_probability
+end_I_mass = 0.0312576 / sequence_probability
+fig, ax = plt.subplots()
+ax.barh(1, best_path_mass, color=cf.EMPHASIS)
+ax.barh(1, end_B_mass - best_path_mass, left=best_path_mass, color=cf.LIGHT)
+ax.barh(0, end_I_mass, color="C0")
+ax.text(best_path_mass / 2, 1, "IIBB", ha="center", va="center", color=cf.PAPER)
+ax.text((best_path_mass + end_B_mass) / 2, 1, "other B paths",
+        ha="center", va="center", fontsize=9)
+ax.text(end_I_mass / 2, 0, "all I paths", ha="center", va="center", color=cf.PAPER)
+for y, mass in [(1, end_B_mass), (0, end_I_mass)]:
+    ax.text(mass + 0.025, y, f"{mass:.3f}", va="center", fontsize=9)
+ax.axvline(0.5, color=cf.RULE, linewidth=0.8, linestyle=":")
+ax.set(xlabel="Probability conditional on SSWS", xlim=(0, 1),
+       yticks=[0, 1], yticklabels=["Ends in I", "Ends in B"])
+plt.show()
+```
 
 ::: {#def-posterior-decoding}
 ## Posterior decoding

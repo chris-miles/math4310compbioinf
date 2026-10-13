@@ -1,14 +1,14 @@
 ---
 published: true
 title: "Affine Gaps and Seed-and-Extend"
-subtitle: "Lesson 6 · 2027-02-01 · Week 4"
+subtitle: "Lesson 5 · 2027-01-27 · Week 3"
 nocite: |
   @durbin1998, @gotoh1982, @altschul1990, @compeau2015
 ---
 
 ## Core question
 
-How do we model gaps as events, then search a database without filling every table?
+How should we score a missing stretch and search many sequences for a match?
 
 ```{.python .execute}
 #| label: setup
@@ -26,11 +26,11 @@ cf.use_style()
 
 ## Gap opening and extension
 
-Suppose sequencing and gene prediction (identifying DNA regions likely to encode proteins) produce a candidate protein whose function is unknown. A database search compares its amino-acid sequence with known records and returns regions worth investigating. Unlike the two-sequence problems so far, we do not know in advance which record contains the useful match. Filling a complete local-alignment table against every record repeats expensive work; seeds first select promising locations.
+Suppose sequencing and gene prediction (identifying DNA regions likely to encode proteins) produce a candidate protein whose function is unknown. Its amino-acid string can be searched against a database of recorded proteins to find shared regions and candidate functions. We need a scoring rule for each proposed correspondence, and a search strategy to find useful candidates among many records.
 
-Within a candidate alignment, a stretch of missing residues may reflect one insertion or deletion event. An affine gap score distinguishes that event from several isolated gaps. These are separate choices: the gap model ranks the alignments we examine, while the seed rule determines which locations we examine at all.
+First consider the scoring rule. A stretch of missing bases or amino acids may reflect one insertion or deletion event [@durbin1998]. The linear gap score from earlier lessons charges by the number of missing letters alone: one length-$\ell$ gap and $\ell$ separate one-letter gaps both score $\ell g$. It cannot express a preference for one longer event over several separate events. An *affine* gap score gives starting a gap a different cost from continuing it.
 
-A linear gap score $\ell g$ charges the same amount for one length-$\ell$ gap as for $\ell$ separate one-letter gaps. A single insertion or deletion often affects a run of adjacent bases or amino acids. We therefore distinguish starting a gap from continuing it.
+Once that score is defined, the database creates a second problem. We do not know which record contains a useful match, and filling a complete local-alignment table against every record repeats expensive work. A *seed* is a short matching word that selects a location for closer comparison. The gap model determines how we rank candidate alignments; the seed rule determines which candidates reach that comparison.
 
 ::: {#def-affine-gap}
 ## Affine gap penalty
@@ -42,6 +42,22 @@ Here $d_o$ is the gap-open penalty and $d_e$ is the gap-extension penalty. Usual
 :::
 
 We subtract this positive cost from an alignment score, just as a negative gap score $g$ was added in earlier lessons. With $d_o=4$ and $d_e=1$, gaps of lengths 1, 2, and 3 cost 4, 5, and 6. Two separate one-letter gaps cost 8. The second opening represents a second event.
+
+The difference is visible even in the toy strings AAAA and AA. Both correspondences in @fig-affine-gap-runs have two matches and two gap columns. Linear scoring ties them; affine scoring charges 5 for the single two-letter gap and 8 for the two separate gaps. The repeated A bases leave the correspondence ambiguous, so this preference comes from the gap model rather than from additional letter evidence.
+
+```{.python .execute}
+#| label: fig-affine-gap-runs
+#| code-fold: true
+#| code-summary: "Compare one gap run with two gap runs"
+#| fig-cap: "Two alignments of AAAA with AA use the same number of gap columns, in one run (left) or two runs (right). With opening penalty 4 and extension penalty 1, their gap costs are 5 and 8, expressing a preference for fewer separate events."
+#| fig-alt: "AAAA over A--A on the left, and AAAA over -A-A on the right. Both pairs have two A matches, but their gaps form one run and two runs respectively."
+#| fig-width: 6
+#| fig-height: 1.8
+fig, axes = plt.subplots(1, 2)
+cf.alignment(axes[0], "AAAA", "A--A")
+cf.alignment(axes[1], "AAAA", "-A-A")
+plt.show()
+```
 
 The cost of the next column now depends on the preceding column. Appending `C/-` after a paired-letter column costs $d_o$, while appending it after another letter/gap column costs only $d_e$. Two prefix alignments can therefore have different continuation costs even when they end at the same $(i,j)$. Keeping only their overall maximum can discard a lower-scoring prefix whose next extension is cheaper. We retain a best score for each possible ending type [@durbin1998].
 
@@ -198,7 +214,7 @@ A *seed* is a short pattern from the query used to find candidate positions in a
 2. Look up each query $k$-mer in the index.
 3. Extend each hit along its ungapped offset by adding pair scores in both directions. Keep the best endpoints; a common stopping rule quits after the running score falls a chosen amount below its best value.
 4. For promising hits, allow gaps by filling a local-alignment table in a window or band around the hit.
-5. Report high-scoring alignments and their search-calibrated significance.
+5. Return the scored candidate alignments.
 :::
 
 Index lookup avoids considering most query-target position pairs. For query `ACGTAC` and target `AGGTTC`, the 3-mer call should return no hits. The 2-mer call should return one hit, `[(2, 2)]`, because GT begins at zero-based position 2 in both strings.
@@ -229,7 +245,20 @@ This example uses DNA exact words to make the search rule inspectable. The origi
 
 ## Seed sensitivity
 
-The ungapped ACGTAC/AGGTTC comparison has four matches and two mismatches, scoring 2 under $+1/-1$. Yet the 3-mer index finds no candidate, while the 2-mer index finds GT. A promising final score cannot help if the seed stage never sends the location to extension.
+The ungapped ACGTAC/AGGTTC comparison has four matches and two mismatches, scoring 2 under $+1/-1$. In @fig-affine-seed-interruptions, the mismatches break those matches into runs of lengths 1, 2, and 1. No run reaches three letters, and inspecting all the words confirms that the strings share no 3-mer at any offset. The 3-mer index finds no candidate, while the 2-mer index finds GT. A promising final score cannot help if the seed stage never sends the location to extension.
+
+```{.python .execute}
+#| label: fig-affine-seed-interruptions
+#| code-fold: true
+#| code-summary: "Show how mismatches interrupt an exact seed"
+#| fig-cap: "Four paired bases match in ACGTAC/AGGTTC, but the two mismatch dots split them into runs of lengths 1, 2, and 1. The exact 3-mer search misses this pair; a 2-mer search finds the central GT run."
+#| fig-alt: "ACGTAC above AGGTTC, with match marks at positions one, three, four, and six and red mismatch dots at positions two and five."
+#| fig-width: 5
+#| fig-height: 1.7
+fig, ax = plt.subplots()
+cf.alignment(ax, "ACGTAC", "AGGTTC", labels=("query", "target"))
+plt.show()
+```
 
 ::: {#def-seed-sensitivity}
 ## Seed sensitivity
@@ -241,6 +270,8 @@ For a tiny sensitivity check, take ACGTAC as the query and suppose the true targ
 Longer exact seeds generate fewer random hits and speed up extension, but they miss more alignments containing substitutions or gaps. Shorter seeds improve sensitivity and produce more candidates. Spaced seeds require matches at selected positions rather than every position in a contiguous word; they can detect some alignments that contiguous seeds miss.
 
 The index finds every accepted shared word when it retains every occurrence. It cannot propose an alignment containing no accepted seed. Unlike full dynamic programming, this search rule can therefore miss the unrestricted best alignment.
+
+:::: {.callout-note collapse="true" title="Going deeper: seed counts and a bounded-mismatch guarantee"}
 
 ### Seed length and candidate counts
 
@@ -269,6 +300,10 @@ The $t$ mismatches divide the $L-t$ matching positions into at most $t+1$ runs, 
 
 For $L=20$ and $t=3$, some run has at least five matches, guaranteeing a 5-mer seed. An 8-mer seed has no such guarantee. Gaps need different accounting because they interrupt the correspondence between positions.
 
+::::
+
+:::: {.callout-note collapse="true" title="Going deeper: database size and E-values"}
+
 ## Database size and E-values
 
 A raw local-alignment score is less surprising in a large search than in a small one. BLAST reports an E-value: the expected number of chance hits scoring at least this well in a search of the stated size under its background model. An E-value of $0.01$ means one such chance hit per 100 comparable searches on average. It is not the probability that the reported sequences are unrelated.
@@ -277,13 +312,15 @@ For fixed $k$, building the index costs $\mathcal O(N)$ expected time with a has
 
 Database composition, low-complexity sequence, score parameters, and database size all affect significance calibration. The extension score and the seed rule answer different questions: a sensitive score cannot recover a target that the seed stage never visits.
 
+::::
+
 ## Limitations
 
 1. **Affine gaps still use a simple duration model.** Every extension has the same cost, regardless of gap length or position.
 2. **State conventions differ.** Allowing direct transitions between opposite gap states changes the set of represented alignments and can change scores under unusual parameter choices.
 3. **Seeds can miss real alignments.** Distributed mismatches or gaps can destroy every accepted word.
 4. **Repeats flood the candidate list.** Common seeds occur at many positions and erase the speed advantage unless the method filters or downweights them.
-5. **E-values depend on the search.** Changing the database size or background composition changes significance even when the raw alignment score stays fixed.
+5. **Statistical significance depends on the search.** The same raw score can be less surprising in a larger database or in repetitive sequence. The optional section explains one measure of this effect.
 
 ## Exercises
 

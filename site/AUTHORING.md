@@ -21,7 +21,7 @@ Each lecture and assignment has YAML front matter:
 ~~~yaml
 ---
 title: "Uncertainty in HMMs: Forward-Backward"
-subtitle: "Lesson 13 · 2027-03-03 · Week 8"
+subtitle: "Lesson 12 · 2027-03-01 · Week 8"
 published: false
 ---
 ~~~
@@ -30,9 +30,9 @@ Change **published: false** to **published: true** to make the title clickable i
 
 Only set this flag after reviewing the page. Each source file's `published` field controls its release status; the generated lecture and assignment catalogs show what is available.
 
-The schedule has broad modules and compact weekly rows. Edit `site/schedule.json`: `modules` groups lesson numbers by subject, and each week's `meetings` assigns one lesson or event to each actual class date. The week's `lessons` list must agree with those meetings. A week may cross a module boundary. The builder displays each meeting date, including midterms and two project presentation days. The checker requires exactly one event on every available Monday or Wednesday, with holidays and spring break excluded. There are 27 meetings and ten problem sets.
+The schedule has broad modules and compact weekly rows. Edit `site/schedule.json`: `modules` groups lesson numbers by subject, and each week's `meetings` assigns one lesson or event to each actual class date. The week's `lessons` list must agree with those meetings. A week may cross a module boundary. The builder displays each meeting date, including two midterms and the April 26 Flex day. The checker requires exactly one event on every available Monday or Wednesday, with holidays and spring break excluded. There are 27 meetings: 24 lessons, two midterms, and one Flex day, plus ten problem sets.
 
-Set `assignment` to null for a week without a release. An assignment entry has an ID, label, and due date; Canvas controls submission details. The ID matches its filename without `.md`; entries without a released source remain unlinked. The homepage, lecture index, and assignment catalog share this schedule. The final two meetings, April 21 and April 26, are reserved for project presentations.
+Set `assignment` to null for a week without a release. An assignment entry has an ID, label, and due date; Canvas controls submission details. The ID matches its filename without `.md`; entries without a released source remain unlinked. The homepage, lecture index, and assignment catalog share this schedule. April 21 is Lesson 24: Modern Frontiers; April 26 is Flex. Projects and any related deadlines remain undecided.
 
 ## Markdown and mathematics
 
@@ -90,6 +90,8 @@ python -m http.server 8000 --directory _site
 Install Pandoc separately. The build replaces only the ignored _site/ output directory. The checker validates internal links and fragments, draft exclusion, figure alt text, and the publication boundary. GitHub Actions uses the same build and checker before deploying to GitHub Pages.
 
 Commit only intended public changes and push to main to deploy. The shared HTML template uses relative URLs, including when the site is hosted under the repository's GitHub Pages path. Existing lecture .html URLs remain valid.
+
+Renamed lesson URLs are maintained in `site/lesson_redirects.json`, which maps each old `.html` filename to its current lesson filename. When renaming or consolidating a lesson, update internal links and add or revise that mapping. Keep redirect targets current; the builder generates redirects and the checker verifies them.
 
 ## Source files and generated output
 
