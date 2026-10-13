@@ -30,7 +30,7 @@ Apply `figstyle.mplstyle` once at lesson top (see `STYLE_FIGURES.md`). **Never**
 - Chunk labels: `code-{chapter}-{shortname}` for code, `fig-{chapter}-{shortname}` when the chunk produces a figure.
 - Figure-producing chunks set `fig-cap`, `fig-alt`, and `label`.
 - `echo: true` by default — students see the code.
-- Imports at chapter top in a single `setup` chunk; later chunks assume those imports.
+- Imports at chapter top in a single `setup` chunk; later chunks assume those imports. The builder hides this chunk by default; use `echo: true` only when the setup itself needs explanation.
 
 ## Reproducibility
 - Set `np.random.seed(0)` (or a chapter-specific seed) at the top of any chunk using randomness.

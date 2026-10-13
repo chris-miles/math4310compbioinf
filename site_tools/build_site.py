@@ -106,7 +106,8 @@ def execute_chunks(body: str, path: Path, route: str) -> str:
                     if value is not None:
                         print(repr(value))
         parts = []
-        if options.get("echo", True):
+        # Keep imports and figure styling out of the rendered lesson opening.
+        if options.get("echo", label != "setup"):
             block = "\n".join(["~~~python", code, "~~~"])
             if options.get("code-fold"):
                 summary = html.escape(options.get("code-summary", "Show code"))
