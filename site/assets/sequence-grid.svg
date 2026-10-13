@@ -5,32 +5,32 @@
     /* Rows settle into alignment, pause for a faint scan, then drift apart. */
     .sequence-row {
       transform: translateX(var(--offset, 0px));
-      animation: align-row 18s cubic-bezier(.45, 0, .25, 1) infinite;
+      animation: align-row 12s cubic-bezier(.45, 0, .25, 1) infinite;
       animation-delay: var(--row-delay, 0s);
     }
     .reference-row { animation: none; }
     @keyframes align-row {
-      0%, 10%, 94%, 100% { transform: translateX(var(--offset, 0px)); }
-      18%, 86% { transform: translateX(0); }
+      0%, 15%, 91%, 100% { transform: translateX(var(--offset, 0px)); }
+      27%, 79% { transform: translateX(0); }
     }
     .sequence-row > rect:not([opacity=".12"]) {
-      animation: column-highlight 18s ease-in-out infinite;
+      animation: column-highlight 12s ease-in-out infinite;
     }
     .sequence-row > rect:nth-of-type(1) { animation-delay: 0.00s; }
-    .sequence-row > rect:nth-of-type(2) { animation-delay: 0.16s; }
-    .sequence-row > rect:nth-of-type(3) { animation-delay: 0.32s; }
-    .sequence-row > rect:nth-of-type(4) { animation-delay: 0.48s; }
-    .sequence-row > rect:nth-of-type(5) { animation-delay: 0.64s; }
-    .sequence-row > rect:nth-of-type(6) { animation-delay: 0.80s; }
-    .sequence-row > rect:nth-of-type(7) { animation-delay: 0.96s; }
-    .sequence-row > rect:nth-of-type(8) { animation-delay: 1.12s; }
-    .sequence-row > rect:nth-of-type(9) { animation-delay: 1.28s; }
-    .sequence-row > rect:nth-of-type(10) { animation-delay: 1.44s; }
-    .sequence-row > rect:nth-of-type(11) { animation-delay: 1.60s; }
-    .sequence-row > rect:nth-of-type(12) { animation-delay: 1.76s; }
+    .sequence-row > rect:nth-of-type(2) { animation-delay: 0.12s; }
+    .sequence-row > rect:nth-of-type(3) { animation-delay: 0.24s; }
+    .sequence-row > rect:nth-of-type(4) { animation-delay: 0.36s; }
+    .sequence-row > rect:nth-of-type(5) { animation-delay: 0.48s; }
+    .sequence-row > rect:nth-of-type(6) { animation-delay: 0.60s; }
+    .sequence-row > rect:nth-of-type(7) { animation-delay: 0.72s; }
+    .sequence-row > rect:nth-of-type(8) { animation-delay: 0.84s; }
+    .sequence-row > rect:nth-of-type(9) { animation-delay: 0.96s; }
+    .sequence-row > rect:nth-of-type(10) { animation-delay: 1.08s; }
+    .sequence-row > rect:nth-of-type(11) { animation-delay: 1.20s; }
+    .sequence-row > rect:nth-of-type(12) { animation-delay: 1.32s; }
     @keyframes column-highlight {
-      0%, 40%, 48%, 100% { opacity: .24; }
-      44% { opacity: .34; }
+      0%, 45%, 53%, 100% { opacity: .24; }
+      49% { opacity: .40; }
     }
     #static:target ~ .sequence-tiles .sequence-row {
       animation: none;
