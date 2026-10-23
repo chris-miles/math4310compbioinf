@@ -24,7 +24,7 @@ cf.use_style()
 
 ## Reads and coverage
 
-Lesson 1 placed each read under a reference genome and read down the columns. Suppose instead that we sequence a virus or bacterium for which no suitable reference exists. The instrument still returns reads, strings of a few hundred letters or fewer, but nothing records where each one came from and there is no reference to place them against. Reconstructing the genome from the reads alone, using only their overlaps, is *de novo assembly*.
+Lesson 1 placed each read under a reference genome and read down the columns. Suppose instead that we sequence a virus or bacterium for which no suitable reference exists. The instrument still returns reads, strings of a few hundred letters or fewer, but nothing records where each one came from and there is no reference to place them against. Reconstructing the genome from the reads alone, using only their overlaps, is *de novo assembly*. A reconstructed genome lets us search for complete genes and see how they are arranged, even when individual reads cover only parts of them.
 
 To see what such data look like, we simulate them from a genome we already know. The bacteriophage phiX174 has a circular genome of 5,386 bases, stored in the course [data folder](../data/phix174-NC_001422.1.fasta). The chunk below draws 162 synthetic reads of length 100 from it, with independent, uniformly random starts and no sequencing errors. To run it, download the repository and work from the lesson folder.
 

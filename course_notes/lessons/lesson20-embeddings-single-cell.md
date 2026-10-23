@@ -374,11 +374,11 @@ for name, A in [("20 PCs", T), ("PC1-PC2", T[:, :2]), ("t-SNE 30", embeddings[30
     print(f"{name:9s} same-type {same_type_fraction(A):.2f}; gaps {center_gaps(A)}")
 ```
 
-Neighbors in the embedding share a type as often as neighbors in the 20 scores, and far more often than neighbors in the PCA plane, so the islands are trustworthy. The center gaps are not. In the input the four types are nearly equidistant, with center distances between 17.6 and 20.5, and types 3 and 4 are the farthest pair. In the embedding, types 3 and 4 are the closest pair, and types 1 and 2 are two and a half times as far apart. The spacing of islands is a by-product of the optimization, as the gradient predicted.
+Neighbors in the embedding share a type as often as neighbors in the 20 scores, and far more often than neighbors in the PCA plane, so membership in an island is supported by the input neighborhoods. The center gaps are not. In the input the four types are nearly equidistant, with center distances between 17.6 and 20.5, and types 3 and 4 are the farthest pair. In the embedding, types 3 and 4 are the closest pair, and types 1 and 2 are two and a half times as far apart. The spacing of islands is a by-product of the optimization, as the gradient predicted.
 
 ## Reading an embedding
 
-Perplexity changes the picture without any change in the data. All three t-SNE panels of @fig-single-cell-embeddings recover the same five groups, but the shapes and arrangement differ. At perplexity 5 each cell keeps only a few neighbors, and a few cells end up stranded between islands; in noisier real data, small perplexities can split one population into fragments, and even structureless random data can form convincing clumps [@wattenberg2016]. No setting is the true one. The five groups are worth reporting because they survive every reasonable setting; the arrangement is not.
+Perplexity changes the picture without any change in the data. All three t-SNE panels of @fig-single-cell-embeddings recover the same five groups, but the shapes and arrangement differ. At perplexity 5 each cell keeps only a few neighbors, and a few cells end up stranded between islands; in noisier real data, small perplexities can split one population into fragments, and even structureless random data can form convincing clumps [@wattenberg2016]. No setting is the true one. The five groups are worth reporting because they appear at every perplexity we tried; their arrangement changes and is not.
 
 Island area is unreliable too. Every simulated type has the same variation around its profile, yet type 1, with 150 cells, covers a far larger area than type 5b, with 20. Because each $\sigma_i$ was tuned to give every cell the same number of effective neighbors, differences in local density were removed in the first step, and area tracks the number of cells more than their variability [@wattenberg2016]. The large rod island in @fig-single-cell-retina-atlas reflects at least partly how many rods were captured.
 
@@ -386,7 +386,7 @@ Island area is unreliable too. Every simulated type has the same variation aroun
 A t-SNE or UMAP plot can support the claim that cells in one island were each other's neighbors in the input. It does not show how different two islands are, how variable a group is, or that an empty region contains no intermediate cells.
 :::
 
-UMAP, the other widely used embedding, builds the $k$-nearest-neighbor graph of Lesson 19 explicitly, with $k$ playing the role of perplexity, and lays it out by pulling neighbors together and pushing sampled non-neighbors apart [@mcinnes2018]. It is faster than t-SNE, but the warning above applies to it unchanged.
+UMAP, the other widely used embedding, builds the $k$-nearest-neighbor graph of Lesson 19 explicitly, with $k$ playing the role of perplexity, and lays it out by pulling neighbors together and pushing sampled non-neighbors apart [@mcinnes2018]. Its speed relative to t-SNE depends on the implementation and settings, and the warning above applies to it unchanged.
 
 In a typical analysis, clusters are computed on the neighbor graph built from PCA scores, as in Lesson 19, and the embedding is drawn alongside for display, not used to define them. Naming a cluster as a cell type is a further biological claim, made from marker genes; the colors in @fig-single-cell-retina-atlas are such claims [@macosko2015].
 

@@ -108,7 +108,7 @@ x_0 & \xrightarrow{\;+\,w_0\;} & x_1 & \xrightarrow{\;+\,w_1\;} & x_2 & \xrighta
 y_0 & & y_1 & & y_2 & &
 \end{array}
 $$
-The horizontal arrows are the HMM's transitions: given $x_k$, the next concentration does not depend on earlier ones. The vertical arrows are its emissions: given $x_k$, the reading $y_k$ is independent of every other state and reading. The B/I model stepped along DNA through two discrete states; here the index is time, the hidden state is a continuous concentration, and the transition comes from the ODE. Recovering the hidden path has a continuous analogue of forward-backward, the Kalman filter, which we do not develop.
+The horizontal arrows are the HMM's transitions: given $x_k$, the next concentration does not depend on earlier ones. The vertical arrows are its emissions: given $x_k$, the reading $y_k$ is independent of every other state and reading. The B/I model stepped along DNA through two discrete states; here the index is time, the hidden state is a continuous concentration, and the transition comes from the ODE. Estimating the hidden concentrations from the readings has continuous analogues of the HMM computations for Gaussian noise: the Kalman filter uses readings up to the current time, like the forward pass, and the Kalman smoother uses the whole series, like forward-backward. We do not develop them.
 
 ## One disturbance, two fates
 

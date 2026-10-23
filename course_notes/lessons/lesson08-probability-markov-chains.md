@@ -32,7 +32,7 @@ Sequencing and assembly turn a genome into a long string of letters. Here are th
 GAGTTTTATCGCTTCCATGACGCAGAAGTTAACACTTTCGGATATTTCTGATGAGTCGAA
 ```
 
-Adjacent letters are neighboring bases along one strand, so the file records the order of the bases as well as their counts, and that order can matter biologically. In many vertebrate genomic regions, C followed by G occurs less often than base composition alone would suggest. Chemical modification of C and its subsequent conversion to T contribute to that depletion, while some regions near gene starts retain more CG neighbors [@durbin1998, pp. 48–49].
+Adjacent letters are neighboring bases along one strand, so the file records the order of the bases as well as their counts, and that order can matter biologically. In many vertebrate genomic regions, C followed by G occurs less often than base composition alone would suggest. Chemical modification of C and its subsequent conversion to T contribute to that depletion, while some GC-rich regions, called *CpG islands*, retain more CG neighbors. CpG means C followed by G on one strand. These regions often lie near gene starts, so locating them can help identify DNA involved in controlling gene activity [@durbin1998, pp. 48–49].
 
 Does a region contain many CG neighbors simply because it contains many C and G bases, or does their order supply additional evidence? Consider the toy strings `ACGCG` and `AGCCG`. Each contains one A, two C bases, and two G bases, but the first has two CG pairs and the second has one. A model that uses only individual base frequencies assigns them the same probability. A model that uses the preceding base can distinguish them.
 
@@ -78,7 +78,7 @@ P(x_1,\ldots,x_n)=P(x_1)\prod_{i=2}^n P(x_i\mid x_1,\ldots,x_{i-1}).
 $$
 :::
 
-Conditional probabilities have a counting interpretation. Generate a very long sequence from a model that uses the same rule at every position, and look only at the positions whose preceding base is C. Among those positions, the fraction holding G approaches $P(X_i=G\mid X_{i-1}=C)$:
+Conditional probabilities have a counting interpretation. Generate a very long sequence from a model that uses the same rule at every position and can move from any letter to any other, and look only at the positions whose preceding base is C. Among those positions, the fraction holding G approaches $P(X_i=G\mid X_{i-1}=C)$:
 $$
 P(X_i=G\mid X_{i-1}=C)\approx
 \frac{\#\{i:\ x_{i-1}=C \text{ and } x_i=G\}}{\#\{i:\ x_{i-1}=C\}}.

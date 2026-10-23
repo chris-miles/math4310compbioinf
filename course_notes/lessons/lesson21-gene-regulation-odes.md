@@ -29,7 +29,7 @@ cf.use_style()
 
 The expression matrices of the previous lessons record each sample at one collection time. Many biological questions are about timing instead: when a bacterium meets a new sugar and switches on a gene, does the protein reach a useful level before conditions change again? Answering that requires measuring the same cell repeatedly.
 
-A *fluorescent reporter* makes this possible. Biologists place the coding sequence of a fluorescent protein, such as green fluorescent protein (GFP), under the control of the promoter they want to study, so the cell makes the reporter whenever it would make the gene's own product. A microscope photographs growing cells every few minutes, and image software outlines each cell and records its mean fluorescence intensity per unit cell area. That reading tracks concentration rather than molecule number, so a division does not halve it; this is why the model below describes a concentration. One record is a cell identifier, an observation time $t_k$, and a measured intensity $y_k$ in arbitrary units. The records below are simulated to resemble such an experiment in *E. coli*, with an inducer added at time zero, images every ten minutes, and one daughter followed after each division.
+A *fluorescent reporter* makes this possible. Biologists place the coding sequence of a fluorescent protein, such as green fluorescent protein (GFP), under the control of the promoter they want to study, so the cell makes the reporter whenever it would make the gene's own product. A microscope photographs growing cells every few minutes, and image software outlines each cell and records its mean fluorescence intensity per unit cell area. That reading tracks concentration rather than molecule number, so a division does not halve it; this is why the model below describes a concentration. One record is a cell identifier, an observation time $t_k$, and a measured intensity $y_k$ in arbitrary units. The records below are simulated to resemble such an experiment in *E. coli*. A chemical inducer switches on reporter production at time zero; images are taken every ten minutes, following one daughter after each division.
 
 ```{.python .execute}
 #| label: code-regulation-reporter-records
@@ -121,7 +121,7 @@ $$
 A solution started at $x_0=x^*$ remains at $x^*$ for all time.
 :::
 
-Doubling production doubles the steady level, and so does halving removal. The three cells in @fig-regulation-reporter-data could differ in $\beta$, for instance through plasmid copy number, and so settle at different plateaus.
+Doubling production doubles the steady level, and so does halving removal. The three cells in @fig-regulation-reporter-data could differ in $\beta$, for instance because they carry different numbers of copies of the reporter gene, and so settle at different plateaus.
 
 Whether a cell started elsewhere reaches $x^*$ depends on the sign of $\dot x$. In @fig-regulation-rate-balance, production is the horizontal line at $\beta=2$ and removal is the line $\alpha x$ with $\alpha=1$, crossing at $x^*=2$. Left of the crossing, production exceeds removal, so $\dot x>0$ and $x$ increases; to the right, removal wins and $x$ decreases. The arrows below the plot record this: every starting concentration flows toward $x^*$, so the equilibrium is drawn as a filled point.
 
@@ -211,7 +211,7 @@ plt.show()
 
 The dilution calculation turns @fig-regulation-response-times into a biological constraint. For a stable protein $\alpha\approx\ln2/T_d$, so @eq-half-time gives $t_{1/2}\approx T_d$: the cell needs about one generation to reach half its new level, however strongly the promoter is induced. That is the 30-minute half-time shared by all three cells in @fig-regulation-reporter-data.
 
-A cell that must respond faster than it divides therefore cannot do so by making more protein. Active degradation raises $\alpha$, but holding the same level then requires proportionally more production, which costs energy. A transcription factor that represses its own promoter can instead start with a strong promoter and shut production down near its target; in *E. coli*, this negative autoregulation cut the time to reach half the final level to about one fifth of a cell cycle [@rosenfeld2002]. Its production depends on $x$, so it lies outside the constant-$\beta$ model; @exr-regulation-autoregulation works out an idealized version.
+A cell that must respond faster than it divides therefore cannot do so by making more protein. Active degradation raises $\alpha$, but holding the same level then requires proportionally more production, which costs energy. A transcription factor is a protein that binds DNA to regulate RNA production. One that represses its own promoter can instead start with a strong promoter and shut production down near its target; in *E. coli*, this negative autoregulation cut the time to reach half the final level to about one fifth of a cell cycle [@rosenfeld2002]. Its production depends on $x$, so it lies outside the constant-$\beta$ model; @exr-regulation-autoregulation works out an idealized version.
 
 ## Simulating the model: forward Euler
 

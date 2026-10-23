@@ -28,7 +28,7 @@ cf.use_style()
 
 Lesson 11 chose one complete annotation of the assembled DNA: for `CGAC`, the model's best path put the first two bases in an island-like region and the last two in background, with a boundary after base 2. How strongly do the letters support that boundary? Other paths explain the same sequence, including one that puts all four bases in the island, and the best path alone does not say how much support these alternatives share.
 
-The input is still the DNA sequence and the fixed region model. We now want a probability for each label at each position, using all the observed bases, so that an uncertain boundary or a weakly supported interval is flagged before we treat the decoded map as evidence about a genomic region [@durbin1998]. We keep the B/I hidden Markov model from Lessons 10 and 11, with $S$ for C/G, $W$ for A/T, hidden labels $B$ and $I$, and a fixed sequence length with no end-state probability:
+The input is still the DNA sequence and the fixed region model. We now want a probability for each label at each position, using all the observed bases, so that an uncertain boundary or a weakly supported interval is flagged before choosing candidate DNA regions for follow-up studies of gene regulation [@durbin1998]. We keep the B/I hidden Markov model from Lessons 10 and 11, with $S$ for C/G, $W$ for A/T, hidden labels $B$ and $I$, and a fixed sequence length with no end-state probability:
 
 $$
 p_B=p_I=0.5,\qquad
@@ -412,7 +412,7 @@ print(f"P(x) = {likelihood:.2g}; expected island positions = {sum(gamma_I):.1f};
       f"true island positions = {path_sim.count('I')}")
 ```
 
-In islands made almost entirely of S, such as positions 99 to 105, 134 to 145, and 249 to 262, the posterior rises above 0.8 within a position or two of the boundary and stays there, and in long background stretches it stays near 0. Uncertainty concentrates elsewhere: the curve climbs over several positions at each boundary, sags toward 0.55 inside the W-rich island at 215 to 228, and hovers near one half in short S-rich stretches of background such as 90 to 96 and 146 to 154, where a small island and a background fluctuation explain the letters about equally well. The 11 background positions that Viterbi appended to the last island carry posteriors of only 0.55 to 0.7, a doubt the single path does not show. Summing the curve gives about 104 expected island positions, against 95 in the truth.
+In islands made almost entirely of S, such as positions 99 to 105, 134 to 145, and 249 to 262, the posterior rises above 0.8 within a position or two of the boundary and stays there, and in long background stretches it stays near 0. Uncertainty concentrates elsewhere: the curve climbs over several positions at each boundary, sags toward 0.55 inside the W-rich island at 215 to 228, and hovers near one half in short S-rich stretches of background such as 90 to 96 and 146 to 154, where a small island and a background fluctuation explain the letters about equally well. The 11 background positions that Viterbi appended to the last island carry island posteriors between about 0.56 and 0.87, a doubt the single path does not show. Summing the curve gives about 104 expected island positions, against 95 in the truth.
 
 ### Stable sums in log space
 

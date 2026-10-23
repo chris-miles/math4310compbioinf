@@ -29,11 +29,11 @@ cf.use_style()
 
 ## Longer reads and richer references
 
-Two earlier problems had a common cause. In assembly, reads shorter than a repeat could not say which unique sequence follows which copy. In read mapping, each read was compared with one reference genome, so a base absent from that genome counted as a mismatch even when many people carry it. This lesson asks what newer data and representations add to each problem.
+Two earlier problems had a common cause. In assembly, reads shorter than a repeat could not say which unique sequence follows which copy. In read mapping, each read was compared with one reference genome, so a base absent from that genome counted as a mismatch even when many people carry it. The goal is to recover missing or duplicated DNA, including changes in which genes a sample carries, that short reads against one reference can overlook. Such changes can alter which proteins a cell makes.
 
 The short reads behind most of our examples are typically under 300 bases. Long-read instruments measure single DNA molecules over far longer stretches: one platform passes a polymerase around the same circular molecule several times and combines the passes into a consensus read of more than 10,000 bases with better than 99% accuracy; nanopore instruments report reads of 10,000 to 100,000 bases, and "ultra-long" reads beyond that [@logsdon2020longread]. A long read is still an inferred base string without genomic coordinates, but it carries much more context.
 
-Context matters because human DNA is highly repetitive. About half of the human genome derives from transposons, and the roughly 300-base Alu element alone has about a million copies with small differences among them [@compeau2015]. About 5% of the genome lies in segmental duplications, long stretches present in two or more nearly identical copies [@logsdon2020longread]. A 150-base read lying inside an Alu copy cannot say which of a million copies produced it.
+Context matters because human DNA is highly repetitive. About half of the human genome derives from transposons, DNA elements that can move or copy themselves to new genome locations, and the roughly 300-base Alu element alone has about a million copies with small differences among them [@compeau2015]. About 5% of the genome lies in segmental duplications, long stretches present in two or more nearly identical copies [@logsdon2020longread]. A 150-base read lying inside an Alu copy may match many of the million copies equally well, and then it cannot say which one produced it.
 
 Recall `ACGTCGACG` and `ACGACGTCG` from Lesson 7. They have the same 3-mer multiset, so error-free 3-base reads cannot distinguish them: in @fig-frontiers-read-layout, the same seven reads fit under both. One 4-base read changes this. `TCGA` occurs in the first candidate only, and `ACGA` in the second only.
 
@@ -113,7 +113,7 @@ $$
 \Pr(\text{no read bridges the copy}) = \Bigl(1-\frac{L-\ell-1}{n}\Bigr)^{m} \leq \exp\Bigl(-\frac{m(L-\ell-1)}{n}\Bigr) = \exp\Bigl(-C\,\frac{L-\ell-1}{L}\Bigr).
 $$ {#eq-frontiers-unbridged}
 
-The inequality is $1-u\leq e^{-u}$, nearly an equality for a genome of billions of bases, and the last step substitutes $m/n=C/L$. The exponent is the expected number of bridging reads: subtract the repeat and its two flanking bases from the read length, divide by the read length, and multiply by the coverage.
+The inequality is $1-u\leq e^{-u}$, nearly an equality for a genome of billions of bases, and the last step substitutes $m/n=C/L$. The exponent is the expected number of bridging reads: count the $L-\ell-1$ start positions from which a read covers the repeat and both flanking bases, divide by the read length, and multiply by the coverage.
 
 If $L\leq\ell+1$, no start bridges and the probability of a bridge is zero at every coverage. If $L$ is much longer than $\ell$, the fraction is near 1 and the chance of missing the copy is about $e^{-C}$, the same as the chance that a single base goes unsequenced.
 
@@ -145,7 +145,7 @@ The calculation assumes error-free reads of one length. Errors cause a separate 
 
 Long reads now give nearly complete assemblies of individual human genomes, so a reference no longer has to be one sequence. To see why that matters, take two toy genomes that differ at one site, `ACGTT` and `ACATT`, and use the first as a linear reference. With Lesson 4's fitting alignment (every read letter used, reference ends free) and match $+1$, mismatch $-1$, gap $-2$, the read `CGTT` scores 4 and the read `CATT` scores $3-1=2$. Suppose a mapper keeps only placements scoring at least 3, to reject chance matches. It keeps reads carrying `G` and discards reads carrying `A`, so even if half of a sample's copies carry `A`, the retained reads show only `G`. This systematic loss of reads that differ from the chosen reference is *reference bias*.
 
-The Human Pangenome Reference Consortium assembled 94 haplotypes of 47 individuals from long reads and combined them into a graph. Compared with workflows based on the linear reference GRCh38, mapping short reads to the graph reduced small-variant discovery errors by 34% and increased the structural variants detected per haplotype by 104% [@liao2023pangenome]. @fig-frontiers-rhd-graph shows one region, where the neighboring genes *RHD* and *RHCE* have highly similar sequences. *RHD* encodes the D protein of the Rh blood group, and in people of European ancestry the D-negative blood type is mostly due to deletion of *RHD* [@gu2014rhd]. The similar pair is a repeat, so short reads from it are hard to place.
+The Human Pangenome Reference Consortium used long reads to assemble the two inherited chromosome sets of each of 47 individuals separately. These 94 genome sequences, called haplotypes here, were combined into a graph. Compared with workflows based on the linear reference GRCh38, mapping short reads to the graph reduced small-variant discovery errors by 34% and increased the structural variants detected per haplotype by 104% [@liao2023pangenome]. @fig-frontiers-rhd-graph shows one region, where the neighboring genes *RHD* and *RHCE* have highly similar sequences. *RHD* encodes the D protein of the Rh blood group, and in people of European ancestry the D-negative blood type is mostly due to deletion of *RHD* [@gu2014rhd]. The similar pair is a repeat, so short reads from it are hard to place.
 
 ::: {#fig-frontiers-rhd-graph .course-figure}
 
@@ -155,7 +155,7 @@ A pangenome graph of the *RHD*–*RHCE* region built from 90 haplotype assemblie
 
 :::
 
-In panel c, 15 of the 90 haplotypes carry *RHCE* alone, and several carry hybrid genes. A linear reference containing *RHD* has no correct place for reads from a haplotype lacking it, and no sequence for a hybrid junction.
+In panel c, 15 of the 90 haplotypes carry *RHCE* alone, and several carry hybrid genes. A linear reference containing *RHD* has no sequence for the junction left where a haplotype lacks the gene, or for a hybrid junction, so reads crossing those junctions cannot be placed correctly, although reads from unchanged sequence still map.
 
 ::: {#def-variation-graph}
 ## Variation graph
@@ -273,11 +273,11 @@ plt.show()
 
 Under the error-free assumption, the exact match to `ACATT` says the read came from a copy carrying `A`. Whether the sample carries `A`, `G`, or both still depends on many reads and their base qualities, as with the error bubbles of Lesson 7; the graph keeps reads carrying `A` from being discarded before that question is asked.
 
-Two limits matter for real graphs. The recurrence needs a topological order, but graphs with inversions or copy-number differences contain cycles; the paths in panel b of @fig-frontiers-rhd-graph loop back through one region. And a graph allows every combination of its bubbles, including ones no input genome carried, so a high score on such a path is not evidence that the combination was ever observed (@exr-frontiers-recombinant).
+Two limits matter for real graphs. The recurrence needs a topological order, but variation graphs used in practice can contain cycles or reverse-oriented nodes, for example around inversions and copy-number changes; the paths in panel b of @fig-frontiers-rhd-graph loop back through one region. And a graph allows every combination of its bubbles, including ones no input genome carried, so a high score on such a path is not evidence that the combination was ever observed (@exr-frontiers-recombinant).
 
 ## Checking a reported alignment
 
-Graph aligners and AI assistants report results we did not compute. Suppose a tool reports that `CATT` aligns to the path $v_1	o v_2	o v_4	o v_5	o v_6$ with columns `CATT` over `CATT` and score 4. Each consecutive pair of nodes must be an edge in @tbl-frontiers-letter-graph, each alignment row without gaps must be the read or a contiguous piece of the path's string `ACATT`, and the column scores must sum to 4. Only filling the table certifies that no better alignment exists. Even then, an optimum is a statement about the scoring rule; a claim about the sample needs independent reads and an error model. Goh and colleagues draw the same line for AI in bioinformatics: software can speed up an analysis but cannot judge whether its result is biologically valid [@goh2026expertise].
+Graph aligners and AI assistants report results we did not compute. Suppose a tool reports that `CATT` aligns to the path $v_1\to v_2\to v_4\to v_5\to v_6$ with columns `CATT` over `CATT` and score 4. Each consecutive pair of nodes must be an edge in @tbl-frontiers-letter-graph, each alignment row without gaps must be the read or a contiguous piece of the path's string `ACATT`, and the column scores must sum to 4. Here a score of 4 already equals the most a four-letter read can earn, so no better alignment exists; in general, the filled table is what certifies that none does. Even then, an optimum is a statement about the scoring rule; a claim about the sample needs independent reads and an error model. Goh and colleagues draw the same line for AI in bioinformatics: software can speed up an analysis but cannot judge whether its result is biologically valid [@goh2026expertise].
 
 ## Exercises
 

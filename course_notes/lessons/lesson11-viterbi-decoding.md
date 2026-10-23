@@ -353,7 +353,7 @@ for candidate, probability in ranked_paths[:3]:
     print(candidate, round(probability, 10))
 ```
 
-The dynamic program agrees with direct enumeration on this instance. Two additional checks catch boundary errors: a length-one sequence must return $\arg\max_k p_ke_k(x_1)$, and deterministic emissions must force the only compatible path.
+The dynamic program agrees with direct enumeration on this instance. Two additional checks catch boundary errors: a length-one sequence must return $\arg\max_k p_ke_k(x_1)$, and if each state deterministically emits its own symbol, the emissions must force the only compatible path.
 
 ## Decoding a simulated sequence
 

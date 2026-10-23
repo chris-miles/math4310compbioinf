@@ -268,7 +268,7 @@ $$
 
 ## SVD computes scores and loadings together
 
-The singular value decomposition (SVD) writes an $n\times p$ matrix as
+The covariance matrix has one entry for every gene pair, which is costly to store when there are many more genes than samples. We can compute scores and loadings directly from the centered expression matrix instead. The singular value decomposition (SVD) writes an $n\times p$ matrix as
 $$
 Z=UDV^\top=\sum_{j=1}^{q}d_j u_jv_j^\top,
 \qquad q=\min(n,p).

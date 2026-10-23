@@ -88,11 +88,11 @@ $$
 E[V(t)]=\sum_{j\in\mathcal N}P(p_j\le t)\le m_0\,t .
 $$ {#eq-fdr-expected-false}
 
-Each null gene has at most a $t$ chance of slipping under the threshold, and there are $m_0$ of them. If all $m=20{,}000$ genes are null and $t=0.05$, we expect $20{,}000\times0.05=1{,}000$ flagged genes, every one a false lead, from an experiment in which the drug did nothing. Each test behaved exactly as designed; the false leads come from asking the same question 20,000 times.
+Each null gene has at most a $t$ chance of slipping under the threshold, and there are $m_0$ of them. If all $m=20{,}000$ genes are null and $t=0.05$, we expect up to $20{,}000\times0.05=1{,}000$ flagged genes, about that many when the p-values are close to uniform, every one a false lead, from an experiment in which the drug did nothing. Each test behaved exactly as designed; the false leads come from asking the same question 20,000 times.
 
 ### A simulated screen with known answers
 
-In a simulated screen we know which genes are null, so we can count false selections. Six control and six treated cultures are measured for $m=5000$ genes. For 500 of them the drug shifts mean $\log_2$ expression by between $0.3$ and $2$ in either direction; the other 4500 are null. Each gene gets the exact two-sided permutation p-value of Lesson 17, computed over all $\binom{12}{6}=924$ relabelings.
+In a simulated screen we know which genes are null, so we can count false selections. Six control and six treated cultures are measured for $m=5000$ genes; each gene's values are centered at its control level, so they can be negative. For 500 of them the drug shifts mean $\log_2$ expression by between $0.3$ and $2$ in either direction; the other 4500 are null. Each gene gets the exact two-sided permutation p-value of Lesson 17, computed over all $\binom{12}{6}=924$ relabelings.
 
 ```{.python .execute}
 #| label: code-fdr-flag-005
@@ -103,7 +103,7 @@ print("p <= 0.05 / m (Bonferroni):", (p_values <= 0.05 / len(p_values)).sum(), "
 
 Flagging every gene with $p_j\le0.05$ selects 634 genes, and 225 of them are null, close to the $4500\times0.05=225$ predicted by @eq-fdr-expected-false. About 35% of this list would be wasted follow-up.
 
-@fig-fdr-screen shows two standard pictures of such a screen. The *volcano plot* places each gene by its effect size and by $-\log_{10}p_j$, so genes with strong evidence rise toward the top. The *p-value histogram* is the more useful diagnostic for multiple testing [@holmeshuber2019]. Because null p-values are uniform, the null genes spread evenly across the bars and form a flat floor about $m_0$ times the bar width high, while genes that truly changed pile up near zero. The first bar mixes real responses with its share of the floor, and the floor's height says roughly how many small p-values to distrust.
+@fig-fdr-screen shows two standard pictures of such a screen. The *volcano plot* places each gene by its effect size and by $-\log_{10}p_j$, so genes with strong evidence rise toward the top. The *p-value histogram* is the more useful diagnostic for multiple testing [@holmeshuber2019]. Because null p-values are close to uniform, the null genes spread nearly evenly across the bars and form a flat floor about $m_0$ times the bar width high, while genes that truly changed pile up near zero. The first bar mixes real responses with its share of the floor, and the floor's height says roughly how many small p-values to distrust.
 
 ```{.python .execute}
 #| label: fig-fdr-screen
@@ -344,7 +344,7 @@ BH selects the longest list whose estimated false fraction $m\,p_{(k)}/k$ is at 
 
 The FDR describes a list, not a gene. Selecting four genes at $q=0.05$ in @exm-bh-ten-genes does not mean that $0.2$ of them are false, nor that each has a 5% chance of being false: the evidence against the null is far stronger for g07 than for g09, which entered only because g04 followed it. An unselected gene is not shown to be unchanged either. Gene g05 missed the list, yet its estimate $\widehat\Delta=2.10$ is the largest in the table, and more cultures might have put it on the list.
 
-A small p-value also does not mean a large change. Gene g07 has the strongest evidence but an estimated change of $0.15$ $\log_2$ units, about 11%; its cultures vary so little that a small shift is easy to detect. Such genes sit high and near the center of the volcano plot in @fig-fdr-screen. Follow-up lists are therefore usually filtered on both axes, requiring evidence that the change is real and a change large enough to matter for the biological question.
+A small p-value also does not mean a large change. Gene g07 has the strongest evidence but an estimated change of $0.15$ $\log_2$ units, about 11%; its cultures vary so little that a small shift is easy to detect. Such genes sit high and near the center of the volcano plot in @fig-fdr-screen. Follow-up lists are therefore usually filtered on both axes, requiring evidence that the change is real and a change large enough to matter for the biological question. The FDR guarantee covers the BH list itself; a shortlist filtered afterward by effect size is a further choice that the theorem does not cover.
 
 Real screens need care with the theorem's assumptions. BH takes each p-value at face value, so the confounded batches and pseudoreplication of Lesson 17, which make null p-values too small across the board, void the guarantee; no list-level procedure repairs a miscalibrated test. Independence is the second assumption. Co-regulated genes rise and fall together, so their p-values are dependent. BH still controls the FDR under a form of positive dependence that covers many such cases, and a more conservative variant works under any dependence [@benjamini2001], but strong dependence makes the realized FDP vary more from run to run.
 

@@ -63,7 +63,7 @@ c. For $k=13$, build the ideal edge list with one prefix-to-suffix edge per geno
 
 d. Explain the $k=13$ result using the repeat positions from part (b). Which two stretches of the genome can trade places, and why does the order in which the repeat copies occur along the genome allow the trade? How many different strings have the reference's $13$-mer composition? Justify your count. (Compare `TACGACG` in Lesson 7, where a repeated node does not create a second string.) If your translation returned the reference at $k=13$, use this explanation to construct the other string and certify it as in part (c).
 
-e. In two or three sentences: would this ambiguity remain if we had error-free 150-base reads covering phiX174? Describe a genome for which the analogous ambiguity would remain even with such reads.
+e. In two or three sentences: would this ambiguity remain if we had error-free 150-base reads, including at least one read that spans each copy of each repeat together with a base on either side? Describe a genome for which the analogous ambiguity would remain even with such reads.
 
 **Evidence to submit:** the prediction with its arithmetic, the table for $k=10,\ldots,14$, the repeat positions, the outputs and composition checks at $k=13$ and $14$, and the explanation of which stretches trade places.
 

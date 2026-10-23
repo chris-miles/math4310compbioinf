@@ -23,7 +23,7 @@ cf.use_style()
 
 ## Alignment as a grid path
 
-Suppose we sequence two bacterial isolates, assemble their reads into longer DNA strings, and extract the same gene from each assembly. We want to identify which bases correspond and where the gene sequences differ. Because both records cover the complete gene, we expect a comparison from beginning to end. An insertion or deletion can shift the internal positions, so equal-numbered bases need not be the corresponding ones.
+Suppose we sequence two bacterial isolates, assemble their reads into longer DNA strings, and extract the same gene from each assembly. We want to identify which bases correspond and where the gene sequences differ. Locating those differences gives us specific DNA changes to test for effects on the gene's activity. Because both records cover the complete gene, we expect a comparison from beginning to end. An insertion or deletion can shift the internal positions, so equal-numbered bases need not be the corresponding ones.
 
 For a toy version, take $x=\texttt{ACGT}$ and $y=\texttt{AGT}$: pairing C with a gap lets the later G and T bases match. Longer strings admit many competing gap placements, and their number grows exponentially with length. Given scores for paired letters and gaps, we seek the highest-scoring correspondence that uses every letter of both records, called a *global alignment*. Because many correspondences share their beginnings, trying each one separately would repeat much of the same work; a dynamic program instead stores the best score for each pair of prefixes and then recovers an alignment attaining the full score.
 

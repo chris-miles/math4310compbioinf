@@ -26,9 +26,9 @@ cf.use_style()
 
 ## Why compare sequences
 
-Suppose we want to find the DNA differences between a bacterial sample and a previously studied strain of the same species. *DNA sequencing* estimates the order of bases in DNA, but not in one piece. The sample's DNA is broken into many fragments, an instrument measures a signal along each fragment (light as a copied strand grows, or electrical current as DNA passes through a pore), and *basecalling* software converts that signal into a string of A, C, G, and T called a *read* [@illumina-sbs; @nanopore-technology]. A short-read instrument reports millions of reads, each a few hundred letters or fewer, and no read says where in the genome it came from. What we do have is a *reference sequence*: the previously assembled genome of the studied strain.
+Two strains of the same bacterial species can differ at only a handful of DNA positions, and those few differences can matter: they can explain why an infection no longer responds to an antibiotic, or show which patient's strain infected which during an outbreak. The differences arise when DNA is copied or repaired imperfectly, and they come in three kinds. A *substitution* replaces one base with another, an *insertion* adds bases, and a *deletion* removes them. Suppose, then, that we want to find the DNA differences between a bacterial sample and a previously studied strain. *DNA sequencing* estimates the order of bases in DNA, but not in one piece. The sample's DNA is broken into many fragments, an instrument measures a signal along each fragment (light as a copied strand grows, or electrical current as DNA passes through a pore), and *basecalling* software converts that signal into a string of A, C, G, and T called a *read* [@illumina-sbs; @nanopore-technology]. A short-read instrument reports millions of reads, each a few hundred letters or fewer, and no read says where in the genome it came from. What we do have is a *reference sequence*: the previously assembled genome of the studied strain.
 
-The plan is to place each read at the stretch of reference it resembles most and then read down each column. @fig-first-problem-pileup shows the result for a few made-up reads. Where every read covering a position disagrees with the reference in the same way, the sample probably carries a real difference. A disagreement that appears in one read and is contradicted by its neighbors is more likely a measurement error. Both conclusions rest on a step the figure takes for granted: deciding where each read belongs and which of its letters correspond to which reference letters.
+The plan is to place each read at the stretch of reference it resembles most and then read down each column. @fig-first-problem-pileup shows the result for a few made-up reads. Where every read covering a position disagrees with the reference in the same way, the sample probably carries a real difference. A disagreement that appears in one read and is contradicted by its neighbors is more likely a measurement error. Both conclusions rest on a step the figure takes for granted: deciding where each read belongs and which of its letters correspond to which reference letters. That correspondence is an *alignment*. Computing a good one is the mathematical problem behind this picture, and the next four lessons develop it.
 
 ```{.python .execute}
 #| label: fig-first-problem-pileup
@@ -46,7 +46,7 @@ cf.read_pileup(ax, reference, reads, starts, highlight_column=10)
 plt.show()
 ```
 
-Exact matching is too strict for placing reads, because the reads we most want to place are the ones that differ from the reference. Suppose a read is `ACGTT` and one candidate reference segment is `ACTT`. No position-by-position comparison makes them agree, yet pairing G with a gap lets the final TT bases line up (@fig-first-problem-read-reference). We need a rule for deciding which letters correspond and how much their differences count. This lesson compares rules that allow different kinds of changes.
+Exact matching is too strict for placing reads, because the reads we most want to place are the ones that differ from the reference, by substitutions, insertions, or deletions. Suppose a read is `ACGTT` and one candidate reference segment is `ACTT`. No position-by-position comparison makes them agree, yet pairing G with a gap lets the final TT bases line up (@fig-first-problem-read-reference). We need a rule for deciding which letters correspond and how much their differences count. This lesson compares rules that allow different kinds of changes.
 
 ```{.python .execute}
 #| label: fig-first-problem-read-reference
@@ -184,7 +184,7 @@ plt.show()
 
 ## Edit distance
 
-To compare strings whose corresponding bases may have shifted, we allow insertions and deletions as well as substitutions. We then minimize over possible transformations, because the observed strings do not tell us which changes produced their differences.
+To compare strings whose corresponding bases may have shifted, we allow insertions and deletions as well as substitutions, the same three kinds of change that occur in genomes. We then minimize over possible transformations, because the observed strings do not tell us which changes produced their differences.
 
 ::: {#def-edit-distance}
 ## Edit distance

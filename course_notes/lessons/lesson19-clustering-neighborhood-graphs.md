@@ -95,12 +95,12 @@ $$
 \qquad r(x,y)=\tilde x\cdot\tilde y,
 \qquad d_r(x,y)=1-r(x,y),
 $$
-where $\bar x$ is the mean of the entries of $x$, $\mathbf 1$ is the all-ones vector, and $r$ is the Pearson correlation. Centering gives $(-1,0,1)$ for $u$ and $(-2,0,2)$ for $v$, which normalize to the same unit vector, so $d_r(u,v)=0$. Centering $w$ gives $(1,0,-1)$, the opposite direction, so $d_r(u,w)=2$, the largest possible value. Because the normalized profiles have unit length, $\|\tilde x-\tilde y\|^2=2-2\,\tilde x\cdot\tilde y=2(1-r)$: correlation distance is Euclidean distance on centered, normalized profiles.
+where $\bar x$ is the mean of the entries of $x$, $\mathbf 1$ is the all-ones vector, and $r$ is the Pearson correlation. Centering gives $(-1,0,1)$ for $u$ and $(-2,0,2)$ for $v$, which normalize to the same unit vector, so $d_r(u,v)=0$. Centering $w$ gives $(1,0,-1)$, the opposite direction, so $d_r(u,w)=2$, the largest possible value. Because the normalized profiles have unit length, $\|\tilde x-\tilde y\|^2=2-2\,\tilde x\cdot\tilde y=2(1-r)$: correlation distance is half the squared Euclidean distance between centered, normalized profiles, so it ranks pairs exactly as that Euclidean distance does.
 
 Which answer is right depends on why $v$ is larger. Deeper sampling is technical, and correlation, like depth normalization, rightly removes it. A larger cell making more of every RNA is biology, and correlation discards it. Correlation is popular for comparing genes, which can rise and fall together from different baseline levels; for cells, Euclidean distance on normalized, log-transformed data is a frequent choice.
 
 ::: {.callout-note title="Key idea"}
-Each distance in this lesson is a Euclidean distance after some transformation of the rows: rescaling features, normalizing depth, or centering and normalizing profiles. Choosing a distance is choosing which measured differences count as biological.
+Each distance in this lesson is a Euclidean distance, or a function of one, after some transformation of the rows: rescaling features, normalizing depth, or centering and normalizing profiles. Choosing a distance is choosing which measured differences count as biological.
 :::
 
 ## K-means: groups around centers
@@ -129,7 +129,7 @@ To see this, write $x_i-m=(x_i-\bar x_C)+(\bar x_C-m)$ and expand the square. Th
 ::: {.algorithm}
 **Algorithm: Lloyd's algorithm for K-means.**
 
-Choose $K$ starting centers, for example $K$ distinct cells. Repeat: (1) assign each cell to its nearest center, keeping its current center if that one ties for nearest; (2) move each center to the mean of its cells. Stop when an assignment changes no label. If a cluster empties, restart from other centers.
+Choose $K$ starting centers, for example $K$ distinct cells. Repeat: (1) assign each cell to its nearest center, keeping its current center if that one ties for nearest; (2) move each center to the mean of its cells. Stop when an assignment changes no label. If a cluster empties, its center stays where it was.
 :::
 
 ::: {#thm-lloyd-descent}
@@ -171,12 +171,14 @@ def assign(X: np.ndarray, centers: np.ndarray,
     return new_labels
 
 
-def update(X: np.ndarray, labels: np.ndarray, K: int) -> np.ndarray:
-    """Move each center to the mean of its cells."""
-    centers = np.zeros((K, X.shape[1]))
-    for g in range(K):
-        centers[g] = X[labels == g].mean(axis=0)
-    return centers
+def update(X: np.ndarray, labels: np.ndarray, centers: np.ndarray) -> np.ndarray:
+    """Move each center to the mean of its cells; an empty cluster keeps its center."""
+    new_centers = centers.astype(float).copy()
+    for g in range(len(centers)):
+        members = X[labels == g]
+        if len(members) > 0:
+            new_centers[g] = members.mean(axis=0)
+    return new_centers
 
 
 def kmeans(X: np.ndarray, centers: np.ndarray) -> tuple[np.ndarray, np.ndarray, list]:
@@ -184,7 +186,7 @@ def kmeans(X: np.ndarray, centers: np.ndarray) -> tuple[np.ndarray, np.ndarray, 
     labels = assign(X, centers)
     history = [np.sum((X - centers[labels]) ** 2)]
     while True:
-        centers = update(X, labels, len(centers))
+        centers = update(X, labels, centers)
         history.append(np.sum((X - centers[labels]) ** 2))
         new_labels = assign(X, centers, labels)
         if np.array_equal(new_labels, labels):
@@ -210,9 +212,9 @@ The values $54, 17, 12.5, 8$ match the hand calculation. In the second panel of 
 #| fig-cap: "Lloyd's algorithm on the six rescaled cells from centers at B and C. Crosses are centers, red arrows show the update step moving them, and color and shape give each cell's cluster. W falls at every step, and C changes cluster once the orange center has moved toward D, E, and F."
 #| fig-alt: "Four panels of six labeled points. First: A, B blue and C to F orange, centers at B and C. Second: red arrows move the centers to the means. Third: C turns blue. Fourth: centers move to (1,1) and (6,2)."
 step_labels = [assign(X, X[[1, 2]])]
-step_centers = [X[[1, 2]], update(X, step_labels[0], 2)]
+step_centers = [X[[1, 2]], update(X, step_labels[0], X[[1, 2]])]
 step_labels.append(assign(X, step_centers[1], step_labels[0]))
-step_centers.append(update(X, step_labels[1], 2))
+step_centers.append(update(X, step_labels[1], step_centers[-1]))
 # (labels, centers, previous centers) for each panel, in the order of the steps
 states = [(0, 0, None), (0, 1, 0), (1, 1, None), (1, 2, 1)]
 fig, axes = plt.subplots(2, 2, sharex=True, sharey=True)
@@ -241,7 +243,7 @@ K-means needs $K$ in advance. UPGMA in Lesson 13 instead merged the two closest 
 
 ## Neighborhood graphs
 
-K-means and average linkage summarize each group by averages over all its cells. For single cells, the most trustworthy information is often local: which few cells are most similar to this one. A neighborhood graph keeps only that.
+K-means and average linkage summarize each group by averages over all its cells. Cells changing gradually between states may form a curved chain rather than a compact cloud, so one group center can describe them poorly. Keeping each cell's nearest neighbors lets a group follow that chain. A neighborhood graph keeps only that.
 
 ::: {#def-knn-graph}
 ## k-nearest-neighbor graph
@@ -319,7 +321,7 @@ In the raw graph, $m=8$. Grouping by marker 2 as $\{A,B,F\}$ and $\{C,D,E\}$ giv
 $$
 Q=2\left[\frac38-\left(\frac{8}{16}\right)^2\right]=\frac14 .
 $$
-Grouping by marker 1 as $\{A,B,C\}$ and $\{D,E,F\}$ keeps only $AB, AC$ and $DE, DF$ inside, so $Q=2(2/8-1/4)=0$, no better than random wiring. In the rescaled graph the marker 1 grouping has $Q=2(3/6-1/4)=1/2$. Each of these is the best two-group partition of its graph, so the distance chosen before the graph was built decided which grouping won. For thousands of cells, single-cell software searches for high-modularity partitions with greedy algorithms such as Louvain and Leiden, which move cells between communities while $Q$ increases.
+Grouping by marker 1 as $\{A,B,C\}$ and $\{D,E,F\}$ keeps only $AB, AC$ and $DE, DF$ inside, so $Q=2(2/8-1/4)=0$, no better than random wiring. In the rescaled graph the marker 1 grouping has $Q=2(3/6-1/4)=1/2$. The marker 2 grouping is the best two-group partition of the raw graph and the marker 1 grouping is the best of the rescaled graph, so the distance chosen before the graph was built decided which grouping won. For thousands of cells, single-cell software searches for high-modularity partitions with greedy algorithms such as Louvain and Leiden, which move cells between communities while $Q$ increases.
 
 ## Why cells are clustered on graphs
 

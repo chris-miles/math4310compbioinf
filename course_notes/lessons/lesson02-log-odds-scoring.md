@@ -26,7 +26,7 @@ cf.use_style()
 
 ## Matches can occur by chance
 
-Suppose we have DNA sequences from two organisms and want to know whether their agreement supports descent from a common ancestral sequence. Sequencing and assembly supply the base strings. For now, take two equal-length segments whose positions have already been paired, with no gaps. A match count summarizes that pairing, and Lesson 1's unit edit costs treat every substitution alike, but neither says how much agreement unrelated sequences would produce or how much a particular pair of letters should count.
+Suppose we have DNA sequences from two organisms and want to know whether their agreement supports descent from a common ancestral sequence. For a gene of unknown function, such evidence can suggest a role to test by comparison with a related gene whose function is known. Sequencing supplies reads; assembly joins overlapping reads into longer base strings. For now, take two equal-length segments whose positions have already been paired, with no gaps. A match count summarizes that pairing, and Lesson 1's unit edit costs treat every substitution alike, but neither says how much agreement unrelated sequences would produce or how much a particular pair of letters should count.
 
 For example, suppose the paired segments are
 $$

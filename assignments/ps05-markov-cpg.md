@@ -18,9 +18,9 @@ $$
 $$
 Identify the step where the row sums are used.
 
-b. A classmate estimates the transition matrix by dividing each pair count $n_{ab}$ by the total number of adjacent pairs in the training sequence, $N=\sum_{c,d}n_{cd}$, rather than by the row total. Call the result $M$, so $M_{ab}=n_{ab}/N$. With the uniform initial distribution $q_b=1/4$, show that the total probability assigned to all strings of length 2 is exactly $1/4$, whatever the training data. Which step of your proof in part (a) fails?
+b. A classmate estimates the transition matrix by dividing each pair count $n_{ab}$ by the total number of adjacent pairs in the training sequence, $N=\sum_{c,d}n_{cd}$, rather than by the row total. Call the result $M$, so $M_{ab}=n_{ab}/N$. With the uniform initial distribution $q_b=1/4$, show that the total probability assigned to all strings of length 2 is exactly $1/4$, whatever the training data (assume the training sequence has at least two bases, so $N>0$). Which step of your proof in part (a) fails?
 
-c. Show that $M_{ab}=f_a\,\widehat a_{ab}$, where $f_a$ is the fraction of adjacent pairs that begin with $a$ and $\widehat a_{ab}$ is the row-normalized estimate from Lesson 8. In two sentences, explain what extra factor this places in each window likelihood, and how that factor could distort a comparison between an island model and a background model fitted this way.
+c. Show that $M_{ab}=f_a\,\widehat a_{ab}$, where $f_a$ is the fraction of adjacent pairs that begin with $a$ and $\widehat a_{ab}$ is the row-normalized estimate from Lesson 8 (assume every base occurs at least once before another base, so each row total is positive). In two sentences, explain what extra factor this places in each window likelihood, and how that factor could distort a comparison between an island model and a background model fitted this way.
 
 Adapted from @durbin1998.
 
