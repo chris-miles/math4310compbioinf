@@ -26,7 +26,13 @@ cf.use_style()
 
 ## Sequences as random variables
 
-Sequencing and assembly give DNA strings whose adjacent letters represent neighboring bases along one strand. We can use that order to look for regions with distinctive sequence patterns. In many vertebrate genomic regions, C followed by G occurs less often than base composition alone would suggest. Chemical modification of C and its subsequent conversion to T contribute to that depletion; some regions near gene starts retain more CG neighbors [@durbin1998, pp. 48–49].
+Sequencing and assembly turn a genome into a long string of letters. Here are the first 60 bases of the bacteriophage phiX174 genome as stored in the [course FASTA file](../data/phix174-NC_001422.1.fasta):
+
+```text
+GAGTTTTATCGCTTCCATGACGCAGAAGTTAACACTTTCGGATATTTCTGATGAGTCGAA
+```
+
+Adjacent letters are neighboring bases along one strand, so the file records the order of the bases as well as their counts, and that order can matter biologically. In many vertebrate genomic regions, C followed by G occurs less often than base composition alone would suggest. Chemical modification of C and its subsequent conversion to T contribute to that depletion, while some regions near gene starts retain more CG neighbors [@durbin1998, pp. 48–49].
 
 Does a region contain many CG neighbors simply because it contains many C and G bases, or does their order supply additional evidence? Consider the toy strings `ACGCG` and `AGCCG`. Each contains one A, two C bases, and two G bases, but the first has two CG pairs and the second has one. A model that uses only individual base frequencies assigns them the same probability. A model that uses the preceding base can distinguish them.
 
@@ -44,16 +50,9 @@ cf.sequence_windows(axes[1], "AGCCG", word="CG", label="y")
 plt.show()
 ```
 
-Our input is contiguous assembled DNA. Joining separate reads would invent neighbors that the experiment did not observe. We want to assign a probability to an observed string under explicit assumptions, then ask which model reproduces its patterns. Independent-base models supply a starting point; first-order Markov chains retain dependence on the preceding base. Simulation will help us see the difference before the next lesson uses two fitted chains to classify genomic regions.
+Our input is contiguous assembled DNA, because joining separate reads would invent neighbors that the experiment never observed. We will compare two kinds of model for such a string, independent bases and a first-order Markov chain, and simulate from both to see which can produce a CG deficit.
 
-A genome file contains one observed string. A probability model describes a collection of strings that could have been observed and assigns a probability to each one. The model lets us ask whether an observed pattern is ordinary or surprising under specific assumptions.
-
-::: {#def-random-sequence}
-## Random sequence and realization
-A *random sequence* $X=X_1X_2\ldots X_n$ records the letters produced by a random model. Each $X_i$ is a random variable: its value is a letter in $\Sigma$, determined when we draw the sequence. A *realization* $x=x_1x_2\ldots x_n$ is one resulting string.
-:::
-
-For DNA, $\Sigma=\{A,C,G,T\}$. Uppercase $X$ denotes the random object and lowercase $x$ the string in the file.
+A genome file contains one observed string, whereas a probability model describes a whole collection of strings that could have been observed and assigns each a probability. That lets us ask whether an observed pattern is ordinary or surprising under specific assumptions. We write a *random sequence* as $X=X_1X_2\ldots X_n$: each $X_i$ is a *random variable* whose value is a letter of $\Sigma=\{A,C,G,T\}$, determined when the model draws a sequence. Lowercase $x=x_1x_2\ldots x_n$ denotes one resulting string, such as the string in the file.
 
 ::: {#def-probability-model}
 ## Probability model
@@ -79,7 +78,12 @@ P(x_1,\ldots,x_n)=P(x_1)\prod_{i=2}^n P(x_i\mid x_1,\ldots,x_{i-1}).
 $$
 :::
 
-For example, $P(X_2=G\mid X_1=C)$ is the fraction of model-generated strings beginning with C whose second base is G. The denominator restricts the comparison to strings satisfying the condition.
+Conditional probabilities have a counting interpretation. Generate a very long sequence from a model that uses the same rule at every position, and look only at the positions whose preceding base is C. Among those positions, the fraction holding G approaches $P(X_i=G\mid X_{i-1}=C)$:
+$$
+P(X_i=G\mid X_{i-1}=C)\approx
+\frac{\#\{i:\ x_{i-1}=C \text{ and } x_i=G\}}{\#\{i:\ x_{i-1}=C\}}.
+$$
+The numerator counts CG pairs and the denominator counts all pairs that begin with C. Dividing by the denominator restricts attention to positions satisfying the condition, just as dividing by $P(B)$ does in the definition.
 
 The chain rule describes a way to assemble the probability of one whole string: first ask for its first letter, then its second letter given the first, then its third given the first two, and continue. This identity holds before making any independence or memory assumption. The difficulty is that the full past can have $4^{i-1}$ possible values at position $i$. A tractable model must specify which parts of that past matter.
 
@@ -95,7 +99,15 @@ P(x)=\prod_{i=1}^{n}q_{x_i}.
 $$
 :::
 
-Independence means that learning any earlier letters with positive probability does not change the probabilities at the next position: $P(X_i=b\mid X_1=x_1,\ldots,X_{i-1}=x_{i-1})=q_b$. Substituting these unchanged probabilities into the chain rule gives the product. "Identically distributed" says that the same four $q_b$ values apply at every position.
+Independence means that learning the earlier letters does not change the probabilities at the next position:
+$$
+P(X_i=b\mid X_1=x_1,\ldots,X_{i-1}=x_{i-1})=q_b
+$$
+for every history with positive probability. In counting terms, the fraction of G among positions that follow a C equals the fraction of G among all positions. Substituting these unchanged probabilities into the chain rule gives the product, and "identically distributed" says that the same four $q_b$ values apply at every position. For two neighbors, independence predicts
+$$
+P(X_{i-1}=a,\ X_i=b)=q_aq_b,
+$$
+a prediction about pair frequencies that we can test against sequence later in this lesson.
 
 ::: {#exm-iid-sequence}
 ## Likelihood under an iid model
@@ -115,7 +127,7 @@ Probability and likelihood use the same number with different quantities held fi
 
 ## First-order Markov chains
 
-The iid model cannot distinguish strings with the same base counts. In particular, it cannot represent a preference for G specifically after C. A first-order chain remembers the current base when generating the next one. This represents neighboring-base dependence without claiming that a genome is literally generated one base at a time.
+The iid model cannot distinguish strings with the same base counts. In particular, it cannot represent a preference for G specifically after C. A first-order chain remembers the current base when generating the next one.
 
 ::: {#def-first-order-markov-chain}
 ## First-order Markov chain
@@ -130,7 +142,17 @@ P(x)=q_{x_1}\prod_{i=2}^{n}a_{x_{i-1}x_i}.
 $$
 :::
 
-The simplification is in the conditioning: all prefixes ending in C use the same C row, regardless of the letters before C. We replace a probability table for every possible history with four rows. Equal rows recover iid when the initial distribution also equals that common row.
+The simplification is in the conditioning. For a three-letter string, the chain rule and the Markov assumption give
+$$
+P(\texttt{ACG})
+=P(X_1=A)\,P(X_2=C\mid X_1=A)\,P(X_3=G\mid X_1=A,X_2=C)
+=q_A\,a_{AC}\,a_{CG}.
+$$
+The last factor forgets the A because only the current base C matters. Every prefix ending in C uses the same C row, so four rows replace a probability table for every possible history. Equal rows recover iid when the initial distribution also equals that common row.
+
+::: {.callout-note title="Key idea"}
+The chain rule writes the probability of any string as a product of next-base probabilities. A first-order Markov chain keeps only the previous base in each condition, so a $4\times4$ transition table and the first-base probabilities determine the probability of every DNA string.
+:::
 
 ::: {#exm-markov-sequence}
 ## One sequence under two models
@@ -147,7 +169,7 @@ For $x=\texttt{ACGCG}$,
 $$
 P_{\mathrm{MC}}(x)=0.3(0.2)(0.4)(0.3)(0.4)=0.00288.
 $$
-The chain assigns six times the iid probability because both CG transitions and the GC transition are favored. These values illustrate the calculation; they are not estimates from a genome.
+The chain assigns six times the iid probability because both CG transitions and the GC transition are favored.
 :::
 
 ## Log-likelihoods
@@ -205,9 +227,7 @@ markov_log_likelihood("ACGCG", initial, transition)
 
 ## Estimating a chain
 
-A training sequence is a sequence used to choose the parameters. A held-out sequence is set aside until those choices are finished, so it can test prediction on data the model did not fit. Our first estimate is simply the fraction of departures from each base that go to each possible next base.
-
-For a training sequence from the population being modeled, count adjacent pairs. Let $n_{ab}$ be the number of times base $a$ is followed by $b$.
+A *training sequence* is used to choose the parameters; a *held-out sequence* is set aside until those choices are finished, so it can test prediction on data the model did not fit. For a training sequence from the population being modeled, let $n_{ab}$ be the number of times base $a$ is followed by $b$. The natural estimate of $a_{ab}$ is the counting ratio from the start of the lesson: the fraction of departures from $a$ that go to $b$.
 
 ::: {#prp-markov-mle}
 ## Maximum-likelihood transition estimates
@@ -232,14 +252,14 @@ For `ACGCGT`, the transitions are `AC`, `CG`, `GC`, `CG`, `GT`. Both transitions
 
 ### Transition counts and sequence boundaries
 
-For a fixed initial distribution, collect equal transition factors in the sequence likelihood:
+For a fixed initial distribution and positive transition probabilities, collect equal transition factors in the sequence likelihood:
 $$
 P(x)=q_{x_1}\prod_{a,b\in\Sigma}a_{ab}^{n_{ab}},\qquad
 \log P(x)=\log q_{x_1}+\sum_{a,b}n_{ab}\log a_{ab}.
 $$
-Here the count form uses positive parameters. With zeros, an unobserved transition contributes no term, while an observed impossible transition makes the log-likelihood $-\infty$. Two strings with the same first base and transition counts receive the same likelihood. A first-order chain retains more order information than an iid model, but still discards distinctions beyond these counts.
+Two strings with the same first base and transition counts receive the same likelihood. A first-order chain retains more order information than an iid model, but still discards distinctions beyond these counts.
 
-When fitting separate sequence records, keep their boundaries: records `ACG` and `TAC` supply AC twice, CG once, and TA once. Concatenating them invents a GT pair between unrelated endpoints. Each record also needs its own initial-base factor. For nonempty records of lengths $L_1,\ldots,L_r$, the transition total is $\sum_j(L_j-1)$.
+When fitting separate sequence records, keep their boundaries: records `ACG` and `TAC` supply AC twice, CG once, and TA once. Concatenating them invents a GT pair between unrelated endpoints. Each record also needs its own initial-base factor.
 
 ## Simulation
 
@@ -272,56 +292,72 @@ def simulate_markov_chain(
     return "".join(sequence)
 
 rng = random.Random(0)
-simulated = simulate_markov_chain(10000, initial, transition, rng)
-simulated[:30]
+simulate_markov_chain(30, initial, transition, rng)
 ```
 
 Scoring and simulation take $\mathcal{O}(n)$ time because each new base requires one transition lookup or draw.
 
 ### Does a simulation reproduce neighboring-base structure?
 
-A GC-rich sequence can contain many CG pairs even if its positions are independent. To isolate order, let $f(C)$ and $f(G)$ be observed base fractions and let $f(CG)$ be the fraction of adjacent pairs equal to CG. Under iid, a pair is CG with probability $q_Cq_G$. Thus the ratio
+A GC-rich sequence can contain many CG pairs even if its positions are independent. To separate order from composition, let $f(a)$ be the fraction of positions holding base $a$ and $f(ab)$ the fraction of adjacent pairs equal to $ab$. Independence predicts that a pair is $ab$ with probability $q_aq_b$, so the ratio
 $$
-R(CG)=\frac{f(CG)}{f(C)f(G)}
+R(ab)=\frac{f(ab)}{f(a)f(b)}
 $$
-compares observed CG frequency with the frequency predicted from composition alone. A ratio near one is consistent with independence for this pair; above one indicates enrichment and below one depletion. The estimate is undefined if either base is absent.
+compares the observed frequency of the pair with the frequency predicted from composition alone. A ratio near one is consistent with independence for this pair; above one indicates enrichment and below one depletion.
 
-Our teaching chain favors C-to-G transitions rather than suppressing them. We compare its simulated ratio with that of an iid sequence having the same estimated base composition.
+To see the ratio detect depletion, start from the iid model of @exm-iid-sequence, with $q_A=q_T=0.3$ and $q_C=q_G=0.2$, and change only what happens after C. The new C row is $(0.3,0.3,0.1,0.3)$ in A, C, G, T order: G after C becomes half as likely, and the removed probability goes to C. Every other row still equals $q$. We simulate 10,000 bases from each model and compute all sixteen ratios.
 
 ```{.python .execute}
 #| label: fig-probability-neighbor-ratio
-#| fig-cap: "CG frequency relative to the frequency predicted from base composition in each simulation. The chain preserves an excess of CG neighbors that an iid model with matching composition misses."
-#| fig-alt: "Two bars labeled iid and chain show the observed-to-expected CG frequency, with a horizontal reference at one."
+#| fig-cap: "Observed-to-expected ratio R(ab) for all sixteen adjacent pairs in 10,000 simulated bases from the iid model and from the chain with a depleted C row. Only the chain dips at CG (red); dividing by composition removes the effect of how common C and G are, so the dip measures order."
+#| fig-alt: "Grouped bars for sixteen pairs AA through TT with a dotted reference line at one. Blue iid bars all lie near one. Orange chain bars lie near one except a red CG bar near 0.5 and a CC bar near 1.4."
+#| fig-width: 6
+#| fig-height: 3
+def pair_ratios(sequence: str) -> dict[str, float]:
+    """Return f(ab) / (f(a) f(b)) for every ordered pair of DNA bases."""
+    n = len(sequence)
+    pair_counts = {}
+    for previous, current in zip(sequence, sequence[1:]):
+        pair = previous + current
+        pair_counts[pair] = pair_counts.get(pair, 0) + 1
+    ratios = {}
+    for a in "ACGT":
+        for b in "ACGT":
+            observed = pair_counts.get(a + b, 0) / (n - 1)
+            expected = (sequence.count(a) / n) * (sequence.count(b) / n)
+            ratios[a + b] = observed / expected
+    return ratios
 
-base_fractions = {}
-for base in initial:
-    base_fractions[base] = simulated.count(base) / len(simulated)
-iid_rows = {base: base_fractions.copy() for base in initial}
-iid_sequence = simulate_markov_chain(10000, base_fractions, iid_rows, rng)
-ratios = []
-for sequence in [iid_sequence, simulated]:
-    cg_count = sum(a == "C" and b == "G"
-                   for a, b in zip(sequence, sequence[1:]))
-    observed = cg_count / (len(sequence) - 1)
-    expected = (sequence.count("C") / len(sequence)
-                * sequence.count("G") / len(sequence))
-    ratios.append(observed / expected)
+iid_row = {"A": 0.3, "C": 0.2, "G": 0.2, "T": 0.3}
+iid_rows = {base: iid_row.copy() for base in "ACGT"}
+depleted_rows = {base: iid_row.copy() for base in "ACGT"}
+depleted_rows["C"] = {"A": 0.3, "C": 0.3, "G": 0.1, "T": 0.3}
 
+rng = random.Random(1)
+iid_ratios = pair_ratios(simulate_markov_chain(10000, iid_row, iid_rows, rng))
+chain_ratios = pair_ratios(simulate_markov_chain(10000, iid_row, depleted_rows, rng))
+
+pairs = list(iid_ratios)
+chain_colors = [cf.EMPHASIS if pair == "CG" else "C1" for pair in pairs]
 fig, ax = plt.subplots()
-ax.bar(["iid", "chain"], ratios)
+ax.bar([i - 0.2 for i in range(16)], iid_ratios.values(), 0.4, label="iid model")
+ax.bar([i + 0.2 for i in range(16)], chain_ratios.values(), 0.4,
+       color=chain_colors, label="depleted C row")
 ax.axhline(1, color=cf.RULE, linestyle=":", linewidth=1)
-ax.set_ylabel("Observed / expected CG frequency")
+ax.set_xticks(range(16), pairs, fontfamily=cf.MONO)
+ax.set(xlabel="Adjacent pair ab", ylabel="Observed / expected, R(ab)")
+ax.legend()
 plt.show()
-print("CG ratios:", [round(ratio, 3) for ratio in ratios])
+print("R(CG): iid", round(iid_ratios["CG"], 2), "chain", round(chain_ratios["CG"], 2))
 ```
 
-The simulated chain supplies both composition and neighbor preferences. A depleted-CG background model would need a smaller C-to-G probability; the same diagnostic would then ask whether CG occurs less often than its composition predicts.
+In the iid sequence every ratio stays near one. In the chain, CG drops to about one half, the only pair far below one, and CC rises because it received the probability taken from G. The other ratios move by roughly ten percent, because the change makes G slightly rarer and C slightly more common overall. Since $R$ divides out composition, a GC-rich region with independent positions would still give $R(CG)$ near one; a dip means that G follows C less often than the frequencies of C and G predict. This CG-depleted chain will reappear as the background model when we classify genomic regions in the next lesson.
 
 ### Training fit and prediction
 
 Compare both models on the same held-out sequence. Raw probability decreases with sequence length even under a good model, so log-likelihood per base is useful when summarizing across lengths.
 
-A chain has four transition rows to estimate, while iid has one base distribution. Unrestricted maximum likelihood cannot give the chain a worse training fit because identical rows recover iid. Separate smoothing rules need not preserve that guarantee. Better training fit can still mean worse prediction: with little data, extra rows can learn chance patterns instead of reproducible neighboring-base structure. The held-out calculation makes that distinction visible.
+A chain has four transition rows to estimate, while iid has one base distribution. Unrestricted maximum likelihood cannot give the chain a worse training fit, because choosing identical rows recovers iid. Better training fit can still mean worse prediction: with little data, the extra rows can learn chance patterns instead of reproducible neighboring-base structure, and only a held-out sequence reveals the difference.
 
 ::: {#exm-markov-held-out}
 ## Fit both models, then predict
@@ -369,7 +405,7 @@ The columns report natural-log likelihood per base for iid and chain models:
 | training `ACGCGT` | −1.339 | −1.018 |
 | held-out `AGCCGA` | −1.339 | −1.432 |
 
-Larger means more probability assigned to the observed string. The chain favors the CG-rich training pattern but predicts this held-out string less well than iid. The extra transition rows learned the training pattern but gave too little probability to the held-out CC pair. This is the cost of estimating more probabilities from only five transitions. With genomic data, we need representative training regions and separate evaluation regions to learn whether neighboring-base structure improves prediction.
+Larger means more probability assigned to the observed string. The chain fits the CG-rich training string better but predicts the held-out string less well than iid, because its C row, learned from only two departures from C, gives the held-out CC pair too little probability. That is the cost of estimating sixteen probabilities from five transitions. With genomic data, we need representative training regions and separate evaluation regions to learn whether neighboring-base structure improves prediction.
 :::
 
 The first-order assumption retains transition counts but loses longer patterns, such as three-base coding units or a motif with separated important bases. The homogeneous assumption also uses one matrix everywhere. CpG islands and surrounding background require different neighboring-base models, which motivates the next lesson.
@@ -390,6 +426,10 @@ Prove that an iid model is a Markov chain whose rows are identical. Then show th
 
 ::: {#exr-markov-validation}
 State two tests for `markov_log_likelihood`: one using a length-one sequence and one using a chain with identical rows. Give the expected result of each.
+:::
+
+::: {#exr-markov-phix-ratios}
+Read the phiX174 genome from [`data/phix174-NC_001422.1.fasta`](../data/phix174-NC_001422.1.fasta) and compute $R(ab)$ for all sixteen pairs. Is CG depleted in this bacteriophage? Which pairs depart most from one, and what do those departures say about an iid model for this genome?
 :::
 
 ::: {#refs}

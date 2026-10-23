@@ -28,19 +28,34 @@ cf.use_style()
 
 Suppose we have DNA from several organisms or viral samples and want to know which are more closely related. Their common ancestors are usually unavailable to sequence. We instead compare the descendants: sequencing gives a DNA letter string from each sample, and substitutions accumulated since their ancestors can leave different letters at corresponding positions. A *phylogeny*, or evolutionary tree, describes the inferred pattern of shared ancestry. Its branches can also represent the amount of sequence change along each lineage.
 
-During the 2003 SARS investigation, researchers compared coronavirus sequences sampled from humans and other animals to investigate their evolutionary relationships [@compeau2015]. Sequence relatedness can help assess an origin hypothesis. A tree of sampled sequences alone does not identify a direct transmission event or prove which animal infected a particular person. Here we develop the distance-based inference using synthetic DNA examples.
+During the 2003 SARS outbreak, researchers asked which animal the new coronavirus had come from. They aligned sequences of the Spike protein, which the virus uses to attach to host cells, from coronaviruses found in patients and in animals; viruses from palm civets were the closest relatives of the human ones [@compeau2015]. Such a comparison can only rank the viruses that have been sampled: bat coronaviruses, sequenced later, suggested that civets may have been an intermediate host. Here we develop the distance-based inference on synthetic DNA.
 
-The sequences must be *homologous*: descended from a corresponding sequence in a common ancestor. Our input is a supplied *multiple alignment*, with one sequence per row and corresponding positions in the same columns. For example:
+The sequences must be *homologous*: descended from a corresponding sequence in a common ancestor. Our input is a supplied *multiple alignment*, with one sequence per row and corresponding positions in the same columns. @fig-upgma-data shows a made-up alignment of four samples beside the kind of tree we want to infer from it.
 
-```text
-A  ACGTACGT
-B  ACGTTCGT
-C  ATGTTCGA
+```{.python .execute}
+#| label: fig-upgma-data
+#| code-fold: true
+#| code-summary: "Draw the alignment and the tree it suggests"
+#| fig-width: 6
+#| fig-height: 2
+#| fig-cap: "A made-up alignment of four sampled sequences (left), with shaded columns where the rows differ, and the rooted tree these differences suggest (right). Tips are the samples, internal nodes are unobserved ancestors, and branch extents are drawing coordinates. A and B, which differ at one column, share the most recent ancestor."
+#| fig-alt: "Four rows of eight DNA letters labeled A to D, with five shaded columns. To the right, a tree with root at the left: D branches off first, then C, then A and B as sister tips."
+samples = {"A": "ACGTACGT", "B": "ACGTTCGT", "C": "ATGTTCGA", "D": "ACGACCAA"}
+target_tree = {"name": "", "length": 0, "children": [
+    {"name": "", "length": 1, "children": [
+        {"name": "", "length": 1, "children": [
+            {"name": "A", "length": 1}, {"name": "B", "length": 1}]},
+        {"name": "C", "length": 2}]},
+    {"name": "D", "length": 3},
+]}
+fig, axes = plt.subplots(1, 2, width_ratios=[2.2, 1])
+cf.multiple_alignment(axes[0], samples)
+cf.tree(axes[1], target_tree)
+axes[1].set_ylim(axes[0].get_ylim())  # put each tip level with its row
+plt.show()
 ```
 
-A and B differ at one of eight columns; A and C differ at three. Alignment matters because comparing unrelated positions would turn errors in correspondence into apparent evolutionary changes. We will use only columns containing a known DNA base in every row. This common set of columns keeps all pairwise comparisons on the same footing; choosing or computing the alignment is a separate task.
-
-Unlike the HMM problems, we now infer relationships among samples rather than hidden labels along one sequence. We first summarize their differences in a matrix, then ask what evolutionary tree could explain that matrix.
+A and B differ at one of the eight columns, A and C at three, and D differs from each of the others at four. Alignment matters because comparing unrelated positions would turn errors in correspondence into apparent evolutionary changes. We use only columns containing a known DNA base in every row, so all pairwise comparisons rest on the same columns; computing the alignment itself is a separate task. We first summarize the differences in a matrix, then ask which evolutionary tree could explain that matrix.
 
 ## Observed differences and evolutionary distance
 
@@ -49,11 +64,11 @@ $$
 f_{ij}=\frac{1}{L}\sum_{\ell=1}^L
 \mathbf{1}\{x^{(i)}_\ell\ne x^{(j)}_\ell\}.
 $$
-The indicator contributes one at a mismatch and zero otherwise. In the alignment above, $f_{AB}=1/8$, $f_{AC}=3/8$, and $f_{BC}=2/8$. The matrix is symmetric, has a zero diagonal, and is nonnegative. Counting mismatches on a common set of columns also gives the triangle inequality $f_{ij}\leq f_{ik}+f_{kj}$: if $i$ and $j$ differ at a column, at least one must differ from $k$ there. Distinct samples can nevertheless have identical retained sequences and distance zero.
+The indicator contributes one at a mismatch and zero otherwise, so $f_{ij}$ is the fraction of retained columns at which samples $i$ and $j$ disagree. In @fig-upgma-data, $f_{AB}=1/8$, $f_{BC}=2/8$, $f_{AC}=3/8$, and $f_{AD}=f_{BD}=f_{CD}=4/8$. The matrix of these fractions is symmetric and nonnegative with a zero diagonal. Because every pair is compared on the same columns, it also satisfies the triangle inequality $f_{ij}\leq f_{ik}+f_{kj}$: wherever $i$ and $j$ differ, at least one of them must differ from $k$.
 
 Mismatch fractions describe the observed letters, not the full history of substitutions. Along a lineage, A could change to G and later back to A, leaving no mismatch. A change to G followed by T leaves one mismatch after two substitutions. This loss of historical information becomes substantial for divergent sequences [@durbin1998].
 
-An *evolutionary distance* estimates the expected number of substitutions per site along the path between two samples. Unlike a mismatch fraction, it can exceed one. We will supply these distances to the tree algorithm; they may come from a fitted substitution model rather than raw mismatch counts.
+An *evolutionary distance* estimates the expected number of substitutions per site along the path between two samples. Unlike a mismatch fraction, it can exceed one. The tree algorithm takes these distances as input, whether they come from a substitution model or from raw mismatch counts.
 
 ### A correction for hidden substitutions
 The Jukes–Cantor model assumes equal base frequencies and equal rates for changes between each pair of different bases. Its predicted mismatch fraction after total path distance $d$ is
@@ -64,23 +79,28 @@ Taking this model relation as given, rearranging and taking the natural logarith
 $$
 d=-\frac34\ln\left(1-\frac43f\right),\qquad 0\leq f<\frac34.
 $$
-For $f=0.1$, this gives $d\approx0.1073$, slightly more than the observed mismatch fraction. As the lineages diverge, their bases approach independent uniform draws, so the probability of a mismatch approaches $3/4$. The observed difference then *saturates*: large additional evolutionary distances produce small changes in $f$. The correction diverges as $f$ approaches $3/4$ and is not a finite real estimate at or above that value. Near saturation, sampling error in $f$ becomes large uncertainty in $d$ [@durbin1998].
-
-A corrected matrix estimated from finite sequences need not fit any tree exactly: correcting for hidden substitutions still leaves sampling noise and model assumptions.
+For A and B, $f=1/8$ gives $d\approx0.137$, only slightly more than the observed fraction. For A and D, $f=1/2$ gives $d=-\tfrac34\ln\tfrac13\approx0.824$: at this level of divergence the observed mismatches miss about two-fifths of the estimated substitutions (@fig-upgma-saturation). As the lineages diverge, their bases approach independent uniform draws, so the probability of a mismatch approaches $3/4$. The observed difference then *saturates*: large additional evolutionary distances produce small changes in $f$. The correction diverges as $f$ approaches $3/4$ and is not a finite real estimate at or above that value. Near saturation, sampling error in $f$ becomes large uncertainty in $d$ [@durbin1998].
 
 ```{.python .execute}
 #| label: fig-upgma-saturation
-#| fig-cap: "Expected mismatch fraction under the Jukes-Cantor model. Additional substitutions become harder to detect as the curve approaches three quarters, so observed mismatches increasingly underestimate evolutionary distance."
-#| fig-alt: "A rising concave curve of mismatch fraction against substitutions per site approaches the horizontal level 0.75; a dashed no-hidden-changes line rises diagonally."
+#| fig-cap: "Expected mismatch fraction under the Jukes-Cantor model (blue) and the line on which every substitution stays visible (dashed). The red arrow is the correction for samples A and D, from an observed fraction of 1/2 to about 0.82 substitutions per site. Near the 3/4 level, extra substitutions barely change the observed fraction."
+#| fig-alt: "A rising concave curve of mismatch fraction against substitutions per site approaches a dotted horizontal line at 0.75; a dashed diagonal line rises above it. A red horizontal arrow at height 0.5 runs from the diagonal at 0.5 to the curve at about 0.82."
 distance = np.linspace(0, 3, 301)
 mismatch = 0.75 * (1 - np.exp(-4 * distance / 3))
+f_ad = 0.5
+d_ad = -0.75 * np.log(1 - 4 * f_ad / 3)
 fig, ax = plt.subplots()
 ax.plot(distance, mismatch, label="Expected mismatch fraction")
 ax.plot([0, 1], [0, 1], "--", color=cf.RULE, label="Every change remains visible")
 ax.axhline(0.75, color=cf.RULE, linewidth=0.8, linestyle=":")
+ax.text(3, 0.77, "3/4", ha="right", va="bottom", fontsize=9, color=cf.RULE)
+ax.annotate("", xy=(d_ad, f_ad), xytext=(f_ad, f_ad),
+            arrowprops={"arrowstyle": "->", "color": cf.EMPHASIS, "lw": 1.5})
+ax.text((f_ad + d_ad) / 2, f_ad + 0.02, "A, D", ha="center", va="bottom",
+        fontsize=9, color=cf.EMPHASIS)
 ax.set(xlabel="Evolutionary distance (substitutions per site)",
        ylabel="Mismatch fraction", ylim=(0, 1))
-ax.legend()
+ax.legend(loc="lower right")
 plt.show()
 ```
 
@@ -98,7 +118,11 @@ If $u$ is the most recent common ancestor of tips $i,j$, their paths to $u$ have
 $$
 d_{ij}=2h_u.
 $$
-This equation explains both the factor of two in UPGMA and its biological interpretation: a smaller distance means a more recent common ancestor *under the clock assumption*. Heights are measured in substitutions per site; converting them to calendar ages requires a calibrated substitution rate.
+Heights are measured in substitutions per site; converting them to calendar ages requires a calibrated substitution rate.
+
+::: {.callout-note title="Key idea"}
+Under a molecular clock, the distance between two tips is twice the height of their most recent common ancestor. The smallest distance in the matrix therefore marks the most recent split, so merging the closest pair first recovers that split.
+:::
 
 ::: {#def-ultrametric}
 ## Ultrametric distances
@@ -110,7 +134,7 @@ $$
 Equivalently, among the three distances for any three tips, the largest two are equal. All three may be equal.
 :::
 
-A clock tree has this property. For three tips, either all share the same most recent common ancestor, or two meet below the ancestor they share with the third. In the latter case, the two distances to the third tip are equal and larger. This gives an observable constraint on the matrix, stronger than the ordinary triangle inequality. Real estimated distances rarely satisfy it exactly; UPGMA still returns a clock tree, but exact recovery then has no guarantee.
+A clock tree has this property. For three tips, either all share the same most recent common ancestor, or two meet below the ancestor they share with the third. In the latter case, the two distances to the third tip are equal and larger. This gives an observable constraint on the matrix, stronger than the ordinary triangle inequality.
 
 ## UPGMA: merge the closest clusters
 
@@ -125,7 +149,7 @@ $$
 d(C\cup D,E)
 =\frac{|C|d(C,E)+|D|d(D,E)}{|C|+|D|}.
 $$
-This avoids revisiting every original pair. A simple average of the two old cluster distances is correct only when their sizes are equal, or when those distances happen to coincide.
+This update avoids revisiting every original pair.
 
 ::: {.algorithm}
 **Algorithm: UPGMA.**
@@ -137,38 +161,46 @@ Initialize singleton clusters, each with size one and height zero.
 4. Repeat until one cluster remains; its node is the root. Break ties by a stated rule.
 :::
 
-The merge distances never decrease: every new distance is a weighted average of distances at least as large as the current minimum, and retained distances also exceed or equal it. Parent heights therefore never lie below child heights, so the algorithm produces nonnegative branches even when its input is not ultrametric.
+The merge distances never decrease. If $\delta$ is the current minimum, each distance from the new cluster is a weighted average of two distances that are both at least $\delta$:
+$$
+d(C\cup D,E)\geq\min\{d(C,E),\,d(D,E)\}\geq\delta,
+$$
+and the retained distances are also at least $\delta$. Parent heights therefore never lie below child heights, so the algorithm produces nonnegative branches even when its input is not ultrametric.
 
 ## Four samples, three merges
 
-Suppose a distance estimator supplies the following synthetic matrix. For convenient hand arithmetic, entries are in units of $0.01$ substitutions per site; an entry 4 means a distance of 0.04.
+Distances estimated from finite sequences are rarely exactly ultrametric, because sampling noise and departures from a clock perturb them. Suppose a distance estimator supplies the matrix below, in units of $0.01$ substitutions per site for convenient hand arithmetic (an entry 4 means 0.04). It is close to ultrametric but not exactly so: in the triple A, B, C the two largest distances are 7 and 9.
+
+::: {#exm-upgma-four-samples}
+## UPGMA on four samples
 
 | | A | B | C | D |
 |---|---:|---:|---:|---:|
-| A | 0 | 4 | 8 | 16 |
-| B | 4 | 0 | 8 | 16 |
-| C | 8 | 8 | 0 | 16 |
-| D | 16 | 16 | 16 | 0 |
+| A | 0 | 4 | 7 | 16 |
+| B | 4 | 0 | 9 | 18 |
+| C | 7 | 9 | 0 | 20 |
+| D | 16 | 18 | 20 | 0 |
 
-The closest pair is A,B at distance 4. Their parent U has height 2, and both terminal branches have length 2. The new distances are
+The closest pair is A,B at distance 4. Their parent U has height 2, and both terminal branches have length 2. Averaging over tip pairs gives
 $$
-d(AB,C)=\frac{8+8}{2}=8,
-\qquad d(AB,D)=\frac{16+16}{2}=16.
+d(AB,C)=\frac{7+9}{2}=8,
+\qquad d(AB,D)=\frac{16+18}{2}=17.
 $$
-The next merge is AB with C at distance 8. Its parent V has height 4; the branch V→U has length $4-2=2$, while V→C has length 4. Now the clusters have unequal sizes:
+The smallest remaining distance is $d(AB,C)=8$, so AB merges with C. Their parent V has height 4; the branch V→U has length $4-2=2$, while V→C has length 4. The clusters now have unequal sizes, and the weights matter:
 $$
 d(ABC,D)=\frac{2\,d(AB,D)+1\,d(C,D)}{3}
-=\frac{2(16)+16}{3}=16.
+=\frac{2(17)+20}{3}=18.
 $$
-The final root R has height 8. Its branch to V has length 4 and its branch to D length 8. Every root-to-tip distance is 8. For instance, the path A→U→V→C has length $2+2+4=8$, reproducing $d_{AC}$.
+This is the average of the three original distances 16, 18, and 20 from D. An unweighted average of the two cluster distances would give $(17+20)/2=18.5$, counting the single pair C,D as heavily as the two pairs A,D and B,D together. The root R has height 9, with a branch of length 5 to V and 9 to D.
+:::
 
-Under the clock model, A and B share the most recent ancestor, C joins their lineage earlier, and D separates earlier still. A is not inferred to be the ancestor of B: both are observed tips descending from U. The heights here are 0.02, 0.04, and 0.08 substitutions per site, not dates.
+Under the clock model, A and B share the most recent ancestor, C joins their lineage earlier, and D separates earlier still; the heights 0.02, 0.04, and 0.09 substitutions per site are not dates. A is not inferred to be the ancestor of B: both are observed tips descending from U.
 
-The equal distances to D conceal the numerical effect of the weights. If instead $d(AB,D)=16$ and $d(C,D)=20$, the update would be $(2\cdot16+20)/3=17\frac13$, not 18. The two-member cluster contributes twice as many cross-cluster pairs.
+The tree cannot reproduce every input. Its paths from A and from B to C both have length $2+2+4=8$, where the matrix has 7 and 9, and all three paths to D have length 18, where it has 16, 18, and 20. Each path distance between two merged clusters is the average of the input distances it replaces, so comparing input and path distances shows how far the data depart from a clock.
 
 ## Computing and drawing the result
 
-The implementation stores a size and height for each active cluster and a dictionary of distances between pairs of cluster identifiers. The returned nested tree records each node's name, children, and branch length from its parent. It also returns the merge history so we can compare execution with the hand calculation.
+The implementation stores a size, a height, and the distances for each active cluster. It returns a nested tree, with each node's name, children, and branch length from its parent, and the merge history for comparison with the hand calculation.
 
 ```{.python .execute}
 #| label: code-upgma
@@ -178,10 +210,6 @@ def upgma(labels: list[str], matrix: np.ndarray) -> tuple[dict, list[tuple]]:
     n = len(labels)
     if n == 0 or len(set(labels)) != n or matrix.shape != (n, n):
         raise ValueError("Use distinct labels and a matching nonempty square matrix.")
-    if (not np.all(np.isfinite(matrix)) or np.any(matrix < 0)
-            or not np.allclose(matrix, matrix.T)
-            or not np.allclose(np.diag(matrix), 0)):
-        raise ValueError("Distances must be finite, symmetric, nonnegative, and zero-diagonal.")
 
     active = list(range(n))
     sizes = dict.fromkeys(active, 1)
@@ -228,14 +256,14 @@ def upgma(labels: list[str], matrix: np.ndarray) -> tuple[dict, list[tuple]]:
 
 labels = ["A", "B", "C", "D"]
 distances = np.array([
-    [0, 4, 8, 16],
-    [4, 0, 8, 16],
-    [8, 8, 0, 16],
-    [16, 16, 16, 0],
+    [0, 4, 7, 16],
+    [4, 0, 9, 18],
+    [7, 9, 0, 20],
+    [16, 18, 20, 0],
 ])
 clock_tree, merge_history = upgma(labels, distances)
-assert [step[2] for step in merge_history] == [4, 8, 16]
-assert [step[3] for step in merge_history] == [2, 4, 8]
+assert [step[2] for step in merge_history] == [4, 8, 18]
+assert [step[3] for step in merge_history] == [2, 4, 9]
 merge_history
 ```
 
@@ -243,26 +271,24 @@ merge_history
 #| label: fig-upgma-clock-tree
 #| fig-width: 6
 #| fig-height: 3
-#| fig-cap: "UPGMA tree for the four-sample matrix. Parentheses give node heights in units of 0.01 substitutions per site; all tips have height zero, and internal branches carry their lengths. The aligned tips show the clock constraint imposed on the inferred ancestry."
+#| fig-cap: "UPGMA tree for the matrix of @exm-upgma-four-samples. Parentheses give node heights in units of 0.01 substitutions per site; all tips have height zero, and internal branches carry their lengths. The tips line up because UPGMA imposes a clock, even though the input distances were not exactly ultrametric."
 #| fig-alt: "Root at the left branches to D and a cluster containing C and the sister tips A and B; all four tips have the same horizontal coordinate."
 fig, ax = plt.subplots()
 # Name the internal nodes of this worked instance, leaving the algorithm general.
-clock_tree["name"] = "R (8)"
+clock_tree["name"] = "R (9)"
 clock_tree["children"][1]["name"] = "V (4)"
 clock_tree["children"][1]["children"][1]["name"] = "U (2)"
 cf.tree(ax, clock_tree, show_lengths=True)
 plt.show()
 ```
 
-The figure's horizontal distances encode branch lengths, not merely the order of merges. Rotating the children of an internal node changes the drawing's tip order but leaves the inferred ancestry and all path distances unchanged.
-
 ## Why exact ultrametric input is recovered
 
-Under a clock, the closest tips meet at the youngest ancestral height because their distance is twice that height. Merging them therefore recovers the most recent split. Once this group is represented by a cluster, every member has the same distance to a tip outside it: all those paths meet at the same older ancestor. Averaging preserves that distance, so the same reasoning applies at the next merge. The proof makes this repeated step precise.
+Under a clock, the closest tips meet at the youngest ancestral height because their distance is twice that height. Merging them therefore recovers the most recent split. Once this group is represented by a cluster, every member has the same distance to a tip outside it: all those paths meet at the same older ancestor. Averaging preserves that distance, so the same reasoning applies at the next merge.
 
 ::: {#thm-upgma-recovery}
 ## Exact distance recovery
-Given an ultrametric distance matrix, UPGMA constructs a rooted tree whose tip-to-tip path distances equal every input distance. Equal-height merges may produce different binary refinements; after contracting zero-length internal edges, these refinements describe the same hierarchy of positive-length branches.
+Given an ultrametric distance matrix, UPGMA constructs a rooted tree whose tip-to-tip path distances equal every input distance. Tied merges may resolve a group in different orders, which only adds internal edges of length zero.
 :::
 
 ::: {.proof}
@@ -275,19 +301,13 @@ $$
 The last two distances are at least $\delta$. They must be equal: if one were larger, it would be the unique largest distance in this triple, contradicting ultrametricity. Hence $d(C,E)=d(D,E)$, and their weighted average equals that same value. All distances from $C\cup D$ to $E$ are therefore equal to the new stored distance. This proves the invariant by induction.
 
 When two tips first enter the same cluster, they are in opposite children of a merge. Their original distance is that merge's $\delta$. The new node has height $\delta/2$; branch lengths telescope from it to each tip to give $\delta/2$. Their tree path distance is thus $\delta$, as required.
-
-To understand ties, fix a threshold $r\geq0$. The relation $i\sim j$ when $d_{ij}\leq r$ is transitive by the ultrametric inequality, so it partitions tips into groups. These nested groups determine the hierarchy. Tied merges resolve a group at the same height in different orders, adding only zero-length internal edges; they do not change the recovered distances.
 :::
 
-This is a conditional guarantee. It does not say that noisy sequence estimates are ultrametric, or that a biological lineage evolves at a constant rate. A useful diagnostic compares the supplied distances with path distances in the output; a visibly aligned set of tips in the drawing only confirms the algorithm's imposed constraint.
+The proof also shows when the size weights matter: on ultrametric input the two distances being averaged are equal, so every weighting gives the same tree. The weights changed a distance in @exm-upgma-four-samples only because that matrix is not ultrametric.
 
 ### Computational cost
 
-With $k$ active clusters, searching all pairs costs $\mathcal{O}(k^2)$ and updating distances costs $\mathcal{O}(k)$. There are $n-1$ merges, so this straightforward implementation takes
-$$
-\sum_{k=2}^n\mathcal{O}(k^2)=\mathcal{O}(n^3)
-$$
-time and $\mathcal{O}(n^2)$ space, assuming constant-time arithmetic and dictionary lookups. The code keeps old distance entries, but only $\mathcal{O}(n^2)$ pairs are ever created. Constructing the original mismatch matrix from $n$ aligned sequences of length $L$ costs $\mathcal{O}(n^2L)$; that data-processing cost is separate from tree construction.
+With $k$ active clusters, searching all pairs costs $\mathcal{O}(k^2)$ and updating distances costs $\mathcal{O}(k)$. Summing over the $n-1$ merges gives $\mathcal{O}(n^3)$ time and $\mathcal{O}(n^2)$ space for this straightforward implementation, assuming constant-time arithmetic and dictionary lookups.
 
 ## When evolutionary rate changes the answer
 
@@ -340,20 +360,20 @@ plt.show()
 
 The true distances still contain information about the branching pattern. For example, $d_{AB}+d_{CD}=18$, while both $d_{AC}+d_{BD}$ and $d_{AD}+d_{BC}$ equal 20: the latter paths cross the connecting edge twice. Methods for additive distances can use such relationships without imposing a clock; neighbor joining is one example and normally returns an unrooted tree [@durbin1998].
 
-A sequence tree describes the history of the sampled region; extending its conclusions to a whole genome requires further assumptions. Distance summaries discard which columns supplied the differences. The next lesson keeps those characters and asks how many changes a candidate tree requires.
+Distance summaries discard which columns supplied the differences. The next lesson keeps those characters and asks how many changes a candidate tree requires.
 
 ## Exercises
 
 ::: {#exr-upgma-mismatches}
-Compute the mismatch matrix for the eight-column alignment near the start. Check each triangle inequality, and decide whether its distances are ultrametric.
+Apply the Jukes–Cantor correction to the mismatch fractions of the alignment in @fig-upgma-data, then run UPGMA on the corrected distances. Does the result agree with the tree drawn there? Which triple of samples violates the ultrametric condition?
 :::
 
 ::: {#exr-upgma-path-checks}
-Trace UPGMA on the four-sample matrix. List all six edge lengths and verify all six tip-to-tip distances. If the substitution rate is 0.01 substitutions per site per million years, what calendar age corresponds to the inferred root height?
+For the tree in @exm-upgma-four-samples, list all six edge lengths and all six tip-to-tip path distances, and compare the path distances with the input matrix. If the substitution rate is 0.01 substitutions per site per million years, what calendar age corresponds to the inferred root height?
 :::
 
 ::: {#exr-upgma-weights}
-Keep $d_{AD}=d_{BD}=16$ but change $d_{CD}$ to 20 in the four-sample example. Trace the updates, compare size-weighted averaging with an unweighted average of clusters, and identify an input distance the final tree cannot reproduce.
+In @exm-upgma-four-samples, set $d_{AC}=d_{BC}=8$ and $d_{AD}=d_{BD}=d_{CD}=18$. Trace UPGMA once with size-weighted updates and once with unweighted averages of cluster distances. Show that the traces agree, and explain using the ultrametric condition why they must.
 :::
 
 ::: {#exr-upgma-ties}

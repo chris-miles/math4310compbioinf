@@ -41,7 +41,7 @@ Use this synthetic two-site alignment throughout:
 | c | G | C | GC |
 | d | G | T | GT |
 
-A *taxon* here is simply one named sampled organism or group. The short rows are teaching data, not a claim about particular species. We assume every entry is an unambiguous DNA base; gaps and uncertain bases are excluded from this example.
+A *taxon* here is simply one named sampled organism or group. We assume every entry is an unambiguous DNA base; gaps and uncertain bases are excluded from this example.
 
 The candidate tree pairs a with b and c with d. Write it as $ ((a,b),(c,d)) $. Let u join a and b, v join c and d, and r join u and v. This specifies the *topology*, or branching pattern. No numerical evolutionary branch lengths are supplied.
 
@@ -106,7 +106,7 @@ $$
 
 The indicator contributes zero for equal bases and one for different bases. Every substitution has the same cost, regardless of its type or direction. Sites can be optimized separately because their assigned states have no cross-site constraints and the objective adds their edge costs.
 
-Fewer changes is a modeling preference, not a universal law of evolution. The minimum counts changes sufficient to explain the observed endpoints; it cannot recover repeated substitutions hidden on the same edge. An inferred ancestral base is an optimal explanation under this objective, not a sequenced ancestor or a posterior probability.
+Fewer changes is a modeling preference, not a law of evolution, and an inferred ancestral base is an optimal explanation under this objective rather than a sequenced ancestor.
 
 The node r gives the algorithm a direction in which to process the tree. Under this symmetric cost, inserting a root on any edge leaves the minimum score unchanged: for edge endpoints a and b, minimizing $\mathbf1\{a\ne t\}+\mathbf1\{t\ne b\}$ over an inserted state t gives $\mathbf1\{a\ne b\}$. Thus this objective alone cannot identify the biological root or date a divergence.
 
@@ -140,6 +140,10 @@ If $t\in S_v$, choose a minimum-cost subtree rooted at t and pay zero for the co
 
 The connecting edge matters. For two A leaves, forcing their parent to C costs two changes inside that subtree; attaching an A-rooted subtree to a C state above it costs only one. The lemma concerns the latter quantity, which is exactly what the next recurrence step uses.
 
+::: {.callout-note title="Key idea"}
+A parent needs only its child's pair $(S_v,c_v)$: a parent state inside $S_v$ attaches at no extra cost, and any other state costs exactly one more. One set per node therefore replaces a search over all $4^{N-1}$ ancestral assignments.
+:::
+
 ::: {#thm-fitch-correctness}
 ## Correctness of Fitch's algorithm
 For a binary tree and the equal-cost objective, the recurrence returns the minimum number of changes at each site.
@@ -153,9 +157,12 @@ The two child contributions add, since their assignments can be chosen independe
 
 ## Two sites by hand
 
-At site 1, a and b both have A, so $S_u=\{A\}$ and $c_u=0$. Similarly $S_v=\{G\}$ and $c_v=0$. Their sets are disjoint: $S_r=\{A,G\}$ and $c_r=1$. Assigning A to r and u, and G to v, places the one change on r–v. Either A or G at the root gives a one-change explanation.
+::: {#exm-fitch-hand-sites}
+## Fitch sets on $((a,b),(c,d))$
+At site 1, a and b both have A, so $S_u=\{A\}$ and $c_u=0$. Similarly $S_v=\{G\}$ and $c_v=0$. These sets are disjoint, so $S_r=\{A,G\}$ and $c_r=1$. Assigning A to r and u, and G to v, places the one change on r–v; G at the root works equally well.
 
-At site 2, $S_u=\{C\}$ with cost zero. The C/T pair under v gives $S_v=\{C,T\}$ with cost one. The root intersection is $\{C\}$, so the total remains one. Assign C to all three internal nodes; only the edge to d changes. Adding sites gives alignment score two.
+At site 2, $S_u=\{C\}$ with cost zero. The C/T pair under v gives $S_v=\{C,T\}$ with cost one, and keeping both states now pays off. The root intersection is $\{C\}$, so the total stays at one: assign C to all three internal nodes, and only the edge to d changes. Had we fixed v to T, the best total would be two: one change on v–c and another between v and the C-bearing subtree under u. Adding the two sites gives alignment score two.
+:::
 
 ### Reconstructing one ancestral assignment
 
@@ -233,18 +240,22 @@ for site in range(2):
 print(site_scores, sum(site_scores))
 ```
 
-The output $[1,1]$, total 2, agrees with the hand calculation. The figure draws the sets returned by the same computation.
+The output $[1,1]$, total 2, agrees with @exm-fitch-hand-sites. @fig-fitch-two-sites draws the sets and one reconstruction returned by the same computation.
 
 ```{.python .execute}
 #| label: fig-fitch-two-sites
-#| fig-cap: "Computed Fitch sets for the two alignment sites. Disjoint child sets require a change; a shared state lets the parent join the child subtrees without adding one. Branch extents are drawing coordinates, not evolutionary lengths."
-#| fig-alt: "Two four-leaf trees pairing a with b and c with d. Site 1 combines A and G into root set A,G. Site 2 intersects C with C,T to give root set C."
+#| fig-cap: "Computed Fitch sets for the two alignment sites, with the change placed by one reconstruction in red. Disjoint child sets require a change; a shared state lets the parent join the child subtrees without adding one. Branch extents are drawing coordinates, not evolutionary lengths."
+#| fig-alt: "Two four-leaf trees pairing a with b and c with d. Site 1 combines A and G into root set A,G, with the branch from r to v in red. Site 2 intersects C with C,T to give root set C, with the branch from v to d in red."
 #| fig-width: 6
 #| fig-height: 5.5
+def fitch_label(node: str, sets: dict[str, set[str]]) -> str:
+    """Write a node name with its computed Fitch set."""
+    return node + ": {" + ",".join(sorted(sets[node])) + "}"
+
+
 def labeled_subtree(node: str, sets: dict[str, set[str]]) -> dict:
     """Build drawing labels from the computed Fitch sets."""
-    label = node + ": {" + ",".join(sorted(sets[node])) + "}"
-    result = {"name": label, "length": 1}
+    result = {"name": fitch_label(node, sets), "length": 1}
     if node in children:
         result["children"] = [labeled_subtree(child, sets) for child in children[node]]
     return result
@@ -252,13 +263,18 @@ def labeled_subtree(node: str, sets: dict[str, set[str]]) -> dict:
 fig, axes = plt.subplots(2, 1)
 for site, ax in enumerate(axes):
     observed = {taxon: sequence[site] for taxon, sequence in alignment.items()}
-    score, sets, _ = fitch_site(children, "r", observed)
-    cf.tree(ax, labeled_subtree("r", sets))
+    score, sets, assigned = fitch_site(children, "r", observed)
+    changed = []
+    for parent, daughters in children.items():
+        for daughter in daughters:
+            if assigned[parent] != assigned[daughter]:
+                changed.append((fitch_label(parent, sets), fitch_label(daughter, sets)))
+    cf.tree(ax, labeled_subtree("r", sets), highlight_edges=changed)
     ax.set_title(f"Site {site + 1}: {score} change")
 plt.show()
 ```
 
-For N leaves a binary tree has $2N-1$ nodes. With the fixed four-base alphabet, set operations take bounded time, so one site costs $\mathcal O(N)$ time and space. Scoring m sites costs $\mathcal O(mN)$ time. Processing one site at a time retains $\mathcal O(N)$ working storage; storing all ancestral sequences additionally needs $\mathcal O(mN)$ space.
+A rooted binary tree with $N$ leaves has $2N-1$ nodes. With the fixed four-base alphabet, set operations take bounded time, so one site costs $\mathcal O(N)$ time and space, and $m$ sites cost $\mathcal O(mN)$ time.
 
 ## Scoring trees versus searching for a tree
 
@@ -287,15 +303,41 @@ for a, b, c, d in splits:
     print(f"{a}{b}|{c}{d}", total)
 ```
 
-This exhaustive comparison is feasible for four taxa. For $N\ge3$ named taxa, the number of unrooted binary trees is $(2N-5)!!$, the product of odd integers from 1 through $2N-5$. Adding another leaf inserts it on any of the current tree's $2N-3$ edges, explaining the next multiplicative factor. There are $15!!=2{,}027{,}025$ trees for 10 taxa and $35!!\approx2.22\times10^{20}$ for 20 taxa. Fast scoring of one tree therefore does not make exhaustive tree search practical. Larger searches often improve a starting tree by local rearrangements, which can stop before the global minimum. Fitch's guarantee concerns the supplied tree, not such a search strategy.
+This exhaustive comparison is feasible for four taxa. How many trees would we have to score for $N$ named taxa? Let $U(N)$ count the unrooted binary trees. There is one tree on three leaves, and an unrooted binary tree with $N-1$ leaves has $2N-5$ edges. Attaching leaf $N$ to the middle of any one of those edges gives a different tree on $N$ leaves, and removing leaf $N$ from a tree on $N$ leaves undoes exactly one such attachment. Therefore
+$$
+U(N)=(2N-5)\,U(N-1),\qquad U(3)=1,
+\qquad\text{so}\qquad
+U(N)=1\cdot3\cdot5\cdots(2N-5)=(2N-5)!!.
+$$
+Each new leaf multiplies the count by a larger factor. There are $15!!=2{,}027{,}025$ trees for 10 taxa and $35!!\approx2.22\times10^{20}$ for 20 taxa, while scoring any one of them visits only $2N-1$ nodes per site (@fig-fitch-tree-count). Fast scoring of one tree therefore does not make exhaustive tree search practical. Larger searches often improve a starting tree by local rearrangements, which can stop before the global minimum; Fitch's guarantee concerns the supplied tree, not such a search.
+
+```{.python .execute}
+#| label: fig-fitch-tree-count
+#| code-fold: true
+#| code-summary: "Plot tree counts against the work to score one tree"
+#| fig-cap: "The number of unrooted binary trees on N named taxa (red) and the number of nodes Fitch visits to score one rooted tree at one site (blue), on a logarithmic axis. Scoring a tree grows linearly in N, while the number of candidate trees grows faster than any exponential."
+#| fig-alt: "Two curves against the number of taxa from 3 to 20 on a log vertical axis: a red curve rising ever more steeply to about two times ten to the twentieth, and a blue line rising slowly to 39."
+taxa = list(range(3, 21))
+tree_counts = []
+count = 1
+for n_taxa in taxa:
+    if n_taxa > 3:
+        count *= 2 * n_taxa - 5  # attach the new leaf to any of 2N - 5 edges
+    tree_counts.append(count)
+nodes_visited = [2 * n_taxa - 1 for n_taxa in taxa]
+fig, ax = plt.subplots()
+ax.semilogy(taxa, tree_counts, "o-", color=cf.EMPHASIS, label="unrooted trees $(2N-5)$!!")
+ax.semilogy(taxa, nodes_visited, "s-", label="nodes per tree $2N-1$")
+ax.set(xlabel="Number of taxa $N$", ylabel="Count", xticks=[3, 5, 10, 15, 20])
+ax.legend()
+plt.show()
+```
 
 ## Biological limits of the answer
 
-A score of two means two changes suffice under our alignment and equal-cost assumptions. It does not mean exactly two substitutions happened historically. Repeated change can restore an earlier base; unrelated lineages can acquire the same base independently. In particular, rapidly evolving lineages can accumulate shared-looking states through repeated or convergent change and be grouped together incorrectly, a problem called *long-branch attraction* [@felsenstein1978].
+A score of two means that two changes suffice under our alignment and equal-cost assumptions, not that exactly two substitutions happened. Repeated change can restore an earlier base, and unrelated lineages can acquire the same base independently. Rapidly evolving lineages can therefore accumulate shared-looking states and be grouped together incorrectly, a problem called *long-branch attraction* [@felsenstein1978].
 
-Real substitution types also have different frequencies: changes between A/G or between C/T need not behave like changes across those pairs. Weighted parsimony replaces the zero/one edge cost with an explicit cost table and keeps a minimum for each possible parent state. That changes the modeling assumptions as well as the calculation.
-
-Alignment mistakes, missing characters, and unrepresentative sites can change the preferred topology. Our toy assumes correspondence and excludes uncertainty. A real analysis must specify how such entries are treated and examine whether the answer persists across suitable sites. Agreement with the minimum-change objective is evidence conditional on those choices, rather than proof of the true genealogy.
+Real substitution types also have different frequencies: changes between A/G or between C/T need not behave like changes across those pairs. Weighted parsimony replaces the zero/one edge cost with an explicit cost table and keeps a minimum for each possible parent state, which changes the modeling assumptions as well as the calculation. Alignment mistakes, missing characters, and unrepresentative sites can also change the preferred topology, so a real analysis must say how such entries are treated and check whether the answer persists across suitable sites.
 
 ## Exercises
 

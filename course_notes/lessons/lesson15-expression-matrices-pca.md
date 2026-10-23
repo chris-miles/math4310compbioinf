@@ -25,9 +25,42 @@ cf.use_style()
 
 ## From RNA reads to a measurement matrix
 
-Two samples can contain the same genes yet use them differently. Cells copy portions of DNA into RNA molecules called *transcripts*, and the abundance of these molecules can differ across cell types or after a treatment. We want to know whether several genes change together, giving samples a shared expression pattern. Here *gene expression* refers to measured RNA abundance [@holmeshuber2019].
+The cells of one person carry essentially the same genome, yet a T cell that has never met an infection behaves very differently from one that is killing infected cells. Much of the difference lies in which genes each cell uses. Cells copy portions of DNA into RNA molecules called *transcripts*; the abundance of a gene's transcripts, its *expression*, differs across cell types and after treatments. Studies of immune memory have sorted T cells into naive, memory, and effector populations and measured the expression of thousands of genes in each sample [@holmeshuber2019, sec. 7.2].
 
-In a typical RNA-sequencing workflow, RNA is collected from each sample and copied into complementary DNA (cDNA); fragments of this DNA are sequenced. Matching those reads to known gene sequences gives a count table [@holmeshuber2019, secs. 7.2, 8.2]. In @fig-expression-reads-to-counts, six short read records produce the row `(4, 2, 0)` for three genes. Each entry counts assigned reads from one sample. These sampled counts are not direct counts of proteins or a complete measure of gene activity.
+@fig-expression-heatmap shows what such data look like, with synthetic values for twelve named genes, invented to mimic the known pattern rather than measured: one row per sample, one column per gene, and color for the log-scale level. We want to know which samples resemble each other and which genes make them alike. Here the eye can answer. CCR7 and SELL, which help naive T cells enter lymph nodes, are bright in the naive rows and dim in the effector rows; GZMB and PRF1, which encode the granzyme and perforin that effector cells use to kill, show the reverse; memory samples mostly sit in between. Because whole groups of genes rise and fall together, one contrast describes most of the picture. A real experiment measures about 20,000 genes, far too many columns to scan, so we want a few coordinates per sample that retain most of the measured variation, together with gene weights saying which genes produce it.
+
+```{.python .execute}
+#| label: fig-expression-heatmap
+#| code-fold: true
+#| code-summary: "Synthetic T-cell matrix: planted group means plus noise"
+#| fig-width: 6
+#| fig-height: 3.4
+#| fig-cap: "A synthetic expression matrix for nine sorted T-cell samples (rows) and twelve named genes (columns), on a log2 scale. Values are invented to mimic the known pattern, not measurements. Naive-cell genes (CCR7 to IL7R) and effector genes (GZMB to CX3CR1) change in opposite directions, memory samples are intermediate for most genes, and ACTB and GAPDH, housekeeping genes drawn flat here, do not change. Coordinated blocks of genes distinguish the samples."
+#| fig-alt: "A heat map with nine rows labeled naive 1 to 3, memory 1 to 3, effector 1 to 3, and twelve gene columns. The first five columns are bright for naive rows and dark for effector rows, with memory rows in between except a bright IL7R column; the next five columns are the reverse; the last two columns are uniformly bright."
+gene_names = ["CCR7", "SELL", "TCF7", "LEF1", "IL7R", "GZMB", "PRF1",
+              "IFNG", "KLRG1", "CX3CR1", "ACTB", "GAPDH"]
+group_means = {
+    "naive": [10, 10, 9, 9, 9, 2, 3, 2, 2, 1, 13, 12],
+    "memory": [7, 7, 7, 7, 10, 5, 6, 6, 5, 4, 13, 12],
+    "effector": [3, 3, 4, 4, 4, 11, 11, 10, 10, 9, 13, 12],
+}
+rng = np.random.default_rng(15)
+sample_names = []
+expression_rows = []
+for group, means in group_means.items():
+    for replicate in range(1, 4):
+        sample_names.append(f"{group} {replicate}")
+        expression_rows.append(np.array(means) + rng.normal(0, 0.5, len(means)))
+fig, ax = plt.subplots()
+image = ax.imshow(np.array(expression_rows), cmap="viridis", vmin=0, vmax=14)
+ax.set_xticks(range(len(gene_names)), gene_names, rotation=60, ha="right")
+ax.set_yticks(range(len(sample_names)), sample_names)
+ax.tick_params(length=0)
+fig.colorbar(image, ax=ax, label="log$_2$ expression", shrink=0.8)
+plt.show()
+```
+
+In a typical RNA-sequencing workflow, RNA is collected from each sample and copied into complementary DNA (cDNA); fragments of this DNA are sequenced. Matching those reads to known gene sequences gives a count table [@holmeshuber2019, secs. 7.2, 8.2]. In @fig-expression-reads-to-counts, six short read records produce the row `(4, 2, 0)` for three genes. Each entry counts the reads from one sample assigned to one gene, a sample of the RNA present rather than a count of protein molecules.
 
 ```{.python .execute}
 #| label: fig-expression-reads-to-counts
@@ -45,11 +78,9 @@ cf.read_assignment(ax, gene_segments, read_records, assigned_genes)
 plt.show()
 ```
 
-We use **samples as rows and genes as columns**. Many RNA-seq files use the opposite orientation, so check the row and column names before transposing. A change in cell proliferation can affect many genes together [@holmeshuber2019, sec. 7.2]. We want a few coordinates per sample that retain as much of the measured variation as possible.
+We use **samples as rows and genes as columns**, as in @fig-expression-heatmap; many RNA-seq files use the opposite orientation, so check the row and column names before transposing. Raw counts depend on *sequencing depth*, the number of reads recorded per sample, and genes differ enormously in scale, so counts are first normalized and log-transformed. Here we hold those steps fixed to understand the mathematical summary. The input is an explicitly supplied, transformed numerical matrix $X\in\mathbb R^{n\times p}$, with $n\ge2$ samples and $p$ genes, like the log-scale values in the heat map.
 
-Raw counts depend on *sequencing depth*, the number of reads recorded per sample, and have strongly unequal scales. Today the input is an explicitly supplied, normalized and transformed numerical matrix $X\in\mathbb R^{n\times p}$, with $n\ge2$ samples and $p$ genes. Lesson 16 examines how those steps put measurements on comparable scales. We hold them fixed here to understand the mathematical summary. The entries need not be integers or remain nonnegative after centering.
-
-For example, if two genes tend to increase together, their combined abundance may describe a sample contrast better than either alone. *Principal component analysis* (PCA) constructs sample coordinates from weighted combinations of genes. We first need to specify what those weights should preserve, so the mathematical summary answers the question about coordinated variation.
+Because groups of genes move together, a weighted combination of genes can describe a sample contrast better than any single gene. *Principal component analysis* (PCA) constructs sample coordinates from such weighted combinations. We first need to specify what those weights should preserve, so the mathematical summary answers the question about coordinated variation.
 
 ## Centering and a direction in gene space
 
@@ -77,7 +108,7 @@ $$
 The corresponding scores are $t_1=Zv_1$. The objective is their sample variance: because the scores have mean zero, it is their sum of squared values divided by $n-1$.
 :::
 
-The unit-length constraint is essential: multiplying $v$ by ten would otherwise multiply the objective by one hundred without choosing a better direction. It lets us compare directions on equal terms.
+The unit-length constraint is essential: multiplying $v$ by ten would otherwise multiply the objective by one hundred without choosing a better direction.
 
 ### Why large spread also gives a good reconstruction
 
@@ -85,9 +116,9 @@ A score tells us where a sample lies along a line, but discards its position per
 $$
 \|Z\|_F^2=\|Zv\|_2^2+\|Z-(Zv)v^\top\|_F^2,
 $$
-where $\|M\|_F^2=\sum_{i,j}M_{ij}^2$ is the squared Frobenius norm. Rotating the line redistributes a fixed total: a direction with more spread along it has less squared distance left perpendicular to it. Thus the line that maximizes score variance also minimizes reconstruction error [@holmeshuber2019, sec. 7.3.2]. PCA's two descriptions, a direction of large spread and a line that fits the samples well, solve the same problem.
+where $\|M\|_F^2=\sum_{i,j}M_{ij}^2$ is the squared Frobenius norm. Rotating the line redistributes a fixed total: a direction with more spread along it has less squared distance left perpendicular to it. Thus the line that maximizes score variance also minimizes reconstruction error [@holmeshuber2019, sec. 7.3.2].
 
-For a preview, take the first two genes of the four-sample example developed below. Their centered measurements are $(-2,-1)$, $(-1,-2)$, $(1,2)$, and $(2,1)$. Both genes tend to be below their means in s1 and s2 and above their means in s3 and s4. @fig-pca-score-projection compares two ways to summarize that coordinated variation: using gene 1 alone or combining the genes along their shared direction. The retained sum of squares rises from 10 to 18, and the residual falls from 10 to 2. Their total remains 20.
+For a preview, take the first two genes of the four-sample matrix in @exm-pca-four-samples. Their centered measurements are $(-2,-1)$, $(-1,-2)$, $(1,2)$, and $(2,1)$. Both genes tend to be below their means in s1 and s2 and above their means in s3 and s4. @fig-pca-score-projection compares two ways to summarize that coordinated variation: using gene 1 alone or combining the genes along their shared direction. The retained sum of squares rises from 10 to 18 while the residual falls from 10 to 2, keeping the total at 20.
 
 ```{.python .execute}
 #| label: fig-pca-score-projection
@@ -115,11 +146,48 @@ Define the sample covariance matrix
 $$
 S=\frac{Z^\top Z}{n-1}\in\mathbb R^{p\times p}.
 $$
-Its entry $S_{jk}$ averages products of the centered measurements for genes j and k. Positive values indicate that their departures tend to have the same sign; negative values indicate opposite signs. The diagonal $S_{jj}$ is the variance of gene j. No probability distribution for the measurements is needed to compute this descriptive matrix.
+Its entry $S_{jk}$ averages products of the centered measurements for genes j and k. Positive values indicate that their departures tend to have the same sign; negative values indicate opposite signs. The diagonal $S_{jj}$ is the variance of gene j.
 
-The PCA objective is $v^\top Sv$. Recall that an eigenvector satisfies $Sv_k=\lambda_kv_k$: multiplication by $S$ leaves its direction unchanged. A real symmetric matrix such as $S$ has an orthonormal basis of eigenvectors $v_1,\ldots,v_p$. Its eigenvalues are nonnegative, since $v^\top Sv=\|Zv\|^2/(n-1)\ge0$. Order them as $\lambda_1\ge\cdots\ge\lambda_p\ge0$.
+The PCA objective can be written with $S$. Squaring and adding the scores gives
+$$
+\frac{\|Zv\|_2^2}{n-1}=\frac{(Zv)^\top(Zv)}{n-1}
+=v^\top\Bigl(\frac{Z^\top Z}{n-1}\Bigr)v=v^\top Sv
+=\sum_{j=1}^p\sum_{k=1}^p v_j\,S_{jk}\,v_k .
+$$
+Read from the right, the variance along $v$ takes every pair of genes, multiplies their covariance by the product of their weights, and adds. Two genes that rise together ($S_{jk}>0$) contribute extra variance when they receive weights of the same sign, which is why combining genes 1 and 2 retained more spread in @fig-pca-score-projection. Recall that an eigenvector satisfies $Sv_k=\lambda_kv_k$: multiplication by $S$ leaves its direction unchanged. A real symmetric matrix such as $S$ has an orthonormal basis of eigenvectors $v_1,\ldots,v_p$. Its eigenvalues are nonnegative, since $v^\top Sv=\|Zv\|^2/(n-1)\ge0$. Order them as $\lambda_1\ge\cdots\ge\lambda_p\ge0$.
 
-Along eigenvector $v_k$, the score variance is exactly $\lambda_k$. A general unit direction combines these perpendicular directions. Its variance is a weighted average of their eigenvalues, with weights equal to its squared coefficients. Because those weights sum to one, mixing in a direction with smaller variance cannot improve on the largest eigenvalue. The calculation below makes that argument precise.
+Along eigenvector $v_k$, the score variance is exactly $v_k^\top Sv_k=\lambda_k$; a general unit direction mixes these perpendicular directions, and its variance is a weighted average of their eigenvalues, with weights equal to its squared coefficients. For genes 1 and 2 of @exm-pca-four-samples, whose eigenvalues are 6 and $2/3$, the unit vector $v=(\cos\theta,\sin\theta)$ gives
+$$
+v^\top Sv=6\cos^2(\theta-45^\circ)+\tfrac23\sin^2(\theta-45^\circ),
+$$
+a weighted average with weights summing to one, so the variance peaks at $\theta=45^\circ$. @fig-pca-rotating-direction follows the sums of squares as $v$ rotates.
+
+```{.python .execute}
+#| label: fig-pca-rotating-direction
+#| echo: false
+#| fig-width: 4.6
+#| fig-height: 3
+#| fig-cap: "Retained and residual sums of squares for the two centered genes of @fig-pca-score-projection as the unit direction v = (cos θ, sin θ) rotates. The curves always add to 20, so the retained part peaks at 18 on the eigenvector direction θ = 45° exactly where the residual is smallest."
+#| fig-alt: "Two curves against angle from 0 to 180 degrees. The retained curve rises from 10 to a red-marked maximum of 18 at 45 degrees and falls to 2 at 135 degrees; the residual curve mirrors it. A dashed line at 20 marks their constant sum."
+angles = np.linspace(0, 180, 361)  # two_genes is drawn in the projection figure
+retained = []
+for angle in np.radians(angles):
+    direction = np.array([np.cos(angle), np.sin(angle)])
+    retained.append(np.sum((two_genes @ direction) ** 2))
+retained = np.array(retained)
+total = np.sum(two_genes ** 2)
+fig, ax = plt.subplots()
+ax.plot(angles, retained, label="retained $\\|Zv\\|^2$")
+ax.plot(angles, total - retained, label="residual")
+ax.axhline(total, color=cf.RULE, linestyle="--", linewidth=1)
+ax.text(178, total - 1.6, "total 20", ha="right", fontsize=9)
+ax.plot(0, 10, "o", color="k", markersize=5, label="gene 1 alone, θ = 0°")
+ax.plot(45, 18, "o", color=cf.EMPHASIS, markersize=6, label="PC1, θ = 45°")
+ax.set(xlabel="Angle θ of v (degrees)", ylabel="Sum of squares",
+       xticks=[0, 45, 90, 135, 180], yticks=[0, 5, 10, 15, 20], ylim=(0, 21.5))
+ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2)
+plt.show()
+```
 
 ::: {#thm-pca-variance}
 ## Maximum-variance direction
@@ -135,6 +203,10 @@ $$
 Taking $v=v_1$ puts all the weight on $\lambda_1$ and attains the bound.
 :::
 
+::: {.callout-note title="Key idea"}
+Rotating a unit direction only moves squared spread between the line and its perpendicular, so the direction of greatest spread is also the best-fitting line. Along any unit direction the variance is a weighted average of the eigenvalues of $S$, so the top eigenvector wins.
+:::
+
 Further components maximize the same objective subject to being perpendicular to earlier loading directions. Choosing successive eigenvectors gives variances $\lambda_2,\lambda_3,\ldots$. Their scores have zero pairwise sample covariance, because
 $$
 \frac{t_j^\top t_k}{n-1}=v_j^\top Sv_k=0\quad(j\ne k).
@@ -143,7 +215,9 @@ This is an algebraic property of the summary; it does not say the underlying gen
 
 ## A four-sample example by hand
 
-Suppose these numbers have already been put on a comparable transformed expression scale. They are synthetic measurements, not raw read counts:
+::: {#exm-pca-four-samples}
+## PCA of four samples and three genes
+Suppose these synthetic numbers have already been put on a comparable transformed expression scale:
 
 | sample | gene 1 | gene 2 | gene 3 |
 |---|---:|---:|---:|
@@ -163,12 +237,12 @@ Z=\begin{pmatrix}
 \qquad
 S=\frac13\begin{pmatrix}10&8&0\\8&10&0\\0&0&4\end{pmatrix}.
 $$
-Genes 1 and 2 tend to increase together, but are not identical. Each alone has variance $10/3$. Combining them equally gives a larger variance:
+Genes 1 and 2 tend to increase together, but are not identical. Each alone has variance $10/3$, while their equal combination is an eigenvector with the larger variance 6:
 $$
 S\frac{(1,1,0)^\top}{\sqrt2}
 =6\frac{(1,1,0)^\top}{\sqrt2}.
 $$
-The joint direction therefore retains variance 6, compared with $10/3$ for either gene alone. The complete eigenpairs, in decreasing order, are
+The complete eigenpairs, in decreasing order, are
 $$
 v_1=\frac1{\sqrt2}(1,1,0)^\top,\quad \lambda_1=6;
 \qquad
@@ -188,7 +262,9 @@ $$
 \frac{\lambda_1}{\sum_j\lambda_j}
 =\frac{6}{6+4/3+2/3}=\frac34=75\%.
 $$
-"Explained" means retained squared spread of these transformed measurements. To relate the separation to a condition, we would need sample metadata.
+:::
+
+"Explained" means retained squared spread of these transformed measurements.
 
 ## SVD computes scores and loadings together
 
@@ -272,17 +348,30 @@ This is the squared-error form of the Eckart-Young result. In our example, $r=1$
 Sketch. The rows of any rank-at-most-$r$ approximation $A$ lie in some subspace $W$ of dimension at most $r$. Projecting each row of $Z$ orthogonally onto $W$ is at least as close as its proposed row in $A$. Choose an orthonormal basis $w_1,\ldots,w_r$ for $W$, padding $W$ if necessary. Its retained squared spread is $\sum_k\|Zw_k\|^2$. Extend $d_j=0$ for $j>q$. In a full orthonormal eigenbasis $v_1,\ldots,v_p$ of $Z^\top Z$, the retained spread equals $\sum_j d_j^2\beta_j$, where $\beta_j=\sum_{k=1}^r(v_j^\top w_k)^2$. Each $\beta_j$ is the squared length of the projection of a unit eigenvector onto $W$, so $0\le\beta_j\le1$; summing over the full eigenbasis gives $\sum_j\beta_j=r$. The largest possible sum puts weight one on the $r$ largest squared singular values. The leading right singular vectors attain that bound. The projection identity then gives the displayed minimum and residual.
 :::
 
-If $p>q$, the omitted eigenvalues in this argument are zero. Take $0\le r\le q$; retaining more than the number of positive singular values gives no further improvement. Adding the means back yields $X_r=Z_r+\mathbf1\bar x^\top$. The rank guarantee concerns the centered variation $Z$, not necessarily this matrix with its baseline restored.
+Adding the means back yields $X_r=Z_r+\mathbf1\bar x^\top$. The rank guarantee concerns the centered variation $Z$, not necessarily this matrix with its baseline restored.
 
 :::
 
-A dense reduced SVD costs roughly $\mathcal O(np\min(n,p))$ operations. When genes greatly outnumber samples, explicitly forming the $p\times p$ covariance matrix wastes storage; SVD can work directly with $Z$. The formulas identify the quantities we need without requiring that large matrix to be built.
-
 ## What the summary can and cannot establish
 
-Centering defines differences from a common baseline. Orthogonal projection divides their squared spread into retained variation and residual error. The eigenvector argument selects the best directions, and SVD computes their loadings, scores, and reconstruction errors together.
+Return to the T-cell question of @fig-expression-heatmap. The same steps, applied to its nine-by-twelve synthetic matrix, answer both parts at once:
 
-Those guarantees concern the matrix supplied to PCA. Without centering, the squared spread includes the common mean profile. Rescaling genes changes which differences count most. Lesson 16 examines these choices, sequencing depth, and sample metadata.
+```{.python .execute}
+#| label: code-pca-t-cells
+expression = np.array(expression_rows)
+centered = expression - expression.mean(axis=0)
+_, t_cell_singular, t_cell_vt = np.linalg.svd(centered, full_matrices=False)
+t_cell_loadings = t_cell_vt[0].copy()
+if t_cell_loadings[np.argmax(np.abs(t_cell_loadings))] < 0:
+    t_cell_loadings *= -1
+print("PC1 fraction:", np.round(t_cell_singular[0]**2 / np.sum(t_cell_singular**2), 3))
+print("PC1 loadings:", np.round(t_cell_loadings, 2))
+print("PC1 scores:", np.round(centered @ t_cell_loadings, 1))
+```
+
+One component retains about 97% of the squared spread. Its loadings, listed in the heat map's gene order, are negative for the five naive-cell genes, positive for the five effector genes, and near zero for ACTB and GAPDH. The scores place the naive samples near $-10$, the memory samples near $-2$, and the effector samples near $+12$: a single coordinate orders the samples and the loadings name the genes responsible.
+
+The optimality guarantees concern the matrix supplied to PCA. Without centering, the squared spread includes the common mean profile. Rescaling genes changes which differences count most. Lesson 16 examines these choices, sequencing depth, and sample metadata.
 
 PCA retains directions with large squared spread; a technical batch or an outlier can supply that spread. A high loading identifies a gene contributing to a direction on the chosen scale, without establishing a causal role. The biological inference comes from relating these gene patterns and sample coordinates to the experiment.
 

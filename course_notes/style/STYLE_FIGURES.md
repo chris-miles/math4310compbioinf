@@ -49,6 +49,9 @@ Set `fig-cap` in the chunk header — that is the caption mechanism. Every capti
 ## When to Make a Figure
 Every figure must answer a specific question. Skip ornamentation. A DP-table heatmap is worth it; a generic "schematic of the pipeline" usually is not. Schematics that *are* worth it (HMM state diagrams, de Bruijn graphs) go through matplotlib + networkx, not external editors, so they regenerate from source. The most valuable figure shows why something is true: a path through the table, evidence accumulating along a sequence, points projected onto an axis. A table of computed values shows the result, not the idea. Never add a picture for decoration.
 
+## Borrowed Figures
+A published figure can show real data or an instrument better than a simulation: a sequencing run, a genome-browser track, a single-cell atlas. Use one only when its license permits reuse (CC BY, CC BY-SA, CC0, or public domain such as NIH/NHGRI images); textbook figures are not reusable. Save it under `site/assets/borrowed/`, record its source URL and license in `site/assets/borrowed/README.md`, and place it as the builder places generated figures: a `::: {#fig-... .course-figure}` div holding an `<img>` tag with `alt` text, then the caption paragraph. The caption ends with the credit and license: "Reproduced from @key (CC BY 4.0)." When the license is unclear, redraw the idea from public data with `coursefigs` and credit it "after @key."
+
 ## File Conventions
 - Figures generated inline in executable Markdown chunks; no committed PNG/PDF unless hand-drawn or third-party.
 - Chunk labels: `fig-{chapter}-{shortname}`, kebab-case (e.g. `fig-align-nw-table`).

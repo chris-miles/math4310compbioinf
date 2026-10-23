@@ -65,11 +65,18 @@ Symbols are defined when they first appear in a lesson. Some letters have differ
 | $p_j$ | Calibrated p-value for feature $j$ in the testing lessons |
 | $V$, $R$, $\mathrm{FDP}=V/\max(R,1)$ | False rejections, total rejections, and realized false discovery proportion |
 | $\mathrm{FDR}=E[\mathrm{FDP}]$ | Expected false discovery proportion |
+| $m$, $m_0$, $\mathcal H_0$ | Number of genes tested, number with a true null hypothesis, and the set of those genes |
+| $q$, $p_{(i)}$ | Target FDR level, and the $i$-th smallest of the $m$ p-values |
 | $x(t)$, $\beta$, $\alpha$ | Gene-product abundance, production rate, and removal-rate constant in the scalar ODE |
 | $x^*=\beta/\alpha$ | Steady abundance for constant production and removal |
+| $K$, $n$, $a=\beta/(\alpha K)$ | Repression threshold, Hill coefficient, and scaled maximal production in the switch lesson |
+| $u$, $v$, $H(z)=a/(1+z^n)$, $J$ | Scaled toggle-switch repressor concentrations, scaled repression function, and Jacobian |
 | $x_k$, $y_k$ | Hidden abundance and its recorded observation at time $t_k$ |
 | $F_h(x)$, $h$ | Deterministic state update across an observation interval, and that interval's duration |
 | $w_k$, $v_k$ | Process disturbance and measurement error in the noisy-dynamics lesson |
+| $q$, $r$, $c$ | Variances of $w_k$ and $v_k$, and the reporter gain in $y_k=c\,x_k+v_k$ |
+| $e_k=x_k-x^*$, $\lambda=1-\alpha h$ | Deviation from steady state and its per-step Euler multiplier |
+| $\sigma_x^2=q/(1-\lambda^2)$, $\rho(\ell)$ | Stationary abundance variance and the readings' autocorrelation at lag $\ell$ |
 
 In the toy HMM, state $B$ denotes background and state $I$ denotes an island-like region. Observation $S$ groups C/G and observation $W$ groups A/T. These observation symbols are distinct from the window score $S(x)$.
 

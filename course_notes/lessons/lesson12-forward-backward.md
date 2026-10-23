@@ -14,6 +14,7 @@ How much support does each base have for belonging to an island-like region?
 #| label: setup
 #| code-fold: true
 import math
+import random
 import sys
 
 import matplotlib.pyplot as plt
@@ -25,11 +26,9 @@ cf.use_style()
 
 ## Genome labels and uncertainty
 
-Lesson 11 chose one complete annotation of the assembled DNA: for `CGAC`, the model's best path put the first two bases in an island-like region and the last two in background. That gives a proposed boundary after base 2. How strongly do the letters support it? Other paths can explain the same sequence, including a path that puts all four bases in the island. Selecting the best path alone does not tell us how much support these alternatives share.
+Lesson 11 chose one complete annotation of the assembled DNA: for `CGAC`, the model's best path put the first two bases in an island-like region and the last two in background, with a boundary after base 2. How strongly do the letters support that boundary? Other paths explain the same sequence, including one that puts all four bases in the island, and the best path alone does not say how much support these alternatives share.
 
-The input is still the DNA sequence and the fixed region model. We now want a probability for each label at each position, using all the observed bases. Such probabilities can identify an uncertain boundary or a weakly supported interval before we treat the decoded map as evidence about a genomic region [@durbin1998].
-
-Keep the B/I hidden Markov model from Lessons 10 and 11. The observations are $S$ for C/G and $W$ for A/T; the hidden labels are background $B$ and island-like $I$. This reduced alphabet describes GC enrichment, not the CG-pair signal itself. All calculations condition on the model and a fixed sequence length, with no end-state probability.
+The input is still the DNA sequence and the fixed region model. We now want a probability for each label at each position, using all the observed bases, so that an uncertain boundary or a weakly supported interval is flagged before we treat the decoded map as evidence about a genomic region [@durbin1998]. We keep the B/I hidden Markov model from Lessons 10 and 11, with $S$ for C/G, $W$ for A/T, hidden labels $B$ and $I$, and a fixed sequence length with no end-state probability:
 
 $$
 p_B=p_I=0.5,\qquad
@@ -46,7 +45,7 @@ I&0.8&0.2
 \end{array}.
 $$
 
-$Q=\{B,I\}$ is the state set. Write $p_k$ for the initial-state probability, $a_{k\ell}$ for the probability of moving from state $k$ to state $\ell$, and $e_k(b)$ for the probability that state $k$ emits symbol $b$. Rows of $A$ are source states; rows of $E$ are emitting states. The hidden states form a first-order Markov chain. Given a hidden path, emissions are independent and each emission depends only on its state. These are the assumptions that let us combine evidence on either side of a position.
+Here $Q=\{B,I\}$ is the state set, $p_k$ is the initial-state probability, $a_{k\ell}$ is the probability of moving from state $k$ to state $\ell$ (rows of $A$ are source states), and $e_k(b)$ is the probability that state $k$ emits symbol $b$. Two assumptions carry the whole lesson: the hidden states form a first-order Markov chain, and given the hidden path, each emission depends only on its own state. Together they let us combine the evidence on either side of a position.
 
 ::: {#def-posterior-state}
 ## Posterior state probability
@@ -57,7 +56,7 @@ $$
 The output is one probability distribution over states for every position.
 :::
 
-The DNA `CGAC` gives $x=\texttt{SSWS}$. Viterbi returns $\texttt{IIBB}$ with joint probability $0.0129024$, establishing the best *complete path*. To assess the final label, we must add the probabilities of all paths ending in $I$ and compare that sum with all paths ending in $B$. This changes the operation we need: retain the combined probability of alternative explanations rather than just the largest one.
+The DNA `CGAC` gives $x=\texttt{SSWS}$, and Viterbi returns the best *complete path* $\texttt{IIBB}$ with joint probability $0.0129024$. To assess the final label, we must instead add the probabilities of all paths ending in $I$ and compare that sum with the total for paths ending in $B$. The operation changes from keeping the largest probability to keeping the combined probability of alternative explanations.
 
 ## The forward algorithm
 
@@ -70,7 +69,7 @@ $$
 sums over every hidden prefix ending at state $k$.
 :::
 
-It includes the emission of $x_i$. To compute the entry for state $k$, partition the possible hidden prefixes by their state $\ell$ at position $i-1$. Those alternatives are mutually exclusive. Their masses therefore add, even though many different paths can belong to each alternative.
+It includes the emission of $x_i$. To compute the entry for state $k$, partition the hidden prefixes by their state $\ell$ at position $i-1$; these alternatives are mutually exclusive, so their masses add, even though many different paths belong to each.
 
 A prefix ending in $\ell$ has total mass $f_\ell(i-1)$. The transition to $k$ multiplies it by $a_{\ell k}$, and the destination state emits $x_i$ with probability $e_k(x_i)$. That emission factor is common to every predecessor. Thus
 $$
@@ -149,7 +148,15 @@ The suffix is more likely starting from $I$ at position 3, although the symbol a
 
 ## Combining the two directions
 
-Fixing the state at position $i$ separates the calculation into a past and a future. Every prefix ending in $k$ can be joined to every suffix starting from $k$. The forward value adds the prefix probabilities; the backward value adds the conditional suffix probabilities. Multiplying the two sums accounts for every compatible combination once. Because forward includes $x_i$ and backward starts at $x_{i+1}$, no observation is counted twice.
+Fixing the state at position $i$ splits every complete path through that state into a hidden prefix $u=\pi_1\ldots\pi_{i-1}$ that enters $k$ and a hidden suffix $u'=\pi_{i+1}\ldots\pi_n$ that leaves it. Given $\pi_i=k$, the Markov and emission assumptions make the future independent of the past, so each complete path probability is a product of a prefix factor and a suffix factor. Any prefix can be joined to any suffix, and the double sum over all pairs therefore factors:
+$$
+P(x,\pi_i=k)
+=\sum_{u}\sum_{u'}
+\underbrace{P(x_1\ldots x_i,\ u\,k)}_{\text{prefix into }k}\,
+\underbrace{P(x_{i+1}\ldots x_n,\ u'\mid\pi_i=k)}_{\text{suffix out of }k}
+=f_k(i)\,b_k(i).
+$$
+Forward gathers the fan of paths entering node $(k,i)$ from the left, backward gathers the fan leaving it to the right, and their product counts every complete path through the node exactly once. For SSWS at position 2, the left fan into $I$ holds two prefixes and the right fan holds four suffixes, so $f_I(2)b_I(2)=0.216(0.184)$ sums eight complete paths. Because forward includes $x_i$ and backward starts at $x_{i+1}$, no observation is counted twice.
 
 ::: {#prp-forward-backward-posterior}
 ## Forward-backward identity
@@ -162,7 +169,7 @@ Consequently, $\gamma_k(i)=f_k(i)b_k(i)/P(x)$.
 :::
 
 ::: {.proof}
-Sketch. Split the observations just after $i$. Conditional on $\pi_i$, the future is independent of the observed prefix. The probability of the prefix and state is $f_k(i)$; the conditional probability of the suffix is $b_k(i)$. Multiplying gives their joint probability. Summing over the mutually exclusive states gives $P(x)$, and division gives the conditional probability.
+Sketch. The factored double sum above gives the first identity. Summing it over the mutually exclusive states $k$ gives $P(x)$, and dividing gives the conditional probability.
 :::
 
 ::: {#exm-posterior-ssws}
@@ -179,9 +186,9 @@ At position 2, $\gamma_I(2)=0.216(0.184)/0.060576\approx0.656$.
 Choosing the largest posterior at each position gives $\texttt{IIBI}$. Viterbi gave $\texttt{IIBB}$. At the last position, all paths ending in $I$ together beat all paths ending in $B$, even though the strongest individual path ends in $B$.
 :::
 
-A 0.516 posterior is weak support for that last island label. Reporting the probability makes this visible. It is also conditional on our chosen emissions and transition probabilities; it does not measure uncertainty about whether those assumptions are right.
+A 0.516 posterior is weak support for that last island label, and reporting the probability makes the weakness visible. The probability is conditional on our chosen emission and transition probabilities; it does not measure uncertainty about whether those assumptions are right.
 
-@fig-forward-backward-path-groups shows the comparison responsible for the disagreement. The largest individual path belongs to the B-ending group, but the I-ending paths have slightly more probability when added together. Summing several explanations answers a different question from selecting one explanation.
+@fig-forward-backward-path-groups shows the comparison responsible for the disagreement: the largest individual path belongs to the B-ending group, but the I-ending paths have slightly more probability when added together.
 
 ```{.python .execute}
 #| label: fig-forward-backward-path-groups
@@ -304,7 +311,13 @@ probability, [round(column["I"], 3) for column in posterior]
 
 ### A disagreement inside a region
 
-Append one S to the running observation, giving SSWSS. The most probable complete path is now IIIII, with joint probability 0.005308416. The posterior at the interior W is only $\gamma_I(3)\approx0.323$, so positionwise decoding gives IIBII. A single path can win by staying in I throughout while the combined mass of paths using B at the middle position is larger. This is why the two decoding objectives can give different annotations even away from sequence boundaries.
+The SSWS disagreement occurs at the last base, where $b_k(4)=1$ and no later symbol can weigh in. Appending one S, giving SSWSS, moves it into the interior. The most probable complete path is now IIIII, with joint probability 0.005308416, because two S symbols on each side make it worth bridging the W. Extending the forward table by one column and recomputing the backward table gives the two alternatives at that W:
+$$
+P(x,\pi_3=B)=f_B(3)\,b_B(3)=0.10752(0.192)\approx0.020644,
+\qquad
+P(x,\pi_3=I)=f_I(3)\,b_I(3)=0.02928(0.336)\approx0.009838.
+$$
+These sum to $P(\texttt{SSWSS})=0.03048192$, so $\gamma_I(3)\approx0.323$ and positionwise decoding gives IIBII. IIIII alone holds more than half of the mass with I at position 3. The mass with B there is spread over 16 paths whose best member, IIBII at 0.004128768, loses to IIIII, yet together they outweigh the I paths about two to one. The two objectives can therefore disagree well away from the ends of a sequence.
 
 ```{.python .execute}
 #| label: fig-forward-backward-evidence
@@ -334,6 +347,72 @@ plt.show()
 At the last position the two curves meet: the prefix is the whole sequence, and every backward value is one. At earlier positions their separation measures how the remaining observations change the state probability under this model.
 
 With $K=|Q|$ states, each table has $nK$ entries and each entry sums $K$ terms. Time is $\mathcal O(nK^2)$ and storage is $\mathcal O(nK)$. A likelihood alone needs only a rolling forward column and $\mathcal O(K)$ storage.
+
+### Posteriors along a simulated sequence
+
+The same computation applies to the 300-position sequence simulated from the sticky variant ($a_{BB}=0.98$, $a_{II}=0.95$, emissions unchanged) and decoded by Viterbi in the previous lesson. Its probability, about $5\times10^{-83}$, is still within floating-point range, so the plain-probability code suffices here; much longer sequences need the log-space version below. @fig-forward-backward-simulated plots $\gamma_I(i)$ against the true islands and the Viterbi path.
+
+```{.python .execute}
+#| label: fig-forward-backward-simulated
+#| code-fold: true
+#| code-summary: "Simulate the sequence and compute posteriors"
+#| fig-width: 6
+#| fig-height: 2.8
+#| fig-cap: "Posterior probability of the island state (blue) along the simulated sticky-variant sequence; shading marks the true islands and red bars the Viterbi islands. The posterior is near 0 or 1 where the letters are unambiguous and drops toward one half at boundaries, in W-rich islands, and in short S-rich stretches of background, places where the single Viterbi path draws sharp edges without showing any doubt."
+#| fig-alt: "A blue curve over positions 1 to 300 between 0 and 1, with six light grey shaded intervals and six red bars above the curve near the top. The curve is near 1 inside most shaded intervals, near 0 between them, near 0.5 around positions 90 to 96 and 146 to 154, and between 0.55 and 0.7 at positions 264 to 273. A dotted line marks 0.5."
+def simulate_hmm(
+    n: int,
+    initial: dict[str, float],
+    transition: dict[str, dict[str, float]],
+    emission: dict[str, dict[str, float]],
+    rng: random.Random,
+) -> tuple[str, str]:
+    """Draw observations and a hidden path of length n (as in Lesson 10)."""
+
+    def draw(distribution: dict[str, float]) -> str:
+        """Draw one outcome with the probabilities stored as values."""
+        return rng.choices(list(distribution), weights=list(distribution.values()))[0]
+
+    state = draw(initial)
+    path = [state]
+    observations = [draw(emission[state])]
+    for _ in range(1, n):
+        state = draw(transition[state])
+        path.append(state)
+        observations.append(draw(emission[state]))
+    return "".join(observations), "".join(path)
+
+
+sticky_transition = {"B": {"B": 0.98, "I": 0.02}, "I": {"B": 0.05, "I": 0.95}}
+x_sim, path_sim = simulate_hmm(
+    300, initial, sticky_transition, emission, random.Random(6)
+)
+left, right, likelihood = forward_backward(
+    x_sim, states, initial, sticky_transition, emission
+)
+gamma_I = []
+for prefix, suffix in zip(left, right):
+    gamma_I.append(prefix["I"] * suffix["I"] / likelihood)
+# (first, last) island intervals of this sequence's Viterbi path, from Lesson 11.
+viterbi_islands = [(43, 64), (97, 105), (133, 145), (185, 202), (213, 229), (249, 273)]
+
+positions = list(range(1, len(x_sim) + 1))
+fig, ax = plt.subplots()
+island = [i + 1 for i, state in enumerate(path_sim) if state == "I"]
+ax.bar(island, 1.13, width=1, color=cf.LIGHT, linewidth=0)
+for first, last in viterbi_islands:
+    ax.plot([first - 0.5, last + 0.5], [1.08, 1.08],
+            color=cf.EMPHASIS, linewidth=4, solid_capstyle="butt")
+ax.plot(positions, gamma_I, color="C0")
+ax.axhline(0.5, color=cf.RULE, linewidth=0.8, linestyle=":")
+ax.set(xlim=(0.5, 300.5), ylim=(0, 1.13), yticks=[0, 0.5, 1],
+       xlabel="Position", ylabel="P(island state | x)")
+plt.show()
+print(f"P(x) = {likelihood:.2g}; expected island positions = {sum(gamma_I):.1f}; "
+      f"true island positions = {path_sim.count('I')}")
+```
+
+In islands made almost entirely of S, such as positions 99 to 105, 134 to 145, and 249 to 262, the posterior rises above 0.8 within a position or two of the boundary and stays there, and in long background stretches it stays near 0. Uncertainty concentrates elsewhere: the curve climbs over several positions at each boundary, sags toward 0.55 inside the W-rich island at 215 to 228, and hovers near one half in short S-rich stretches of background such as 90 to 96 and 146 to 154, where a small island and a background fluctuation explain the letters about equally well. The 11 background positions that Viterbi appended to the last island carry posteriors of only 0.55 to 0.7, a doubt the single path does not show. Summing the curve gives about 104 expected island positions, against 95 in the truth.
 
 ### Stable sums in log space
 

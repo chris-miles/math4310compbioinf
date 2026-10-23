@@ -52,7 +52,7 @@ Section order may vary to explain the subject. Local formatting conventions shou
 
 Use this progression in the lesson's main explanation, not solely in a biology callout. "Sequence analysis is important in modern biology" gives the reader no problem to solve. Mathematical definitions and algorithms should answer a question the reader already understands.
 
-Use Lesson 1's sequencing-to-read comparison as the clarity benchmark throughout the book. At a topic's first appearance, briefly explain what the technology measures, show what one resulting record looks like, and state what we want to learn biologically. Terms such as read, reference, alignment, expression count, and reporter need that orientation before they can carry an explanation. A continuing lesson can recall the established data and pose its new question. Keep the Core question understandable before the lesson's technical definitions, and use a small sketch or comparison when it can show the problem more clearly than another paragraph.
+Use Lesson 1's sequencing-to-read comparison as the clarity benchmark throughout the book. At a topic's first appearance, briefly explain what the technology measures, show what one resulting record looks like, and state what we want to learn biologically. Terms such as read, reference, alignment, expression count, and reporter need that orientation before they can carry an explanation. A continuing lesson can recall the established data and pose its new question. Keep the Core question understandable before the lesson's technical definitions, and use a small sketch or comparison when it can show the problem more clearly than another paragraph. Show real or realistic data before abstracting it: reads stacked against a reference, an expression heat map with gene names, a reporter time course. A cited published figure can serve when its license permits reuse (see `STYLE_FIGURES.md`).
 
 **Required: keep the biological meaning connected to the work throughout when informative.** Explain how modeling choices represent the data, why a computational obstacle matters for the inference, what an algorithm's behavior means for the biological question, and what results and limitations allow us to conclude. An opening motivation followed by mathematics with no return to that question is insufficient. Do not force a biological aside into every algebraic step; place these connections where they help the reader understand a choice or an answer.
 
@@ -136,6 +136,7 @@ Justify complexity by counting the operations that dominate the computation. For
 - Prefer familiar wording: "use," "compute," "choose," "assume," and "estimate." Keep technical vocabulary when it adds precision; define it at first use.
 - Be direct about uncertainty. Say what the model assumes or what evidence supports an interpretation. Avoid both overclaiming and stacks of hedges.
 - Use present tense for mathematics and algorithms. Reserve boldface for a small number of terms or distinctions worth finding again.
+- Vary sentence length. A run of short declarative sentences, each asserting one fact, reads as a list with the periods left in. Join a claim to its reason and let a paragraph move from a question to its answer, as a lecturer would at the board.
 
 Concrete questions can help when they express a real problem: "Which previous state could produce this observation?" Follow with the reasoning. Avoid theatrical questions, manufactured suspense, and reassurance that a topic is simple. The default voice is calm, interested, and explanatory.
 
@@ -225,7 +226,7 @@ Retain recognizable topic names: "Global Alignment," "Markov Chains," "Viterbi D
 
 ### Default budget
 
-Prepare roughly one hour of taught material within the scheduled meeting. This is a teaching-duration target, not an hour of reading or a word-count target. Lesson 1 is a useful depth benchmark and may be slightly short. Some existing lessons need more development to support that hour. Concise, self-contained notes must supply enough derivation, worked examples, biological interpretation, and practice for a full lesson; they must not become skeletal summaries. Estimate time for explanation, board work, tracing an algorithm, and student calculation as well as prose. Add material that advances the lesson's question, without padding. Spend most of the lesson on its one or two central ideas; a side topic that would get only a paragraph is usually better cut or made an exercise.
+Prepare roughly one hour of taught material within the scheduled meeting. This is a teaching-duration target, not an hour of reading or a word-count target. Lesson 1, about 3,000 words of source including code, marks the typical scale and may be slightly short. A lesson well below that scale usually lacks a worked example, a figure, or interpretation; supply what is missing rather than a new topic. Concise, self-contained notes must supply enough derivation, worked examples, biological interpretation, and practice for a full lesson; they must not become skeletal summaries. Estimate time for explanation, board work, tracing an algorithm, and student calculation as well as prose. Add material that advances the lesson's question, without padding. Spend most of the lesson on its one or two central ideas; a side topic that would get only a paragraph is usually better cut or made an exercise.
 
 Use these ranges to keep the scale of lessons consistent. They are pacing defaults, not quotas or acceptance tests.
 
@@ -235,7 +236,7 @@ Use these ranges to keep the scale of lessons consistent. They are pacing defaul
 | Numbered propositions or theorems | 1 or 2, each with justification |
 | Worked examples | 2 or 3 |
 | Code chunks | 2 or 3, short |
-| Figures | 1 to 3; at least one shows the central idea at work, not only computed values |
+| Figures | 2 to 4; at least one shows the central idea at work, not only computed values; a lesson that introduces a kind of data shows what it looks like |
 | Interruptive callouts | At most 2, including Key idea boxes; numbered environments are not callouts |
 | Exercises | 3 to 5 |
 | "Going deeper" blocks | 0 to 2, genuinely optional |
@@ -362,7 +363,7 @@ Code serves mathematical understanding. Mention real tools such as BWA, BLAST, a
 
 Allow a student's preferred language unless a particular task needs a restriction. Python and scientific packages describe the lecture examples, not a universal submission requirement. Chris will rarely inspect code line by line; emphasize the reasoning, independently justified checks, actual outputs, and interpretation. Code should remain reproducible and explainable.
 
-For an introductory problem set, aim for 3 or 4 problems and about one hour: small hand calculations or proofs, a compact coding or debugging task, and a concrete interpretation question. Let students use AI where permitted by the course policy. Ask for meaningful validation and a brief disclosure, not long process narratives. No take-home question is literally LLM-proof; unsupported claims of AI resistance do not belong in student material. Do not introduce new graded quizzes or assessment weights without a course-level decision.
+For an introductory problem set, aim for 3 or 4 problems and about one hour; later sets usually have 4 or 5. Combine small hand calculations or proofs, a compact coding or debugging task, and a concrete interpretation question. Let students use AI where permitted by the course policy. Ask for meaningful validation and a brief disclosure, not long process narratives. No take-home question is literally LLM-proof; unsupported claims of AI resistance do not belong in student material. Do not introduce new graded quizzes or assessment weights without a course-level decision.
 
 ## Required review before accepting a lesson
 

@@ -25,7 +25,7 @@ cf.use_style()
 
 Suppose we sequence two bacterial isolates, assemble their reads into longer DNA strings, and extract the same gene from each assembly. We want to identify which bases correspond and where the gene sequences differ. Because both records cover the complete gene, we expect a comparison from beginning to end. An insertion or deletion can shift the internal positions, so equal-numbered bases need not be the corresponding ones.
 
-For a toy version, take $x=\texttt{ACGT}$ and $y=\texttt{AGT}$. Pairing C with a gap allows the later G and T bases to match. Longer strings admit many competing gap placements. Given scores for paired letters and gaps, we seek the highest-scoring correspondence that uses every letter of both records, called a *global alignment*. Trying each correspondence separately would repeat much of the same work. A dynamic program stores the best score for each pair of prefixes, then recovers an alignment attaining the full score.
+For a toy version, take $x=\texttt{ACGT}$ and $y=\texttt{AGT}$: pairing C with a gap lets the later G and T bases match. Longer strings admit many competing gap placements, and their number grows exponentially with length. Given scores for paired letters and gaps, we seek the highest-scoring correspondence that uses every letter of both records, called a *global alignment*. Because many correspondences share their beginnings, trying each one separately would repeat much of the same work; a dynamic program instead stores the best score for each pair of prefixes and then recovers an alignment attaining the full score.
 
 Let $x=x_1\cdots x_n$ and $y=y_1\cdots y_m$. After reading some alignment columns, record $(i,j)$, the number of letters consumed from $x$ and $y$. An alignment consumes letters in order. A letter over a letter consumes one symbol from each string; a gap column consumes a symbol from one string. These counts turn a correspondence between letters into a path on a grid.
 
@@ -65,16 +65,15 @@ cf.dp_table(axes[1], list("ACGT"), list("AGT"), empty_grid, path=path_cells)
 plt.show()
 ```
 
-Different paths can reach the same prefix pair. They then leave the same unused suffixes, so a table can retain one summary per pair. A *recurrence* computes that summary from smaller prefixes; row-major order makes the row above and the cell to the left available before each new cell. We will retain the best score, rather than enumerate every path.
+Different paths can reach the same prefix pair, and from there they face the same unused suffixes. A table indexed by prefix pairs can therefore keep one summary per cell, computed from smaller prefixes by a *recurrence*. Here the summary will be the best score.
 
 ## The global alignment objective
 
-The grid represents every allowed correspondence, but the biological comparison calls for a preferred one. Let $s(a,b)$ score a letter pair, and let $g<0$ score a letter paired with a gap. For an alignment $A$ with rows $u,v$ of common length $L$, define the column score $c(a,b)=s(a,b)$ when both symbols are letters and $c(a,b)=g$ when exactly one is a gap. Thus
+The grid represents every allowed correspondence, but the biological comparison calls for a preferred one. Let $s(a,b)$ score a letter pair, and let $g<0$ score a letter paired with a gap. For an alignment $\mathcal A$ with rows $u,v$ of common length $L$, define the column score $c(a,b)=s(a,b)$ when both symbols are letters and $c(a,b)=g$ when exactly one is a gap. Thus
 $$
-\operatorname{score}(A)=\sum_{\ell=1}^{L}c(u_\ell,v_\ell),\qquad
-A^*\in\operatorname*{arg\,max}_{A\in\mathcal A(x,y)}\operatorname{score}(A),
+\operatorname{score}(\mathcal A)=\sum_{\ell=1}^{L}c(u_\ell,v_\ell).
 $$
-where $\mathcal A(x,y)$ is the set of global alignments of $x$ and $y$. We seek an alignment attaining the largest total, using the same three moves with these scores attached.
+We seek an alignment attaining $\max_{\mathcal A}\operatorname{score}(\mathcal A)$, where the maximum runs over every alignment $\mathcal A$ of $x$ and $y$, using the same three moves with these scores attached.
 
 ::: {#def-global-alignment}
 ## Global alignment problem
@@ -86,11 +85,37 @@ Given strings $x,y$, substitution score $s$, and linear gap score $g$, find a ma
 For $0\le i\le n$ and $0\le j\le m$, let $F(i,j)$ be the maximum score of a global alignment of prefixes $x_1\cdots x_i$ and $y_1\cdots y_j$.
 :::
 
-$F(i,j)$ summarizes every possible alignment of those prefixes by its best score. In particular, $F(n,m)$ answers the full comparison. The optional path-counting extension applies a different summary to the same grid.
+$F(i,j)$ summarizes every possible alignment of those prefixes by its best score. In particular, $F(n,m)$ answers the full comparison.
 
 ### The three-way recurrence
 
-Suppose two paths reach the same predecessor cell, with scores 5 and 3. Appending the same final column adds the same amount to both, so the second path cannot overtake the first. The same is true for any common continuation because scores add by columns. We may therefore discard every lower-scoring path to that cell while retaining its best score.
+Many paths reach each cell, yet the table stores a single number there. Why is the best score enough? Take the five paths into $(2,1)$, which align AC with A, and score them with match $+1$, mismatch $-1$, and gap $-2$, the scores we use for the full table below. They score $-1$, $-3$, $-6$, $-6$, and $-6$ (@fig-global-path-bundle). Any continuation $C$ from $(2,1)$ to $(4,3)$ consumes the same remaining letters, and because scores add by columns it adds the same amount to every path $P$ it extends:
+$$
+\operatorname{score}(P\,C)=\operatorname{score}(P)+\operatorname{score}(C).
+$$
+Adding the same number to every candidate cannot change their order. Along the dashed G/G, T/T continuation, the five totals become $1,-1,-4,-4,-4$, and the path that was best at $(2,1)$ is still best. We may therefore discard every lower-scoring path into a cell and keep only its best score.
+
+```{.python .execute}
+#| label: fig-global-path-bundle
+#| code-fold: true
+#| code-summary: "Draw the five paths into one cell"
+#| fig-cap: "The five alignment paths of AC with A, all ending at cell (2,1), with their scores under match +1, mismatch −1, gap −2. Every path continues along the same dashed G/G, T/T columns, which add +2 to each, so the red path that is best at (2,1) stays best and the grey paths can be discarded."
+#| fig-alt: "A five-by-four grid of dots. Grey and red line segments run from the top-left dot to the dot in row C, column A; a dashed black diagonal continues to the bottom-right dot. A legend lists AC/A- with score −1, AC/-A with −3, and three other paths with −6."
+#| fig-width: 5
+#| fig-height: 3.4
+paths_into_cell = [
+    [(0, 0), (1, 1), (2, 1)],
+    [(0, 0), (1, 0), (2, 1)],
+    [(0, 0), (1, 0), (2, 0), (2, 1)],
+    [(0, 0), (1, 0), (1, 1), (2, 1)],
+    [(0, 0), (0, 1), (1, 1), (2, 1)],
+]
+path_labels = ["AC/A-  −1", "AC/-A  −3", "three other paths  −6", None, None]
+fig, ax = plt.subplots()
+cf.path_bundle(ax, list("ACGT"), list("AGT"), paths_into_cell, keep=0,
+               continuation=[(2, 1), (3, 2), (4, 3)], labels=path_labels)
+plt.show()
+```
 
 An optimal alignment ending at $(i,j)$ must use one of the three final columns from @def-alignment-path. Remove that column. If the remaining prefix were worse than another path to the same predecessor, replacing it would improve the whole alignment. Conversely, appending the indicated column to an optimal predecessor gives a valid candidate. For $i,j\geq1$, compare all three:
 $$
@@ -101,13 +126,17 @@ F(i,j-1)+g, & \text{pair a gap with }y_j.
 \end{cases}
 $$ {#eq-global-recurrence}
 
-The boundaries are
+Read the recurrence as three lookups and a comparison: take the best scores already stored for the three neighboring prefix pairs, add the score of the column that connects each one to $(i,j)$, and keep the largest. The boundaries are
 $$
 F(0,0)=0,\qquad F(i,0)=ig,\qquad F(0,j)=jg.
 $$
 A nonempty prefix aligned to an empty string needs one gap per letter. A zero border makes end letters free and answers a different problem.
 
-These scores can be computed in row-major order. Every predecessor has either a smaller row index or the same row index and a smaller column index. No complete alignment is enumerated; the maximum compares three best prefix scores.
+Filling the table row by row works because every predecessor lies in an earlier row or earlier in the same row.
+
+::: {.callout-note title="Key idea"}
+Every continuation from a cell adds the same score to all paths that reach it, so a best path into $(i,j)$ extends a best path into one of its three predecessors. One number per cell therefore summarizes exponentially many alignments.
+:::
 
 ::: {.algorithm}
 **Algorithm: fill the global-alignment table.**
@@ -126,7 +155,7 @@ For every $0\le i\le n$ and $0\le j\le m$, $F(i,j)$ equals the maximum score amo
 ::: {.proof}
 We use induction on $i+j$. The claim holds on the boundaries because there is only one alignment of a nonempty prefix with an empty string: every letter is paired with a gap.
 
-For $i,j>0$, take an optimal alignment $A$. Its final column is $x_i/y_j$, $x_i/-$, or $-/y_j$. Removing that column leaves a valid alignment for the corresponding predecessor cell. It must be optimal for those prefixes. Otherwise, replacing it with a better prefix alignment would improve $A$, a contradiction. Thus $A$ has the score of one candidate in the recurrence, so the optimum is no larger than the table maximum.
+For $i,j>0$, take an optimal alignment $\mathcal A$. Its final column is $x_i/y_j$, $x_i/-$, or $-/y_j$. Removing that column leaves a valid alignment for the corresponding predecessor cell. It must be optimal for those prefixes. Otherwise, replacing it with a better prefix alignment would improve $\mathcal A$, a contradiction. Thus $\mathcal A$ has the score of one candidate in the recurrence, so the optimum is no larger than the table maximum.
 
 Conversely, append the appropriate final column to an optimal alignment from each predecessor. Each candidate is attained by a valid alignment. Their maximum is therefore attainable and cannot be larger than the optimum. Together with the preceding inequality, this proves equality.
 :::
@@ -135,7 +164,7 @@ The proof uses two facts: the final-column cases are exhaustive, and an optimal 
 
 ## A complete table
 
-Use $x=\texttt{ACGT}$, $y=\texttt{AGT}$, match $+1$, mismatch $-1$, and gap $-2$. These are illustrative scores, rather than the calibrated log-odds table from Lesson 2. The algorithm applies to either choice of additive scores.
+Use $x=\texttt{ACGT}$, $y=\texttt{AGT}$, match $+1$, mismatch $-1$, and gap $-2$. On a uniform background, match $+1$ and mismatch $-1$ are log-odds scores for related sequences about 75% identical; the gap score $-2$ is a separate modeling choice. The recurrence works for any additive scores.
 
 The earlier path placed C opposite a gap. The table must decide whether that choice beats pairing C with G and repairing the correspondence later. Each prefix gets its own optimum; a choice that wins for AC/AG may lose in the complete comparison.
 
@@ -145,7 +174,7 @@ At $F(2,2)$, C meets G. The candidates are
 $$
 F(1,1)-1=0,\qquad F(1,2)-2=-3,\qquad F(2,1)-2=-3.
 $$
-Here $F(1,1)=1$ comes from A/A. The predecessors $F(1,2)=F(2,1)=-1$ each pair A/A and add one gap. Thus $F(2,2)=0$, attained by AC/AG with one match and one mismatch. This is the best alignment for these prefixes; it need not be the prefix used by the best complete alignment.
+Here $F(1,1)=1$ comes from A/A. The predecessors $F(1,2)=F(2,1)=-1$ each pair A/A and add one gap. Thus $F(2,2)=0$, attained by AC/AG with one match and one mismatch.
 :::
 
 In Python, `table[i][j]` stores $F(i,j)$, so its indices are prefix lengths. Their final letters are `x[i - 1]` and `y[j - 1]` because Python strings start at index zero. The function returns the whole table for inspection; its bottom-right entry is the optimum score.
@@ -186,11 +215,9 @@ cf.dp_table(ax, list(x), list(y), scores,
 plt.show()
 ```
 
-In @fig-global-table, the borders decrease by two each step and the A/A cell is 1. No interior cell can exceed the largest predecessor by more than the match reward, 1.
+In @fig-global-table, the borders decrease by two each step and the final entry is $F(4,3)=1$. At $(3,2)$, pairing G/G extends the prefix AC/A, whose best alignment puts C opposite a gap. The winning full path therefore bypasses the shaded cell $(2,2)$: its mismatch was optimal for AC/AG, but those are not the prefixes used by the full optimum.
 
-The final entry is $F(4,3)=1$. At $(3,2)$, pairing G/G extends the prefix AC/A, whose best alignment puts C opposite a gap. The winning full path therefore bypasses the shaded cell $(2,2)$: its mismatch was optimal for AC/AG, but those are not the prefixes used by the full optimum.
-
-We can now check the final answer independently. No alignment has more than three letter pairs, each worth at most $+1$, and the length difference forces at least one $-2$ gap. The score is at most $3-2=1$, attained by ACGT/A-GT. For the gene comparison, this optimum proposes a correspondence under our chosen scores. To identify the paired bases, we must recover the path that attains this score.
+A short bound confirms this value: no alignment has more than three letter pairs, each worth at most $+1$, and the length difference forces at least one $-2$ gap. The score is at most $3-2=1$, attained by ACGT/A-GT. For the gene comparison, this optimum proposes a correspondence under our chosen scores.
 
 ## Traceback
 
@@ -211,7 +238,7 @@ A *backpointer* from $(i,j)$ records a predecessor whose candidate attains the m
 4. Stop at $(0,0)$ and reverse the collected columns.
 :::
 
-For $x=\texttt{ACGT}$ and $y=\texttt{AGT}$, with match $+1$, mismatch $-1$, and gap $-2$, the unique path yields
+For $x=\texttt{ACGT}$ and $y=\texttt{AGT}$, with match $+1$, mismatch $-1$, and gap $-2$, the unique path (the red cells in @fig-global-table) yields
 $$
 \begin{array}{c}
 \texttt{ACGT}\\
@@ -219,21 +246,6 @@ $$
 \end{array}
 $$
 with score $1-2+1+1=1=F(4,3)$.
-
-```{.python .execute}
-#| label: fig-global-traceback
-#| fig-cap: "Traceback through the ACGT/AGT table. The red cells form the unique optimal path from the bottom-right entry to the origin."
-#| fig-alt: "A five-by-four dynamic-programming table with a red path passing diagonally except for one vertical step."
-#| fig-width: 4.5
-#| fig-height: 4
-x, y = "ACGT", "AGT"
-scores = [[0, -2, -4, -6], [-2, 1, -1, -3], [-4, -1, 0, -2],
-          [-6, -3, 0, -1], [-8, -5, -2, 1]]
-fig, ax = plt.subplots()
-cf.dp_table(ax, list(x), list(y), scores,
-            path=[(0, 0), (1, 1), (2, 1), (3, 2), (4, 3)])
-plt.show()
-```
 
 ::: {#prp-traceback-score}
 ## Traceback preserves the table score
@@ -250,11 +262,7 @@ At $(4,3)$ in the ACGT/AGT table, T meets T. The diagonal candidate is $F(3,2)+1
 
 At $(2,1)$, C meets A. The candidates are $F(1,0)-1=-3$, $F(1,1)-2=-1$, and $F(2,0)-2=-6$. The vertical pointer wins, so we emit C/-. The remaining diagonal emits A/A. Traceback generates columns from right to left, so an implementation must reverse both collected rows.
 
-Every move decreases $i$, $j$, or both. The process reaches $(0,0)$ after at most $n+m$ moves. A pointer that leaves both indices unchanged creates an infinite loop; one that increases an index was stored in the wrong direction.
-
-::: {.callout-tip title="Check the recovered alignment"}
-Sum its printed column scores and compare with $F(n,m)$. Removing gaps must recover both input strings; matching the score alone cannot detect a wrong letter.
-:::
+Every move decreases $i$, $j$, or both, so the process reaches $(0,0)$ after at most $n+m$ moves.
 
 For AA against A, either AA/A- or AA/-A scores $1-2=-1$. Both placements are optimal: the scores do not identify which A corresponds to the shorter record. A *tie policy* chooses a maximizing predecessor when candidates agree, for example preferring diagonal, then vertical, then horizontal moves. It prints one optimal alignment without establishing uniqueness.
 
@@ -282,9 +290,7 @@ E(i-1,j)+1,\\
 E(i,j-1)+1.
 \end{cases}
 $$
-Here $[x_i\ne y_j]$ is 1 when the letters differ and 0 when they match. The boundaries are $E(i,0)=i$ and $E(0,j)=j$.
-
-For ACGT and AGT, the minimum edit cost is 1, realized by deleting C. The maximum-score model above also chooses that alignment, but the numerical answers, 1 and 1, happen to agree only for this instance. One is a similarity score to maximize; the other is a cost to minimize.
+Here $[x_i\ne y_j]$ is 1 when the letters differ and 0 when they match. The boundaries are $E(i,0)=i$ and $E(0,j)=j$. Because edit distance is the minimum cost over alignments, $E(n,m)=d_E(x,y)$ by @prp-edit-alignment.
 
 ::: {#exm-score-cost}
 ## Two conventions, one path
@@ -295,7 +301,7 @@ Negating every column score converts maximization to an equivalent minimization 
 
 ### Counting paths
 
-Different paths can consume the same two prefixes. Once they reach $(i,j)$, they have the same unused suffixes, even if their earlier gap placements differ. This shared continuation is what makes a table useful. Lesson 1 counted all ways of reaching each prefix pair using $A(i,j)$; we now interpret those counts as numbers of grid paths.
+Lesson 1 counted all ways of reaching each prefix pair using $A(i,j)$; we now interpret those counts as numbers of grid paths.
 
 For $i,j\geq1$, the counts satisfy
 $$
@@ -401,7 +407,7 @@ assert top.replace("-", "") == "ACGT"
 assert bottom.replace("-", "") == "AGT"
 ```
 
-Rescoring is independent of the table recurrence and can detect an omitted gap or a misplaced column. Agreement alone is insufficient: `ATGT/A-GT` also scores 1, but it does not align the input `ACGT`. The two gap-removal checks detect that wrong letter even though its score agrees. Score agreement and input reconstruction check different requirements.
+Rescoring is independent of the table recurrence and can detect an omitted gap or a misplaced column. Agreement alone is insufficient: `ATGT/A-GT` also scores 1, but it does not align the input `ACGT`. The two gap-removal checks detect that wrong letter even though its score agrees.
 
 ::: {.callout-tip title="Check: unconsumed prefixes"}
 Traceback must continue while either index is positive. Stopping as soon as one index reaches zero drops the other string's remaining prefix. AA against A exposes this bug; an exact equal-length match may not.
@@ -423,7 +429,7 @@ $$
 A *tie policy* is a deterministic rule for choosing among maximizing predecessors. It selects an optimum but does not make that optimum unique.
 :::
 
-Different programs can print different optimal alignments while agreeing on the score. Enumerating all optimal alignments can take exponential time because there can be exponentially many tied paths.
+Enumerating all optimal alignments can take exponential time because there can be exponentially many tied paths.
 
 ### Sensitivity to score parameters
 
@@ -435,7 +441,7 @@ $$
 $$
 With $p=d=1$, they win by one point. Keeping $p=1$ but raising $d$ to 2 reverses this comparison: the ungapped candidate scores 0 and the gapped candidates score $-1$. At $p=d-1/2$ they tie.
 
-This calculation compares these candidates; a complete claim of optimality still requires checking all admissible alignments, which the dynamic program does. It gives a useful prediction before rerunning the code. If a small parameter change moves the chosen gap, that movement can reflect the scoring assumptions even when both implementations are correct. Counting ties at one parameter setting describes exact ambiguity; varying the scores asks whether the answer remains stable under nearby modeling choices.
+This calculation compares only these candidates; the dynamic program is what certifies an optimum over all alignments. Still, it shows before any code is rerun that a small change in $p$ or $d$ can move the chosen gap, and when that happens the change reflects the scoring assumptions rather than a bug.
 
 ### Counting optimal alignments
 
@@ -469,7 +475,7 @@ cf.dp_table(
 plt.show()
 ```
 
-These two alignments disagree about which A in the longer string corresponds to the A in the shorter one. Their tie does not establish equally probable evolutionary histories; it says the supplied scores do not distinguish those correspondences.
+These two alignments disagree about which A in the longer string corresponds to the A in the shorter one, and the supplied scores cannot distinguish them.
 
 ::: {#prp-count-optima}
 ## Counting optimal paths

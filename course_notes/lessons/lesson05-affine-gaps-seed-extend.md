@@ -18,6 +18,7 @@ import sys
 
 sys.path.insert(0, "../style")
 import matplotlib.pyplot as plt
+import numpy as np
 
 import coursefigs as cf
 
@@ -41,7 +42,7 @@ $$
 Here $d_o$ is the gap-open penalty and $d_e$ is the gap-extension penalty. Usually $d_o>d_e$.
 :::
 
-We subtract this positive cost from an alignment score, just as a negative gap score $g$ was added in earlier lessons. With $d_o=4$ and $d_e=1$, gaps of lengths 1, 2, and 3 cost 4, 5, and 6. Two separate one-letter gaps cost 8. The second opening represents a second event.
+We subtract this positive cost from an alignment score, just as a negative gap score $g$ was added in earlier lessons. With $d_o=4$ and $d_e=1$, gaps of lengths 1, 2, and 3 cost 4, 5, and 6, while two separate one-letter gaps cost 8 because each represents its own event and pays its own opening.
 
 The difference is visible even in the toy strings AAAA and AA. Both correspondences in @fig-affine-gap-runs have two matches and two gap columns. Linear scoring ties them; affine scoring charges 5 for the single two-letter gap and 8 for the two separate gaps. The repeated A bases leave the correspondence ambiguous, so this preference comes from the gap model rather than from additional letter evidence.
 
@@ -83,7 +84,7 @@ $$ {#eq-affine-recurrence}
 
 The first candidate in a gap state opens a gap; the second extends one. Entering $I_x$ consumes the next letter of $x$ but none of $y$, so its predecessors lie at $(i-1,j)$. Entering $I_y$ consumes only a letter of $y$, and entering $M$ consumes one from each. These index changes are the vertical, horizontal, and diagonal moves from Lesson 3, with the ending type now recorded as well.
 
-This version forbids immediate switches between $I_x$ and $I_y$ in either direction. Other formulations allow them; the transition convention determines which alignments are admissible. The name $M$ denotes a paired-letter column, which can be either a match or a mismatch.
+This version forbids immediate switches between $I_x$ and $I_y$; other formulations allow them, and the convention determines which alignments are admissible. The name $M$ denotes any paired-letter column, match or mismatch.
 
 ```{.python .execute}
 #| label: fig-affine-state-transitions
@@ -129,9 +130,22 @@ $$
 I_x(3,1)=\max\{M(2,1)-4,\ I_x(2,1)-1\}
 =\max\{-7,-6\}=-6.
 $$
-Discarding the lower prefix score $-5$ would lose this better continuation. The two resulting alignments are ACG/-C- (score $-7$) and ACG/C-- (score $-6$). A linear cost of 4 per gap character instead ranks them $-7$ and $-9$, favoring the isolated gaps. The affine model accepts a mismatch to group the missing bases into one run.
+Discarding the lower prefix score $-5$ would lose this better continuation. Scoring the two complete alignments under both gap models shows that the choice of model changes the answer:
+$$
+\begin{array}{c|c|c}
+\text{alignment} & \text{linear, } g=-4 & \text{affine, } d_o=4,\ d_e=1\\
+\hline
+\texttt{ACG}/\texttt{-C-} & 1-4-4=-7 & 1-4-4=-7\\
+\texttt{ACG}/\texttt{C--} & -1-4-4=-9 & -1-5=-6
+\end{array}
+$$
+Linear gaps prefer ACG/-C-, which keeps the C/C match and pays for two separate one-letter gaps. Affine gaps prefer ACG/C--, accepting a mismatch so that the two missing letters form one run and pay one opening.
 
 The best affine score is $-6$; ACG/--C also attains it. That tie leaves the placement ambiguous, but both optima use one opening rather than two. The model encodes a preference for one insertion or deletion event; it does not establish which event occurred.
+:::
+
+::: {.callout-note title="Key idea"}
+With affine gaps, the cost of the next column depends on how the alignment so far ends. Each cell therefore keeps one best score per ending state, because a prefix that scores lower now can still lead to the best complete alignment.
 :::
 
 ::: {#prp-affine-correctness}
@@ -194,7 +208,7 @@ def affine_global_score(
 affine_global_score("ACG", "C"), affine_global_score("ACG", "C", gap_extend=4)
 ```
 
-The outputs are `(-6, -7)`. The affine score agrees with @exm-affine-gap; setting opening and extension costs both to 4 gives the best linear score. Impossible border states remain $-\infty$ so they cannot win a maximum. The same initialization gives score 0 for two empty strings and $-d_o-(\ell-1)d_e$ for a length-$\ell$ string against an empty one.
+The outputs are `(-6, -7)`. The affine score agrees with @exm-affine-gap, and setting opening and extension costs both to 4 recovers the best linear score. Impossible border states remain $-\infty$ so that they can never win a maximum.
 
 The function returns a score. Recovering the alignment would require traceback that records both a predecessor cell and its state. A pointer to $(i-1,j)$ alone cannot tell whether that step opened a gap from $M$ or extended it from $I_x$.
 
@@ -239,13 +253,13 @@ def exact_seed_hits(query: str, target: str, k: int) -> list[tuple[int, int]]:
 exact_seed_hits("ACGTAC", "AGGTTC", 3), exact_seed_hits("ACGTAC", "AGGTTC", 2)
 ```
 
-The function returns pairs of zero-based start positions `(query_start, target_start)`, not alignments. The difference `target_start - query_start` identifies a candidate ungapped offset. Extending along it is cheap because the base pairing is fixed. An insertion or deletion changes the offset, so a later gapped extension must be able to move away from that diagonal. A window or band limits the cells examined; an alignment leaving that region can still be missed.
+The function returns pairs of zero-based start positions `(query_start, target_start)`, not alignments. The difference `target_start - query_start` identifies a candidate ungapped offset, along which extension is cheap because the base pairing is fixed. An insertion or deletion changes the offset, so gapped extension must be able to leave that diagonal; a window or band limits the cells examined, and an alignment that leaves it can still be missed.
 
-This example uses DNA exact words to make the search rule inspectable. The original BLAST algorithm also admits high-scoring protein words that need not match exactly, then extends its word hits [@altschul1990; @durbin1998]. Exact seeding is a simpler member of the same search architecture.
+Exact DNA words keep the search rule easy to inspect. The original BLAST algorithm also admits high-scoring protein words that need not match exactly, then extends its word hits in the same way [@altschul1990; @durbin1998].
 
 ## Seed sensitivity
 
-The ungapped ACGTAC/AGGTTC comparison has four matches and two mismatches, scoring 2 under $+1/-1$. In @fig-affine-seed-interruptions, the mismatches break those matches into runs of lengths 1, 2, and 1. No run reaches three letters, and inspecting all the words confirms that the strings share no 3-mer at any offset. The 3-mer index finds no candidate, while the 2-mer index finds GT. A promising final score cannot help if the seed stage never sends the location to extension.
+The ungapped ACGTAC/AGGTTC comparison has four matches and two mismatches, scoring 2 under $+1/-1$. In @fig-affine-seed-interruptions, the mismatches split those matches into runs of lengths 1, 2, and 1, so no 3-mer is shared at this offset (and checking all the words shows none at any other). The 3-mer index finds no candidate while the 2-mer index finds GT: a promising final score cannot help if the seed stage never sends the location to extension.
 
 ```{.python .execute}
 #| label: fig-affine-seed-interruptions
@@ -267,23 +281,53 @@ For a specified class of true alignments, seed sensitivity is the fraction that 
 
 For a tiny sensitivity check, take ACGTAC as the query and suppose the true targets are ACGTTC, ACATAC, AGGTTC, and ATGTTC. The first two contain a shared 3-mer; the last two do not. This class has exact 3-mer sensitivity $2/4$, while all four contain a shared 2-mer. The fraction refers to this specified class, rather than a universal property of $k$.
 
-Longer exact seeds generate fewer random hits and speed up extension, but they miss more alignments containing substitutions or gaps. Shorter seeds improve sensitivity and produce more candidates. Spaced seeds require matches at selected positions rather than every position in a contiguous word; they can detect some alignments that contiguous seeds miss.
-
-The index finds every accepted shared word when it retains every occurrence. It cannot propose an alignment containing no accepted seed. Unlike full dynamic programming, this search rule can therefore miss the unrestricted best alignment.
-
-:::: {.callout-note collapse="true" title="Going deeper: seed counts and a bounded-mismatch guarantee"}
-
-### Seed length and candidate counts
-
-Under an iid uniform DNA background, two independent length-$k$ words agree with probability $4^{-k}$. A query of length $n$ and target of length $N$, both at least $k$, offer $(n-k+1)(N-k+1)$ pairs of starting positions. If $h$ counts exact seed hits, adding the probabilities of these position pairs gives
+Shorter seeds improve sensitivity, but they also produce more chance hits, and every hit costs an extension. We can count the chance hits under a simple background. If both sequences are independent, uniformly random DNA, two length-$k$ words agree with probability $4^{-k}$. A query of length $n$ and a target of length $N$, both at least $k$, offer $(n-k+1)(N-k+1)$ pairs of starting positions. Let $h$ count the exact seed hits. Adding the agreement probability over all position pairs gives
 $$
-\mathbb E[h]=(n-k+1)(N-k+1)4^{-k}.
+\mathbb E[h]=(n-k+1)(N-k+1)\,4^{-k}.
 $$
-Overlapping words make hit events dependent, but expectation still adds. Independence of the two sequences and the uniform background are the assumptions behind each event's probability.
+The first two factors count the comparisons the index makes implicitly; the last is the chance that any one of them succeeds. Overlapping words make hit events dependent, but an expected count still adds over events. Lengthening the seed by one letter divides the expected number of chance hits by about four, while the number of position pairs barely changes. For a length-100 query against a length-1,000 target, $k=4$ gives $97\cdot997/256\approx378$ expected chance hits and $k=8$ gives $93\cdot993/65536\approx1.4$.
 
-For a length-100 query and a length-10,000 target, $k=4$ gives an expected $97(9997)/256\approx3788$ random hits. At $k=8$, the expectation is $93(9993)/65536\approx14.2$. These are counts of candidate position pairs, not counts of distinct matching records or final reported alignments.
+```{.python .execute}
+#| label: fig-affine-seed-dotplot
+#| code-fold: true
+#| code-summary: "Plot seed hits for a query that shares one region with a random target"
+#| fig-cap: "Exact seed hits for a length-100 query against a random length-1,000 target; the query is a copy of target positions 401 to 500 with about 20% of its bases substituted. Red hits lie on the true offset and grey hits arise by chance. With k = 4 the true diagonal is surrounded by about as many chance hits as the formula predicts; with k = 8 almost all chance hits disappear, and so do the true seeds in stretches where substitutions leave no 8-letter match."
+#| fig-alt: "Two dot plots of query position against target position. The left panel, k equals 4, has several hundred grey points scattered everywhere and a red near-vertical line of points near target position 400 to 500. The right panel, k equals 8, has one grey point and a broken red line covering only the first 60 query positions."
+#| fig-height: 3.5
+rng = np.random.default_rng(7)
+target = "".join(rng.choice(list("ACGT"), size=1000))
+true_offset = 400
+# The query copies 100 target bases, substituting each with probability 0.2.
+query_letters = []
+for base in target[true_offset:true_offset + 100]:
+    if rng.random() < 0.8:
+        query_letters.append(base)
+    else:
+        query_letters.append(rng.choice([b for b in "ACGT" if b != base]))
+query = "".join(query_letters)
 
-The random-hit calculation addresses workload. For sensitivity, a different question is whether mismatches can destroy every accepted word.
+fig, axes = plt.subplots(1, 2, sharey=True)
+for ax, k in zip(axes, (4, 8)):
+    hits = exact_seed_hits(query, target, k)
+    true_hits = [(q, t) for q, t in hits if t - q == true_offset]
+    chance_hits = [(q, t) for q, t in hits if t - q != true_offset]
+    ax.plot([t for q, t in chance_hits], [q for q, t in chance_hits], "o",
+            markersize=2.5, color=cf.RULE, label="chance offset")
+    ax.plot([t for q, t in true_hits], [q for q, t in true_hits], "o",
+            markersize=2.5, color=cf.EMPHASIS, label="true offset")
+    ax.set(title=f"$k={k}$: {len(chance_hits)} chance, {len(true_hits)} true",
+           xlabel="Target position", xlim=(0, 1000), ylim=(0, 100))
+axes[0].set(ylabel="Query position")
+axes[0].invert_yaxis()
+axes[1].legend(loc="lower right", markerscale=2)
+plt.show()
+```
+
+@fig-affine-seed-dotplot runs `exact_seed_hits` on such a pair, with one planted region of 80% identity. At $k=4$ the 376 chance hits agree with the predicted 378, and each would send the search to an extension that finds nothing. At $k=8$ one chance hit remains, but the true diagonal has lost its seeds wherever substitutions fall closer together than eight letters. A region with slightly lower identity could lose all of them, and an alignment containing no accepted seed is never proposed; unlike full dynamic programming, the search can miss the best alignment. Spaced seeds, which require matches only at selected positions within a longer window, are one way to keep the low chance-hit rate of a long seed while tolerating some substitutions.
+
+:::: {.callout-note collapse="true" title="Going deeper: a bounded-mismatch guarantee"}
+
+The expected-hit calculation addresses workload. For sensitivity, a different question is whether mismatches can destroy every accepted word.
 
 ::: {#prp-seed-guarantee}
 ## An exact seed survives bounded mismatches
@@ -310,17 +354,14 @@ A raw local-alignment score is less surprising in a large search than in a small
 
 For fixed $k$, building the index costs $\mathcal O(N)$ expected time with a hash table. Looking up query words and listing $h$ hits costs $\mathcal O(n+h)$ before extension. Repeated words can make $h$ as large as $\mathcal O(nN)$, so indexing does not guarantee a speedup on every input.
 
-Database composition, low-complexity sequence, score parameters, and database size all affect significance calibration. The extension score and the seed rule answer different questions: a sensitive score cannot recover a target that the seed stage never visits.
-
 ::::
 
 ## Limitations
 
 1. **Affine gaps still use a simple duration model.** Every extension has the same cost, regardless of gap length or position.
-2. **State conventions differ.** Allowing direct transitions between opposite gap states changes the set of represented alignments and can change scores under unusual parameter choices.
-3. **Seeds can miss real alignments.** Distributed mismatches or gaps can destroy every accepted word.
-4. **Repeats flood the candidate list.** Common seeds occur at many positions and erase the speed advantage unless the method filters or downweights them.
-5. **Statistical significance depends on the search.** The same raw score can be less surprising in a larger database or in repetitive sequence. The optional section explains one measure of this effect.
+2. **Seeds can miss real alignments.** Distributed mismatches or gaps can destroy every accepted word.
+3. **Repeats flood the candidate list.** Common seeds occur at many positions and erase the speed advantage unless the method filters or downweights them.
+4. **Statistical significance depends on the search.** The same raw score can be less surprising in a larger database or in repetitive sequence.
 
 ## Exercises
 

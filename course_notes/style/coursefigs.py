@@ -786,3 +786,275 @@ def independent_pair_area(
             ha="center", va="center", color=PAPER, fontsize=9)
     ax.set_xlim(-0.45, 1.05)
     ax.set_ylim(-0.3, 1.08)
+
+
+def read_pileup(
+    ax: plt.Axes,
+    reference: str,
+    reads: Sequence[str],
+    starts: Sequence[int],
+    *,
+    highlight_column: int | None = None,
+    reference_label: str = "reference",
+) -> None:
+    """Stack placed reads under a reference, greying agreeing bases.
+
+    A read base that disagrees with the reference is drawn in ink; at
+    ``highlight_column`` (0-based reference position) disagreeing bases get a
+    red fill, marking the difference the figure is about.
+    """
+    if len(reads) != len(starts):
+        raise ValueError("Supply one start per read.")
+    for read, start in zip(reads, starts):
+        if start < 0 or start + len(read) > len(reference):
+            raise ValueError("Each read must lie within the reference.")
+    _bare(ax)
+    ax.text(-0.8, 0, reference_label, ha="right", va="center", fontsize=9)
+    for i, base in enumerate(reference):
+        ax.text(i, 0, base, ha="center", va="center", fontsize=11,
+                family=MONO, color=INK, fontweight="bold")
+    ax.plot([-0.5, len(reference) - 0.5], [-0.55, -0.55], color=RULE,
+            linewidth=0.8)
+    for row, (read, start) in enumerate(zip(reads, starts), start=1):
+        y = -row - 0.3
+        for offset, base in enumerate(read):
+            i = start + offset
+            differs = base != reference[i]
+            selected = differs and i == highlight_column
+            if selected:
+                ax.add_patch(mpatches.Rectangle(
+                    (i - 0.36, y - 0.32), 0.72, 0.64,
+                    facecolor=EMPHASIS, edgecolor="none", zorder=1,
+                ))
+            color = PAPER if selected else (INK if differs else RULE)
+            ax.text(i, y, base, ha="center", va="center", fontsize=11,
+                    family=MONO, color=color, zorder=2,
+                    fontweight="bold" if differs else "normal")
+    ax.set_xlim(-3.4, len(reference) - 0.4)
+    ax.set_ylim(-len(reads) - 0.8, 0.6)
+
+
+# --- One-variable rate balance and phase line -------------------------------
+
+def rate_balance(
+    ax: plt.Axes,
+    production: Callable[[np.ndarray], np.ndarray],
+    removal: Callable[[np.ndarray], np.ndarray],
+    xlim: tuple[float, float],
+    *,
+    fixed_points: Iterable[tuple[float, bool]] = (),
+    labels: tuple[str, str] = ("Production", "Removal"),
+    xlabel: str = "$x$",
+    ylabel: str = "Rate",
+) -> None:
+    """Plot production and removal rates against one state, above a phase line.
+
+    Production is drawn in SECOND and removal in THIRD. Fixed points are
+    (x, stable) at crossings of the two curves: red filled if stable, open if
+    unstable. Below the curves, a grey phase line carries one ink arrow per
+    interval between fixed points, pointing the way the state moves (to the
+    right wherever production exceeds removal).
+    """
+    xs = np.linspace(*xlim, 400)
+    # A constant rate function may return a scalar, so broadcast to the grid.
+    produced = np.broadcast_to(production(xs), xs.shape)
+    removed = np.broadcast_to(removal(xs), xs.shape)
+    top = max(produced.max(), removed.max())
+    line_y = -0.12 * top
+    ax.plot(xs, produced, color=SECOND, label=labels[0])
+    ax.plot(xs, removed, color=THIRD, label=labels[1])
+    ax.plot(xlim, [line_y, line_y], color=RULE, lw=0.8)
+    points = sorted(fixed_points)
+    bounds = [xlim[0]] + [x for x, _ in points] + [xlim[1]]
+    for left, right in zip(bounds[:-1], bounds[1:]):
+        middle = (left + right) / 2
+        net = float(np.asarray(production(middle)) - np.asarray(removal(middle)))
+        if net == 0:
+            continue
+        half = 0.2 * (right - left)
+        start, end = (middle - half, middle + half) if net > 0 else (
+            middle + half, middle - half)
+        ax.annotate("", xy=(end, line_y), xytext=(start, line_y),
+                    arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.2,
+                                    mutation_scale=12))
+    for x, stable in points:
+        level = float(np.asarray(production(x)))
+        face = EMPHASIS if stable else PAPER
+        ax.plot([x, x], [line_y, level], color=RULE, lw=0.8, ls=":")
+        for y in (level, line_y):
+            ax.plot(x, y, marker="o", ms=7, color=EMPHASIS,
+                    markerfacecolor=face, markeredgewidth=1.5, zorder=3)
+    ax.set_xlim(*xlim)
+    ax.set_ylim(1.9 * line_y, 1.1 * top)
+    ax.set_yticks([t for t in ax.get_yticks() if 0 <= t <= 1.1 * top])
+    ax.spines["left"].set_bounds(0, 1.1 * top)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.legend(loc="upper left")
+
+
+# --- Clustering and neighbor graphs on measured coordinates -------------------
+
+CLUSTER_MARKERS = ["o", "^", "s", "D", "v", "P"]
+
+
+def cluster_step(
+    ax: plt.Axes,
+    points: Sequence[Sequence[float]],
+    labels: Sequence[int],
+    centers: Sequence[Sequence[float]],
+    *,
+    names: Sequence[str] = (),
+    previous_centers: Sequence[Sequence[float]] | None = None,
+) -> None:
+    """Draw one K-means state: points by cluster, centers as crosses.
+
+    Cluster g uses SERIES[g] and the g-th marker shape. When previous_centers
+    is given, red arrows show how each center moved in the update step.
+    Axes stay visible because positions are measured coordinates.
+    """
+    points = np.asarray(points, dtype=float)
+    centers = np.asarray(centers, dtype=float)
+    labels = np.asarray(labels)
+    for g in range(len(centers)):
+        members = points[labels == g]
+        ax.scatter(members[:, 0], members[:, 1], s=36, color=SERIES[g],
+                   marker=CLUSTER_MARKERS[g], zorder=3)
+    for name, point in zip(names, points):
+        ax.annotate(name, point, xytext=(5, 4), textcoords="offset points",
+                    fontsize=9, family=MONO)
+    if previous_centers is not None:
+        for old, new in zip(np.asarray(previous_centers, dtype=float), centers):
+            if np.allclose(old, new):
+                continue
+            ax.annotate("", xy=new, xytext=old, zorder=4,
+                        arrowprops={"arrowstyle": "-|>", "color": EMPHASIS,
+                                    "lw": 1.5, "shrinkA": 0, "shrinkB": 5})
+    for g, center in enumerate(centers):
+        ax.scatter(*center, s=90, marker="X", color=SERIES[g],
+                   edgecolors=INK, linewidths=1.0, zorder=5)
+    ax.margins(0.08)
+    ax.set_aspect("equal", adjustable="box")
+
+
+def neighbor_graph(
+    ax: plt.Axes,
+    points: Sequence[Sequence[float]],
+    edges: Iterable[tuple[int, int]],
+    *,
+    names: Sequence[str] = (),
+    highlight: Iterable[int] = (),
+) -> None:
+    """Draw an undirected neighbor graph with nodes at measured coordinates.
+
+    Edges are grey; highlighted nodes, and edges joining two of them, are red.
+    With names, nodes are labeled white circles; without, small dots.
+    """
+    points = np.asarray(points, dtype=float)
+    highlight = set(highlight)
+    for i, j in edges:
+        on = i in highlight and j in highlight
+        ax.plot(points[[i, j], 0], points[[i, j], 1],
+                color=EMPHASIS if on else RULE, lw=1.6 if on else 0.8,
+                zorder=1)
+    colors = [EMPHASIS if i in highlight else PAPER for i in range(len(points))]
+    edgecolors = [EMPHASIS if i in highlight else INK for i in range(len(points))]
+    if names:
+        ax.scatter(points[:, 0], points[:, 1], s=260, c=colors,
+                   edgecolors=edgecolors, linewidths=1.0, zorder=3)
+        for i, name in enumerate(names):
+            ax.text(*points[i], name, ha="center", va="center", fontsize=9,
+                    family=MONO, color=PAPER if i in highlight else INK,
+                    zorder=4)
+    else:
+        ax.scatter(points[:, 0], points[:, 1], s=14, c=colors,
+                   edgecolors=edgecolors, linewidths=0.6, zorder=3)
+    ax.margins(0.12 if names else 0.05)
+    ax.set_aspect("equal", adjustable="box")
+
+
+def multiple_alignment(ax: plt.Axes, rows: dict[str, str]) -> None:
+    """Print a multiple alignment in monospace columns, shading columns where rows differ.
+
+    Row labels are the sample names from the prose; column numbers run from 1.
+    """
+    _bare(ax)
+    lengths = {len(sequence) for sequence in rows.values()}
+    if len(lengths) != 1 or not rows:
+        raise ValueError("A multiple alignment needs nonempty rows of equal length.")
+    length = lengths.pop()
+    sequences = list(rows.values())
+    for i in range(length):
+        if len({sequence[i] for sequence in sequences}) > 1:
+            ax.add_patch(mpatches.Rectangle(
+                (i - 0.45, -len(rows) + 0.5), 0.9, len(rows),
+                facecolor=LIGHT, edgecolor="none", zorder=0,
+            ))
+        ax.text(i, 0.85, str(i + 1), ha="center", va="center", fontsize=9,
+                color=RULE)
+    for row, (label, sequence) in enumerate(rows.items()):
+        ax.text(-0.9, -row, label, ha="right", va="center", fontsize=10)
+        for i, symbol in enumerate(sequence):
+            ax.text(i, -row, symbol, ha="center", va="center", fontsize=11,
+                    family=MONO, color=INK, zorder=2)
+    ax.set_xlim(-3, length - 0.4)
+    ax.set_ylim(-len(rows) + 0.3, 1.3)
+
+
+# --- Several alignment paths converging on one table cell -------------------
+
+def path_bundle(
+    ax: plt.Axes,
+    rows: Sequence[str],
+    cols: Sequence[str],
+    paths: Sequence[Sequence[tuple[int, int]]],
+    *,
+    keep: int = 0,
+    continuation: Sequence[tuple[int, int]] = (),
+    labels: Sequence[str | None] | None = None,
+) -> None:
+    """Draw several alignment paths through the cells of an alignment grid.
+
+    Cells are light dots at the `dp_table` positions, with the same (i, j)
+    indices and row and column labels. Path `keep` (the best one, which the
+    table retains) is red; the others are grey. A shared `continuation` from
+    the common end cell is drawn dashed in ink. Optional `labels`, one per
+    path, become a monospace legend in path order; a None label leaves that
+    path out of the legend, so several alike paths can share one entry.
+    """
+    if not 0 <= keep < len(paths):
+        raise ValueError("keep must index one of the paths.")
+    if labels is not None and len(labels) != len(paths):
+        raise ValueError("Supply one label (or None) per path.")
+    _bare(ax)
+    for i in range(len(rows) + 1):
+        for j in range(len(cols) + 1):
+            ax.plot(j, -i, marker="o", ms=7, color=LIGHT,
+                    markeredgecolor=RULE, markeredgewidth=0.6, zorder=1)
+    ax.text(-1, 0, "$-$", ha="center", va="center", fontsize=10)
+    for i, label in enumerate(rows, start=1):
+        ax.text(-1, -i, label, ha="center", va="center", fontsize=10, family=MONO)
+    ax.text(0, 1, "$-$", ha="center", va="center", fontsize=10)
+    for j, label in enumerate(cols, start=1):
+        ax.text(j, 1, label, ha="center", va="center", fontsize=10, family=MONO)
+    # draw the kept path last so it sits on top of shared grey segments
+    order = [k for k in range(len(paths)) if k != keep] + [keep]
+    lines = {}
+    for k in order:
+        path = paths[k]
+        best = k == keep
+        (lines[k],) = ax.plot([j for _, j in path], [-i for i, _ in path],
+                              color=EMPHASIS if best else RULE,
+                              lw=2.5 if best else 1.5, marker="o", ms=4,
+                              zorder=4 if best else 3)
+    if continuation:
+        ax.plot([j for _, j in continuation], [-i for i, _ in continuation],
+                color=INK, lw=1.5, ls="--", marker="o", ms=4, zorder=2)
+    if labels is not None:
+        # list the paths in the order given, not the drawing order
+        shown = [k for k in range(len(paths)) if labels[k] is not None]
+        ax.legend([lines[k] for k in shown], [labels[k] for k in shown],
+                  loc="center left", bbox_to_anchor=(1.0, 0.5),
+                  prop={"family": MONO, "size": 9}, handlelength=1.5)
+    ax.set_xlim(-1.6, len(cols) + 0.4)
+    ax.set_ylim(-len(rows) - 0.4, 1.6)

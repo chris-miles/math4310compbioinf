@@ -17,6 +17,7 @@ Which regions of two proteins have similar sequences?
 import sys
 sys.path.insert(0, "../style")
 import matplotlib.pyplot as plt
+import numpy as np
 import coursefigs as cf
 cf.use_style()
 ```
@@ -41,7 +42,7 @@ cf.alignment(axes[1], "ACG", "ACG")
 plt.show()
 ```
 
-Our input remains two strings and column scores. We now seek both the best correspondence and the start and end of its region in each string, allowing unused prefixes and suffixes. This is *local alignment*. The Smith-Waterman algorithm lets a promising region start after a poor prefix and end before poor trailing columns; its table finds those endpoints along with the score.
+The input is still two strings and column scores, but the output must now say where the matching region starts and ends in each string, leaving the prefixes and suffixes outside it unused. This problem is *local alignment*; the Smith-Waterman algorithm solves it with one table that finds the endpoints along with the score.
 
 Which letters must appear in the answer depends on the biological task:
 
@@ -53,18 +54,16 @@ Which letters must appear in the answer depends on the biological task:
 
 : Biological tasks determine alignment boundaries. {#tbl-alignment-biological-tasks}
 
-The fitting model assumes the whole read belongs in one reference interval. A read with an adapter (a laboratory-added sequence used during sequencing) or an unreliable end may need trimming or an alignment that leaves those bases unaligned. We will keep the simpler whole-read requirement when deriving the fitting recurrence.
-
 ::: {#def-local-alignment}
 ## Local alignment problem
 Given strings $x$ and $y$ and additive column scores, find substrings of $x$ and $y$ whose alignment has maximum score. The empty alignment, with score zero, is allowed.
 :::
 
-Allowing the empty alignment means the answer is never negative. More importantly, it lets a poor prefix be discarded before a promising region begins.
-
-The start of the shared region is unknown. At a fixed endpoint $(i,j)$, its part in $x$ could begin at any position up to $i$, and likewise in $y$. Those choices are precisely the suffixes of $x_1\cdots x_i$ and $y_1\cdots y_j$. Let $H(i,j)$ store the best alignment score over all such suffix pairs, including the empty alignment. One entry therefore summarizes many possible starts. Taking the largest entry will also choose the endpoint.
-
-Recall the global traceback: choose a maximizing predecessor, emit its column, and reverse the collected columns. Here the correspondence must also tell us where a shared region starts and ends. The restart candidate, best endpoint, and stopping rule change together.
+Neither end of the shared region is known in advance. Fix a candidate endpoint $(i,j)$ for the moment, so that the region ends at $x_i$ and $y_j$. Its start could be any position up to $i$ in $x$, and likewise in $y$; those choices are the suffixes of $x_1\cdots x_i$ and $y_1\cdots y_j$. Write $\operatorname{opt}(u,v)$ for the best global-alignment score of two strings $u$ and $v$, with $\operatorname{opt}=0$ when both are empty. The table entry we want is
+$$
+H(i,j)=\max_{0\le i_0\le i,\ 0\le j_0\le j}\ \operatorname{opt}\bigl(x_{i_0+1}\cdots x_i,\ y_{j_0+1}\cdots y_j\bigr).
+$$
+Read it from the inside out: choose how many letters $i_0$ and $j_0$ to skip at the start of each prefix, align what remains end to end, and keep the largest score over all $(i+1)(j+1)$ choices of starts. Choosing $i_0=i$ and $j_0=j$ selects the empty alignment, so $H(i,j)\geq0$. Maximizing over the endpoint as well gives the best local score, $\max_{i,j}H(i,j)$. Computing each $\operatorname{opt}$ separately would repeat the global algorithm for every start; the recurrence below folds the choice of start into the table itself.
 
 ## The Smith-Waterman recurrence
 
@@ -95,6 +94,10 @@ The global and local algorithms differ in four connected rules:
 
 The zero candidate means "discard the alignment built so far and start after this coordinate." Suppose a prefix has score $-2$ and a later run would add 3. Keeping the prefix gives 1; restarting gives 3. Because a local alignment is allowed to omit that prefix, keeping its loss can never help. A restart replaces all negative alternatives by zero, while a positive extension keeps accumulating evidence.
 
+::: {.callout-note title="Key idea"}
+The zero candidate starts a new alignment wherever every way of continuing the old one has a negative score. One table therefore maximizes over all starting points at once, and its largest entry chooses where the shared region ends.
+:::
+
 ::: {.algorithm}
 **Algorithm: find one optimal local alignment.**
 
@@ -106,7 +109,7 @@ The zero candidate means "discard the alignment built so far and start after thi
 
 ## A shared interior region
 
-Use a toy DNA comparison with a shared core and differing flanks: $x=\texttt{TTACGCC}$ and $y=\texttt{GGACGAA}$, with match $+1$, mismatch $-1$, and gap $-2$. The letters make the calculation short; the same boundary choice lets a protein-domain match omit the surrounding protein regions.
+Return to $x=\texttt{TTACGCC}$ and $y=\texttt{GGACGAA}$ with match $+1$, mismatch $-1$, and gap $-2$, a shared core between differing flanks.
 
 ::: {#exm-local-reset}
 ## Discarding a poor prefix
@@ -117,9 +120,24 @@ $$
 The next diagonal T/G mismatch is also discarded. Pairing the following A/A, C/C, and G/G gives $H(3,3)=1$, $H(4,4)=2$, and $H(5,5)=3$. Continuing through the two C/A mismatches lowers the diagonal scores to 2 and then 1. The largest score, rather than the final cell, selects the end of the core.
 :::
 
-The local alignment is ACG/ACG with score 3. The global alignment TTACGCC/GGACGAA scores $-2+3-2=-1$: its four flank mismatches cancel more than the core earns. Local alignment omits the flanks and identifies a region worth investigating. Its coordinates will tell us where that region lies in both input records.
+The local alignment is ACG/ACG with score 3. The global alignment TTACGCC/GGACGAA scores $-2+3-2=-1$, because its four flank mismatches cancel more than the core earns. Here the core occupies positions 3 to 5 in both strings, so global alignment still pairs the right letters; it fails only by burying a perfect three-letter agreement inside a negative total. When the shared region sits at different positions in the two records, global alignment can also choose the wrong correspondence.
 
-The function returns the score, the two gapped strings, and the start and end grid coordinates of the selected region. If the latter are $(i_0,j_0)$ and $(i_1,j_1)$, the ungapped strings must equal Python slices `x[i_0:i_1]` and `y[j_0:j_1]`. These are zero-based half-open intervals: the start is included and the end excluded. In our one-based mathematical notation, the first selected letters are $x_{i_0+1}$ and $y_{j_0+1}$. An empty result uses start and end $(0,0)$.
+::: {#exm-local-global-shift}
+## A shared core that global alignment misplaces
+Suppose the domain lies near the start of one record and near the end of the other. Removing the first two letters of $x$ and the last two of $y$ gives $x=\texttt{ACGCC}$ and $y=\texttt{GGACG}$, so the core is now $x_1x_2x_3$ and $y_3y_4y_5$. A global alignment must use every letter, and pairing the two copies of ACG then needs two gap columns on each side. Compare it with the ungapped alignment:
+$$
+\begin{array}{ccc}
+\text{alignment} & \text{columns} & \text{score}\\[2pt]
+\begin{array}{c}\texttt{--ACGCC}\\\texttt{GGACG--}\end{array} & \text{3 matches, 4 gaps} & 3-8=-5\\[10pt]
+\begin{array}{c}\texttt{ACGCC}\\\texttt{GGACG}\end{array} & \text{1 match, 4 mismatches} & 1-4=-3
+\end{array}
+$$
+The ungapped alignment is the unique global optimum. It pairs A with G and G with A, and its one match is a coincidental C/C in column 4. Local alignment pays for none of those gaps: $H$ climbs along the diagonal from $(0,2)$ to $H(3,5)=3$, and traceback selects $x_1x_2x_3=y_3y_4y_5=\texttt{ACG}$.
+:::
+
+In the protein comparison, global alignment would report a negative score and line up the domain of one protein with unrelated residues of the other. Local alignment reports the shared region and its coordinates in both records, which is what we need to choose a region whose activity to test.
+
+The function returns the score, the two gapped strings, and the grid coordinates $(i_0,j_0)$ where traceback stops and $(i_1,j_1)$ where it starts. The selected letters are $x_{i_0+1}\cdots x_{i_1}$ and $y_{j_0+1}\cdots y_{j_1}$, which are exactly the Python slices `x[i_0:i_1]` and `y[j_0:j_1]` because Python slices include the start index and exclude the end.
 
 ```{.python .execute}
 #| label: code-local-alignment
@@ -170,10 +188,10 @@ result = local_alignment(x, y)
 score, aligned_x, aligned_y, start, end = result
 assert aligned_x.replace("-", "") == x[start[0]:end[0]]
 assert aligned_y.replace("-", "") == y[start[1]:end[1]]
-result
+result, local_alignment("ACGCC", "GGACG")
 ```
 
-The output is `(3, "ACG", "ACG", (2, 2), (5, 5))`, agreeing with the hand calculation. Placing `stop` first in a score tie discards a neutral prefix; updating `best_cell` only when the score increases chooses the first maximizing endpoint.
+The first output is `(3, "ACG", "ACG", (2, 2), (5, 5))`, agreeing with the hand calculation. For the shifted pair of @exm-local-global-shift, the coordinates `(0, 2)` and `(3, 5)` locate the same core at the start of one string and the end of the other. Placing `stop` first in a score tie discards a neutral prefix; updating `best_cell` only when the score increases chooses the first maximizing endpoint.
 
 
 ```{.python .execute}
@@ -202,9 +220,7 @@ For $x=\texttt{AAA}$ and $y=\texttt{CCC}$ with these scores, every nonzero candi
 
 ### Local-alignment coordinates
 
-Traceback identifies more than the aligned letters. If it starts at a maximum cell $(i_1,j_1)$ and stops at a zero cell $(i_0,j_0)$, then the selected substrings begin just after the stop coordinates and end at the start coordinates, respectively. For TTACGCC/GGACGAA, traceback starts at $(5,5)$ and stops at $(2,2)$. It selects $x_3\cdots x_5=y_3\cdots y_5=\texttt{ACG}$.
-
-This coordinate information matters in applications. A local protein alignment proposes where a shared domain lies in each protein, and a read alignment identifies a reference interval. The returned boundaries let us verify the selected substrings as well as the score.
+For TTACGCC/GGACGAA, traceback starts at $(5,5)$ and stops at $(2,2)$, selecting $x_3x_4x_5=y_3y_4y_5=\texttt{ACG}$. These coordinates are the biological output: they propose where a shared domain lies in each protein. They need not be unique, even when the score is.
 
 ::: {#exm-local-two-islands}
 ## Two separated matches
@@ -232,7 +248,7 @@ A length-$n$ string has $n(n+1)/2$ nonempty substrings, so separately aligning e
 
 ### Free-end alignment variants
 
-The recurrence, borders, answer cell, and stopping rule act together. Start from the three-way global recurrence, without a zero candidate in interior cells. Zero borders and a required bottom-right answer allow free leading ends but charge trailing ends. Global borders and an answer taken from the last row or last column instead charge leading ends and allow free trailing ends. These are free-end variants; neither permits the arbitrary internal restart used by local alignment.
+The recurrence, borders, answer cell, and stopping rule act together. Keeping the three-way global recurrence but changing only the borders or the answer cell gives free-end variants: zero borders make leading end gaps free, and taking the answer anywhere in the last row or column makes trailing end gaps free. Neither permits the arbitrary internal restart used by local alignment.
 
 ### Fitting an entire read inside a reference
 
@@ -243,7 +259,7 @@ Q(0,j)=0,\qquad Q(i,0)=ig,\qquad
 $$
 The zero top row lets us skip a reference prefix. The penalized first column prevents skipping a read prefix for free. Taking the answer anywhere in the last row leaves the unused reference suffix uncharged but requires consuming the whole read. Traceback stops on the top row, where $i=0$; it does not stop at an arbitrary interior zero.
 
-For read $\texttt{AC}$ and reference $\texttt{TTACGG}$, using match $+1$, mismatch $-1$, and gap $-2$, the fitting alignment scores 2 and places the read at reference positions 3 and 4. Two is also an upper bound: each of the two read letters can contribute at most one match reward, and gaps have negative scores. Global alignment instead must account for four additional reference letters; local alignment is allowed to omit part of the read.
+For read $\texttt{AC}$ and reference $\texttt{TTACGG}$, using match $+1$, mismatch $-1$, and gap $-2$, the fitting alignment scores 2 and places the read at reference positions 3 and 4. Global alignment instead must account for four additional reference letters; local alignment is allowed to omit part of the read.
 
 These boundary choices express a biological requirement in the table. Before modifying an alignment routine, state which input letters the output must consume, then choose its initialization and endpoint to enforce that requirement.
 
@@ -251,7 +267,52 @@ These boundary choices express a biological requirement in the table. Before mod
 
 ## Scoring and region length
 
-The restart rule relies on the scoring choice from Lesson 2. A calibrated log-odds table has negative expected score under its background model, so extending an unselected alignment through unrelated sequence tends to decrease its score. This makes the edges of a shared region detectable. If background columns instead have positive average score, the algorithm is rewarded for extending into unrelated material and the selected region expands. A zero mismatch score does not by itself force the whole sequence into the answer, but it can make neutral columns free and produce long, poorly localized optima.
+The restart rule finds the edges of a shared region only if unrelated sequence tends to lower the score. Lesson 2 measured this tendency with the expected score of one background column. If the two letters of an unrelated column are drawn independently with base probabilities $q_a$ and $q_b$, then
+$$
+\mathbb E_R[s]=\sum_{a,b}q_aq_b\,s(a,b).
+$$
+The sum weights each letter pair's score by how often unrelated sequence produces that pair, then adds. For uniform DNA with match $+1$ and mismatch $-1$, a column matches with probability $1/4$, so $\mathbb E_R[s]=\tfrac14(1)+\tfrac34(-1)=-\tfrac12$, and $\ell$ unrelated columns cost about $\ell/2$ points on average. A calibrated log-odds table always has negative background expectation.
+
+To see what this does to the recurrence, follow one diagonal of a longer simulated pair and ignore gaps. With $s_k$ the score of column $k$, the running total and the restarted score are
+$$
+C_k=C_{k-1}+s_k,\qquad H_k=\max\{0,\ H_{k-1}+s_k\},\qquad C_0=H_0=0.
+$$
+Both add the new column's score; $H_k$ then replaces a negative result by zero, as the local recurrence does along diagonal moves. In @fig-local-score-drift, columns 81 to 110 come from a shared region with 90% identity and the flanks are unrelated. The running total drifts down through the flanks, while the restarted score waits near zero, climbs through the shared region, and peaks where it ends. Chance runs of matches still raise small bumps in the flanks, so a small positive local score is weak evidence.
+
+```{.python .execute}
+#| label: fig-local-score-drift
+#| code-fold: true
+#| code-summary: "Simulate one diagonal through unrelated and shared columns"
+#| fig-cap: "Running total C_k (blue) and restarted score H_k (red) along one simulated ungapped diagonal, using match +1 and mismatch -1. Columns 81 to 110 (shaded) match with probability 0.9 and the rest with probability 1/4. Negative background expectation pulls the running total down in both flanks, while the restart holds the local score near zero until the shared region, so its maximum marks the region's end."
+#| fig-alt: "Two score curves against column number from 1 to 190. A blue line falls steadily to about minus 50, rises across a shaded band from 81 to 110, and falls again to about minus 75. A red line stays near zero with small bumps, rises across the shaded band to a peak of 28 at column 110, and declines back to zero."
+rng = np.random.default_rng(4)
+flank_length, core_length = 80, 30
+# Unrelated columns match with probability 1/4; shared-region columns with 0.9.
+match_probability = ([0.25] * flank_length + [0.9] * core_length
+                     + [0.25] * flank_length)
+column_scores = np.where(rng.random(len(match_probability)) < match_probability, 1, -1)
+
+running_total, restarted = [], []
+c_k, h_k = 0, 0
+for s_k in column_scores:
+    c_k = c_k + s_k
+    h_k = max(0, h_k + s_k)
+    running_total.append(c_k)
+    restarted.append(h_k)
+
+columns = range(1, len(column_scores) + 1)
+fig, ax = plt.subplots()
+ax.axvspan(flank_length + 0.5, flank_length + core_length + 0.5,
+           color=cf.LIGHT, label="shared region")
+ax.axhline(0, color=cf.RULE, linewidth=0.8)
+ax.plot(columns, running_total, label="running total $C_k$")
+ax.plot(columns, restarted, color=cf.EMPHASIS, label="restarted score $H_k$")
+ax.set(xlabel="Column $k$ along the diagonal", ylabel="Score")
+ax.legend(loc="lower left")
+plt.show()
+```
+
+If background columns instead had positive average score, both curves would climb through the flanks, and the maximum would move toward the end of the sequence; the selected region would expand into unrelated material. A zero mismatch score does not by itself force the whole sequence into the answer, but it can make neutral columns free and produce long, poorly localized optima.
 
 ::: {.callout-warning title="Similarity is not evidence by itself"}
 A high local score can arise in a low-complexity repeat such as ACACAC. Database tools mask or downweight such regions because the scoring model alone does not know that many similar-looking hits occur by chance.
@@ -263,8 +324,7 @@ Smith-Waterman finds the best region under its score. It does not supply a proba
 
 1. **Only the best region is returned.** Two disjoint domains require repeated searches or methods designed for multiple hits.
 2. **The score controls length.** Weak mismatch or gap penalties allow unrelated columns to join nearby good regions.
-3. **Low complexity creates strong accidental matches.** Repetitive composition violates the simple background model.
-4. **Quadratic time remains.** Exact local alignment against every database record is too costly at database scale. Lesson 5 introduces seed-and-extend search.
+3. **Quadratic time remains.** Exact local alignment against every database record is too costly at database scale. Lesson 5 introduces seed-and-extend search.
 
 ## Exercises
 

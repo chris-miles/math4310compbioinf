@@ -26,19 +26,66 @@ cf.use_style()
 
 ## CpG islands
 
-Many genes have nearby *promoters*, DNA regions where the cell's machinery can begin copying DNA into RNA. Some promoters lie in *CpG islands*, stretches of DNA that retain many adjacent CG pairs compared with the surrounding genome [@durbin1998]. If we have the genome sequence but no map of these regions, where should we look?
+Many genes have nearby *promoters*, DNA regions where the cell's machinery can begin copying DNA into RNA. Some promoters lie in *CpG islands*, stretches of DNA that retain many adjacent CG pairs compared with the surrounding genome [@durbin1998]. CpG means C followed by G on the same strand, a neighboring pair rather than a base pair across the two DNA strands. In vertebrate DNA, the C of a CpG often carries a chemical modification called *methylation*, and a methylated C is prone to mutate to T. Over evolutionary time this depletes CG pairs from most of the genome, while many promoter regions escape the depletion. Islands are typically a few hundred to a few thousand bases long [@durbin1998].
 
-Sequencing measurements are converted to A, C, G, T base calls and assembled into genomic sequence. Our input is a contiguous interval of that DNA string, called a *window*, with its position in the genome. A record might contain `CGTA` and the coordinates of its four bases. We want to score how closely such a window resembles an island rather than surrounding sequence, then mark candidates for further study of gene regulation.
+@fig-cpg-island-track shows what an island looks like along a stretch of DNA. The 1,000 bases are simulated from the two models used later in this lesson, with one 300-base island placed around the start of a gene, and each tick marks a CG pair. Outside the shaded island, CG pairs are scattered tens of bases apart; inside it, they occur every few bases, and a count of CG pairs in a sliding 100-base window rises and falls with the island. The printed excerpts show the same contrast in the letters themselves. If we have the genome sequence but no map of these regions, where should we look?
 
-CpG means C followed by G on the same strand, a neighboring pair rather than a base pair across the two DNA strands. Why is this pair unusual? In vertebrate DNA, C at a CpG often carries a chemical modification called *methylation*. The modified C is more prone to conversion to T, depleting CG pairs over evolutionary time. Many promoter regions escape this depletion [@durbin1998].
+```{.python .execute}
+#| label: fig-cpg-island-track
+#| code-fold: true
+#| code-summary: "Simulate a stretch of DNA with one island and mark its CG pairs"
+#| fig-cap: "A simulated 1,000-base stretch with an island at positions 301 to 600 (shaded). Top: each tick is one CG pair, and the arrow marks an illustrative gene start. Bottom: number of CG pairs in a 100-base window centered at each position. CG pairs cluster inside the island and are sparse outside it."
+#| fig-alt: "Two stacked panels sharing a position axis from 1 to 1000. The top panel has sparse vertical ticks outside a shaded band from 301 to 600 and dense ticks inside it, with a right-pointing arrow labeled gene start inside the band. The bottom panel shows a curve near 1 or 2 outside the band rising to about 20 inside it."
+#| fig-width: 6
+#| fig-height: 3.4
+# The two synthetic chains introduced in "A synthetic CpG classifier" below.
+plus_row = {"A": 0.2, "C": 0.3, "G": 0.3, "T": 0.2}
+minus_row = {"A": 0.3, "C": 0.2, "G": 0.2, "T": 0.3}
+transition_plus = {base: plus_row.copy() for base in "ACGT"}
+transition_plus["C"] = {"A": 0.1, "C": 0.3, "G": 0.5, "T": 0.1}
+transition_minus = {base: minus_row.copy() for base in "ACGT"}
+transition_minus["C"] = {"A": 0.3, "C": 0.3, "G": 0.1, "T": 0.3}
 
-An ordinary DNA letter string does not record attached methyl groups or gene activity. We predict a sequence feature, rather than measure methylation or establish that a promoter is active. Today's output is a window score and a threshold decision. It does not locate an island's exact boundaries.
+# Draw each base from the previous base's row of the island chain inside
+# positions 301 to 600 and of the background chain elsewhere.
+length, island_start, island_end = 1000, 301, 600
+rng = random.Random(1)
+track = rng.choices("ACGT", k=1)
+for position in range(2, length + 1):
+    if island_start <= position <= island_end:
+        row = transition_plus[track[-1]]
+    else:
+        row = transition_minus[track[-1]]
+    track += rng.choices("ACGT", weights=[row[base] for base in "ACGT"], k=1)
+track = "".join(track)
 
-A CpG island is not simply a GC-rich string. The order matters: `GCTA` and `CGTA` have the same base composition, but only the second contains `CG`. An independent-base model gives these strings the same probability. A first-order Markov chain can distinguish them by using the previous base when assigning the next-base probability. We fit one chain to island sequence and another to background sequence, then compare their explanations of the observed window.
+cg_starts = [i + 1 for i in range(length - 1) if track[i:i + 2] == "CG"]
+centers = list(range(51, length - 49, 5))
+window_counts = [track[c - 51:c + 49].count("CG") for c in centers]
+
+fig, axes = plt.subplots(2, 1, sharex=True, height_ratios=[1, 2])
+for ax in axes:
+    ax.axvspan(island_start - 0.5, island_end + 0.5, color=cf.LIGHT, zorder=0)
+axes[0].vlines(cg_starts, 0, 1, color=cf.INK, linewidth=0.8)
+axes[0].annotate("", xy=(560, 1.3), xytext=(470, 1.3),
+                 arrowprops=dict(arrowstyle="-|>", color=cf.INK, lw=1))
+axes[0].text(465, 1.3, "gene start", ha="right", va="center", fontsize=9)
+axes[0].set(yticks=[], ylim=(0, 1.6))
+axes[0].spines["left"].set_visible(False)
+axes[1].plot(centers, window_counts)
+axes[1].set(xlabel="Base position", ylabel="CG pairs per 100 bases")
+plt.show()
+print("background, positions 101-140:", track[100:140])
+print("island,     positions 401-440:", track[400:440])
+```
+
+Our input is a contiguous interval of assembled genomic DNA, called a *window*, together with its position in the genome. We want to score how closely a window resembles an island rather than surrounding sequence, then mark candidates for further study of gene regulation. The letters record neither methyl groups nor gene activity, so the score predicts a sequence feature; it does not measure methylation or show that a promoter is active.
+
+A CpG island is not simply a GC-rich string. The order matters: `GCTA` and `CGTA` have the same base composition, but only the second contains `CG`, so an independent-base model gives the two strings the same probability. A first-order Markov chain distinguishes them because each base's probability depends on the base before it. We fit one chain to island sequence and another to background sequence, then ask which chain explains the observed window better.
 
 ## Two models and one window
 
-For training, suppose a separate annotation lists genomic intervals labeled island or background. Extracting their DNA strings gives two collections of labeled sequence. We fit a first-order Markov chain to each collection, then compare the island model $M_+$ and background model $M_-$ on a new window $x=x_1\ldots x_n$. The annotation defines the target we learn; it is not a methylation measurement supplied by the DNA letters.
+For training, suppose a separate annotation lists genomic intervals labeled island or background. Extracting their DNA strings gives two collections of labeled sequence. We fit a first-order Markov chain to each collection, then compare the island model $M_+$ and background model $M_-$ on a new window $x=x_1\ldots x_n$.
 
 As in Lesson 8, each chain has an initial distribution $q^\pm$ and a transition matrix $A^\pm$. Initial probabilities sum to one, and each transition row sums to one. We assume every parameter is strictly positive so both window likelihoods and their logarithms are defined.
 
@@ -79,7 +126,7 @@ This uses the same product-to-sum rule as Lesson 2, but adjacent pairs now overl
 
 ## A synthetic CpG classifier
 
-Use the illustrative models below. Both models have neighboring-base dependence: the island model favors G especially after C, while the background model suppresses that transition. They also differ in their overall preferences for C and G. The numbers are chosen for hand calculation, not fitted to a genome.
+Use the illustrative models below. Both models have neighboring-base dependence: the island model favors G especially after C, while the background model suppresses that transition. The background chain is the CG-depleted chain simulated in Lesson 8. The two models also differ in their overall preferences for C and G. The numbers are chosen for hand calculation, not fitted to a genome.
 
 $$
 A^+=
@@ -127,7 +174,7 @@ For `CGTA`, the pairs are `CG`, `GT`, and `TA`:
 $$
 S(\texttt{CGTA})=2.322-0.585-0.585=1.152.
 $$
-At threshold zero, the first window is background-like and the second island-like under these models. Their 2.737-bit score difference comes entirely from order because their base counts agree. The classifications describe which synthetic model better fits each window.
+At threshold zero, the first window is background-like and the second island-like under these models. Their 2.737-bit score difference comes entirely from order because their base counts agree.
 :::
 
 @fig-cpg-order-evidence separates the contributions of the three neighboring pairs. Both windows contain one of each base, but putting G after C supplies a large positive contribution in the second window. The model therefore distinguishes a neighboring-base pattern that a base-count comparison misses.
@@ -161,8 +208,6 @@ plt.show()
 ## The threshold changes the decision
 The likelihood ratio for `CGTA` is $2^{1.152}\approx2.22$. Threshold zero calls it an island. Threshold two bits requires the island model to be more than four times as likely, so the same window is classified as background.
 :::
-
-The parameters and four-base windows are teaching examples. Real estimates come from much longer labeled island and flanking sequences.
 
 ## Scoring windows
 
@@ -215,7 +260,7 @@ initial_minus = initial_plus.copy()
 ]
 ```
 
-One length-$w$ window costs $\mathcal{O}(w)$ time: it has one initial-base contribution and $w-1$ pair contributions. Every pair can strengthen or weaken the accumulated evidence.
+One length-$w$ window costs $\mathcal{O}(w)$ time: it has one initial-base contribution and $w-1$ pair contributions.
 
 ## Likelihood ratios and prior odds
 
@@ -225,63 +270,124 @@ $$
 =\frac{P(x\mid M_+)}{P(x\mid M_-)}
 \frac{P(M_+)}{P(M_-)}.
 $$
-Both posterior probabilities divide by $P(x)$, the overall probability of observing the window after allowing either class. Taking their ratio cancels that common denominator. The sequence likelihood ratio therefore multiplies the starting class odds.
+Both posterior probabilities divide by $P(x)$, the overall probability of the window under either class, so that factor cancels and the sequence likelihood ratio multiplies the starting class odds.
 
 A threshold also allows unequal class prevalence. Under equal costs for the two kinds of classification error, choosing the more probable class by Bayes' rule favors the island class when
 $$
 S(x)>\log_2\frac{P(M_-)}{P(M_+)}.
 $$
-If islands are rare, the right side is positive. A window needs stronger sequence evidence to overcome the prior odds. In practice, the threshold can instead be selected on validation data to meet a desired false-positive rate.
+If islands are rare, the right side is positive, and a window needs stronger sequence evidence to overcome the prior odds. In practice, the threshold can instead be selected on validation data to meet a desired false-positive rate.
 
 For example, if the prior island probability is 0.1, the prior odds are $1/9$. The exact likelihood ratio $20/9$ for `CGTA` changes the odds to $20/81$, giving posterior probability $20/101\approx0.198$. The letters nearly double the island probability, but background remains the more probable class.
 
 ## Evidence accumulates along the sequence
 
-A four-base window provides only three pair contributions. Longer windows have more opportunities to distinguish the chains. If a window has $w-1$ pairs with average contribution $\bar\beta$, then, with our equal initial distributions,
+A four-base window provides only three pair contributions. To see how evidence builds up over a longer stretch, score the simulated sequence of @fig-cpg-island-track one pair at a time. Write $S_i=S(x_1\ldots x_i)$ for the score of the prefix that ends at position $i$. Because our initial distributions are equal, @prp-markov-ratio-adds gives
 $$
-S(x)=(w-1)\bar\beta.
+S_1=0,
+\qquad
+S_i=S_{i-1}+\beta(x_{i-1},x_i)\quad(i\geq2).
 $$
-For example, an average of 0.1 bit per pair yields 0.9 bit in ten bases but 19.9 bits in 200 bases. Those scores mean likelihood ratios of about 1.87 and nearly one million. They describe two whole-window hypotheses, so the gain in evidence assumes the whole window belongs to the same regime.
-
-We can see the accumulation by simulating a sequence with background, then an island, then background again. At each new position, use the row of the current region's chain. Both chains are the synthetic models already scored by hand.
+Each step adds the table entry for the newest adjacent pair, so plotting $S_i$ against $i$ draws a walk whose steps are the pair contributions.
 
 ::: {.algorithm}
-**Algorithm: simulate a changing region and accumulate evidence.**
-Draw the first base from the shared initial distribution. For each later position, select the island or background transition matrix according to its known simulation label and draw from the row of the previous base. Append the base and add its pair log ratio to the cumulative score.
+**Algorithm: accumulate evidence along a sequence.**
+Set $S_1$ to the initial-base log ratio. For $i=2,\ldots,n$, add $\beta(x_{i-1},x_i)$ to $S_{i-1}$ to obtain $S_i$. Return $S_1,\ldots,S_n$.
 :::
 
 ```{.python .execute}
 #| label: fig-cpg-cumulative-evidence
 #| code-fold: true
-#| fig-cap: "Cumulative island-versus-background log ratio for a simulated sequence; the shaded interval uses the island chain. Upward and downward trends show where successive pairs favor each model."
-#| fig-alt: "A cumulative score curve falls through background, rises within the shaded island interval from bases 201 to 400, and falls again in background."
-rng = random.Random(0)
-alphabet = list(initial_plus)
-sequence = rng.choices(alphabet, weights=list(initial_plus.values()), k=1)
-cumulative_score = [0.0]
-for position in range(1, 800):
-    region_matrix = (transition_plus if 200 <= position < 400
-                     else transition_minus)
-    previous = sequence[-1]
-    row = region_matrix[previous]
-    current = rng.choices(alphabet, weights=[row[base] for base in alphabet], k=1)[0]
-    sequence.append(current)
+#| code-summary: "Accumulate pair contributions along the simulated stretch"
+#| fig-cap: "Prefix score S_i along the simulated stretch of the opening figure; the shaded interval is the island. The walk falls through background, climbs inside the island, and falls again, so its slope shows which chain explains the local pairs better."
+#| fig-alt: "A jagged line against base position from 1 to 1000. It falls through the first 300 positions, rises inside a shaded band from 301 to 600, then falls again to position 1000."
+prefix_scores = [math.log2(initial_plus[track[0]] / initial_minus[track[0]])]
+for previous, current in zip(track, track[1:]):
     contribution = math.log2(transition_plus[previous][current]
-                              / transition_minus[previous][current])
-    cumulative_score.append(cumulative_score[-1] + contribution)
+                             / transition_minus[previous][current])
+    prefix_scores.append(prefix_scores[-1] + contribution)
 
 fig, ax = plt.subplots()
-ax.axvspan(200.5, 400.5, color=cf.LIGHT, label="Simulated island")
-ax.plot(range(1, 801), cumulative_score)
-ax.set_xlabel("Base position")
-ax.set_ylabel("Cumulative log ratio (bits)")
+ax.axvspan(island_start - 0.5, island_end + 0.5, color=cf.LIGHT, label="Island")
+ax.plot(range(1, length + 1), prefix_scores)
+ax.axhline(0, color=cf.RULE, linewidth=0.8)
+ax.set(xlabel="Base position i", ylabel="Prefix score $S_i$ (bits)")
 ax.legend()
+plt.show()
+for label, first, last in [("background", 1, island_start - 1),
+                           ("island", island_start, island_end),
+                           ("background", island_end, length)]:
+    slope = (prefix_scores[last - 1] - prefix_scores[first - 1]) / (last - first)
+    print(f"{label} positions {first}-{last}: {slope:+.3f} bits per base")
+```
+
+Why does the walk fall in background and climb in the island? Suppose the previous base is $a$ and the next base is drawn from row $a$ of the background chain. The expected contribution of the new pair is
+$$
+\sum_{b}a^-_{ab}\,\beta(a,b)
+=\sum_{b}a^-_{ab}\log_2\frac{a^+_{ab}}{a^-_{ab}}
+\leq 0 .
+$$
+This is the inequality of @prp-background-log-odds applied to two rows instead of two pair tables: a log ratio averaged under the distribution in its denominator cannot be positive, and it equals zero only when the two rows agree. Exchanging the roles of the chains shows that the average is nonnegative when the next base comes from the island row. For our tables, the background averages are $-0.117$ bit after A, G, or T and $-0.719$ bit after C; the island averages are $+0.117$ and $+0.844$. Most of the evidence therefore arrives right after a C, where the two chains disagree most about what comes next. Weighting these averages by how often each base occurs over a long stretch gives slopes of about $-0.25$ bit per base in background and $+0.34$ in the island, close to the printed slopes of the simulated walk.
+
+::: {.callout-note title="Key idea"}
+The log-likelihood ratio of two Markov chains is a walk with one step per adjacent pair. It drifts upward where the island chain explains the pairs better and downward where the background chain does, and a window's score is the walk's rise across that window.
+:::
+
+The height $S_i$ scores the whole prefix $x_1\ldots x_i$, which may span several regions, so a positive height is not a label for base $i$; location is carried by the slope. The walk also need not rise at every island base, because CA and CT still favor background there. Only the trend reflects the balance of evidence.
+
+### Window length
+
+A window score is a difference of two heights of the walk. The pairs inside a window $x_i\ldots x_j$ are exactly the steps taken between positions $i$ and $j$, so, with our equal initial distributions,
+$$
+S(x_i\ldots x_j)=S_j-S_i .
+$$
+A window is called island when the walk climbs more than $c$ bits across it. A window of $w$ bases inside one region contains $w-1$ steps, so its expected score is about $w-1$ times that region's slope: roughly $+0.34(w-1)$ bits in an island and $-0.25(w-1)$ in background. The expected separation therefore grows in proportion to $w$. Individual steps, however, range from $-1.585$ to $+2.322$ bits, so a short window can land on the wrong side of the threshold by chance.
+
+@fig-cpg-window-calls applies the threshold $c=0$ to every window of the simulated stretch, drawing each call at its window's center. With $w=20$, calls flicker: 47 background windows, each containing at least one CG, are called island, and 18 island windows are called background. With $w=100$, the chance calls disappear and only 16 windows are miscalled, all centered within ten bases of a boundary. These errors come from mixing: every window centered within 50 bases of a boundary contains bases from both regions, so where the called interval begins and ends depends on how the evidence in a mixed window happens to balance.
+
+```{.python .execute}
+#| label: fig-cpg-window-calls
+#| code-fold: true
+#| code-summary: "Call every window of two lengths from differences of the prefix scores"
+#| fig-cap: "Island calls at threshold 0 for every window of 20 and of 100 bases along the simulated stretch, each drawn at its window's center, beneath the true island. Short windows produce scattered false calls; long windows remove them but cannot place the island boundaries exactly."
+#| fig-alt: "Three horizontal strips over positions 1 to 1000. The top strip, labeled true island, is filled from 301 to 600. The middle strip, labeled 20-base windows, is filled mostly across the island with a few gaps and has several thin slivers outside it. The bottom strip, labeled 100-base windows, is one filled interval close to 301 to 600."
+#| fig-width: 6
+#| fig-height: 2.2
+def window_calls(width: int, threshold: float) -> tuple[list[float], list[bool]]:
+    """Return the center and island call of every window of the given width."""
+    centers, calls = [], []
+    for i in range(1, length - width + 2):
+        j = i + width - 1
+        window_score = prefix_scores[j - 1] - prefix_scores[i - 1]
+        centers.append((i + j) / 2)
+        calls.append(window_score > threshold)
+    return centers, calls
+
+fig, ax = plt.subplots()
+positions = list(range(1, length + 1))
+truth = [island_start <= i <= island_end for i in positions]
+ax.fill_between(positions, -0.35, 0.35, where=truth, color=cf.INK, step="mid")
+labels = ["true island"]
+for row, width in enumerate([20, 100], start=1):
+    centers, calls = window_calls(width, threshold=0)
+    ax.fill_between(centers, -row - 0.35, -row + 0.35, where=calls,
+                    color="C0", step="mid")
+    labels.append(f"{width}-base windows")
+    false_calls, missed = 0, 0
+    for center, is_island in zip(centers, calls):
+        inside = island_start <= center <= island_end
+        false_calls += is_island and not inside
+        missed += inside and not is_island
+    print(f"w = {width}: {false_calls} background windows called island, "
+          f"{missed} island windows called background")
+ax.set_yticks([0, -1, -2], labels)
+ax.set(xlabel="Base position", xlim=(1, length))
+ax.spines["left"].set_visible(False)
+ax.tick_params(axis="y", length=0)
 plt.show()
 ```
 
-The curve need not rise at every island base: CA and CT still favor background there. Its trend reflects the balance of all pair contributions. The height at position $i$ scores the whole prefix $x_1\ldots x_i$ under two homogeneous chains; the change in slope shows where local evidence changes. A positive prefix score is therefore not a label for its final base.
-
-Window width creates a related compromise. Short windows respond quickly to a change of region but contain few pairs, so individual contributions can reverse a call. Long windows accumulate stronger evidence within a region but mix the two regimes near a boundary. For instance, a 100-base window straddling a boundary could contain 50 background bases and 50 island bases; either whole-window label assigns one class to bases from the other. Allowing the region label to change inside the sequence is the problem taken up by hidden Markov models.
+Window length is therefore a compromise between noise and resolution. A window must be long enough that the expected separation outgrows the pair-to-pair variation; for these synthetic chains, a few dozen bases suffice. It must also be shorter than the islands we hope to find, and near a boundary it mixes the two regimes: a 100-base window straddling a boundary may contain 50 background and 50 island bases, and either whole-window label assigns one class to bases from the other. Real islands range from a few hundred to a few thousand bases, so no single width serves every island. Allowing the region label to change inside the sequence, instead of fixing a window, is the problem taken up by hidden Markov models.
 
 ## Estimation and evaluation
 
@@ -320,6 +426,10 @@ Compute $S(\texttt{AAAA})$ and classify it at thresholds $-2$, $0$, and $1$ bit.
 
 ::: {#exr-cpg-prior}
 Suppose $P(M_+)=0.1$ and $P(M_-)=0.9$. Derive the Bayes threshold in bits and classify `CGTA`.
+:::
+
+::: {#exr-cpg-window-boundary}
+A 100-base window straddles an island boundary, with a fraction $f$ of its pairs inside the island. Using the long-run slopes $+0.34$ and $-0.25$ bit per base, find the value of $f$ at which the expected window score is zero. Where, relative to the true boundary, will the centers of the first island calls tend to fall?
 :::
 
 ::: {#exr-cpg-leakage}

@@ -24,47 +24,51 @@ cf.use_style()
 
 Assembly starts with overlapping reads whose positions in the genome are unknown. Lesson 6 represented their short words in a de Bruijn graph: each word supplies an edge, and matching suffixes and prefixes allow edges to follow one another. For the ideal 3-mer multiset of `TACGACG`, those edges must be ordered to use TAC once, ACG twice, CGA once, and GAC once. Following that order spells a candidate DNA sequence.
 
-Our first task is to find such an ordering without repeatedly guessing at branches. We use the ideal genomic multiset, meaning that each valid genome start position contributes exactly one k-mer occurrence. A complete reconstruction must use each edge occurrence once. This is an *Eulerian path* problem, with degree conditions that tell us whether a solution exists and an algorithm that constructs one.
+Our first task is to find such an ordering without guessing at branches. Throughout, the multiset is the ideal genomic one, in which each genome position contributes exactly one $k$-mer occurrence, so a complete reconstruction uses each edge exactly once. This is an *Eulerian path* problem: simple degree conditions decide whether a solution exists, and an algorithm constructs one in linear time.
 
-Finding one complete path answers the computational question. It leaves a biological question: do the words force that sequence, or could another path spell a different one? Repeats can leave the data compatible with several assemblies. We will compare complete paths and then return to observed reads, where uneven coverage and sequencing errors add further branches or missing edges.
+Finding one complete path answers the computational question but leaves a biological one: do the words force that sequence, or could another path spell a different genome? Repeats can leave the data compatible with several genomes, and with real reads, errors and coverage gaps add or remove edges. An assembler then reports contigs, stretches that every compatible genome shares.
 
-For example, `ACGTCGACG` and `ACGACGTCG` contain exactly the same 3-mers with the same counts. @fig-euler-repeat-graph shows their shared graph and the two different orders of its closed routes. Finding a route through the graph can therefore give a valid reconstruction without identifying which sequence supplied the words.
+For example, `ACGTCGACG` and `ACGACGTCG` contain exactly the same 3-mers with the same counts, so they have the same de Bruijn graph. @fig-euler-repeat-graph draws that graph twice, each time with a different loop from CG taken first, and spells the resulting genome beneath it. The two loops append TCG and ACG, and taking them in the other order swaps those letters in the genome. A route through this graph is a valid reconstruction, but the words alone cannot say which of the two genomes supplied them.
 
 ```{.python .execute}
 #| label: fig-euler-repeat-graph
-#| fig-cap: "The same graph permits two orders of its closed excursions from CG. Each panel highlights the excursion taken first and names the different string spelled by the completed traversal."
-#| fig-alt: "Two copies of the same directed multigraph. The upper panel highlights CG to GT to TC to CG and is labeled ACGTCGACG; the lower highlights CG to GA to AC to CG and is labeled ACGACGTCG."
+#| fig-cap: "One graph, two genomes. Each panel highlights the loop from CG that a complete traversal takes first and, beneath it, the string the traversal spells, with the three letters appended by the highlighted loop in red. Swapping the order of the two loops swaps TCG and ACG in the spelled genome while using the same edges."
+#| fig-alt: "Two copies of the same directed multigraph, each above a nine-letter string. The upper graph highlights CG to GT to TC to CG above ACGTCGACG, with letters 4 to 6 (TCG) on red; the lower highlights CG to GA to AC to CG above ACGACGTCG, with letters 4 to 6 (ACG) on red."
 #| fig-width: 6
-#| fig-height: 5.5
+#| fig-height: 6
 #| code-fold: true
 #| code-summary: "Compare two reconstructions from the same short words"
 repeat_edges = [("AC", "CG"), ("AC", "CG"), ("CG", "GT"),
                 ("GT", "TC"), ("TC", "CG"), ("CG", "GA"), ("GA", "AC")]
 positions = {"AC": (0, 0), "CG": (1.6, 0), "GT": (3, .9),
              "TC": (4.2, .2), "GA": (2.5, -1.1)}
-first_excursions = [
+first_loops = [
     [("CG", "GT"), ("GT", "TC"), ("TC", "CG")],
     [("CG", "GA"), ("GA", "AC"), ("AC", "CG", 0)],
 ]
-fig, axes = plt.subplots(2, 1)
-for ax, excursion, spelling in zip(
-    axes, first_excursions, ["ACGTCGACG", "ACGACGTCG"]
-):
-    cf.digraph(ax, repeat_edges, pos=positions, highlight_edges=excursion)
-    ax.set_title("Complete traversal spells " + spelling)
+spellings = ["ACGTCGACG", "ACGACGTCG"]
+titles = ["TCG loop first", "ACG loop first"]
+fig, axes = plt.subplots(4, 1, gridspec_kw={"height_ratios": [3, 0.7, 3, 0.7]})
+for panel in range(2):
+    graph_ax, string_ax = axes[2 * panel], axes[2 * panel + 1]
+    cf.digraph(graph_ax, repeat_edges, pos=positions,
+               highlight_edges=first_loops[panel])
+    graph_ax.set_title(titles[panel])
+    # positions 4-6 of the genome (Python indices 3-5) come from the first loop
+    cf.sequence_tracks(string_ax, {"spells": spellings[panel]},
+                       highlighted_row="spells", highlighted_positions=[3, 4, 5],
+                       show_positions=False)
 plt.show()
 ```
 
-Recall that $\operatorname{Comp}_k(x)$ lists the length-$k$ substrings of $x$, including repeated occurrences. In $D(K)$, each word in the multiset $K$ supplies an edge from its length-$(k-1)$ prefix to its length-$(k-1)$ suffix. Identical words supply parallel edges. Following an edge appends its last base to the sequence spelled so far.
-
-The multiplicities here are genomic occurrences, as in Lesson 6. Read abundance will return when we consider errors and contigs.
+Recall that $\operatorname{Comp}_k(x)$ lists the length-$k$ substrings of $x$, including repeated occurrences. In $D(K)$, each word in the multiset $K$ supplies an edge from its length-$(k-1)$ prefix to its length-$(k-1)$ suffix, identical words supply parallel edges, and following an edge appends the word's last base to the sequence spelled so far.
 
 ::: {#def-eulerian-trail}
 ## Eulerian path and cycle
 An *Eulerian path* uses every edge exactly once. An *Eulerian cycle* is an Eulerian path whose first and last nodes agree.
 :::
 
-Vertices may repeat. The restriction is on edges, which represent the $k$-mer occurrences that reconstruction must consume.
+Nodes may repeat; the restriction falls on edges, because they represent the $k$-mer occurrences that a reconstruction must consume.
 
 ::: {#prp-assembly-eulerian}
 ## Reconstruction is an Eulerian path problem
@@ -83,10 +87,14 @@ Write $d^+(v)$ and $d^-(v)$ for out-degree and in-degree, counting parallel edge
 
 ::: {#thm-directed-euler-path}
 ## Eulerian path criterion
-Suppose all nonzero-degree nodes of a finite directed multigraph are connected when directions are ignored. It has an Eulerian path exactly when either:
-
-1. every node is balanced, giving an Eulerian cycle; or
-2. one start $s$ has $d^+(s)-d^-(s)=1$, one end $t$ has $d^-(t)-d^+(t)=1$, and all other nodes are balanced.
+Suppose all nonzero-degree nodes of a finite directed multigraph are connected when directions are ignored. It has an Eulerian path exactly when either every node is balanced, $d^+(v)=d^-(v)$, in which case every Eulerian path is a cycle; or there are two nodes $s\neq t$ with
+$$
+d^+(v)-d^-(v)=\begin{cases}
+\phantom{-}1, & v=s \text{ (the start)},\\
+-1, & v=t \text{ (the end)},\\
+\phantom{-}0, & \text{every other node } v.
+\end{cases}
+$$
 :::
 
 ::: {.proof}
@@ -114,11 +122,11 @@ The path must start at `TA` and end at `CG`.
 
 ### Interpreting degree differences
 
-A genome walk contributes one entry and one exit whenever it passes through an internal $(k-1)$-mer. These contributions cancel in the degree difference. The first node has one unpaired exit, and the last has one unpaired entry. For a circular genome, every exit is paired with an entry and all nodes balance.
+A genome walk contributes one entry and one exit each time it passes through an internal $(k-1)$-mer, and these cancel in the degree difference. Only the first node keeps an unpaired exit and the last an unpaired entry; for a circular genome, every node balances.
 
-This accounting argument is a fast rejection test. If two nodes have one extra outgoing edge, no ordering of the given edge multiset can produce one linear string. It does not tell us whether the failure came from a missing k-mer, an extra erroneous k-mer, or data from more than one genome. Those are different biological explanations for the same graph obstruction.
+This accounting gives a fast rejection test. If two nodes each have one extra outgoing edge, no ordering of the given edges can produce one linear string. The failure could come from a missing $k$-mer, an extra erroneous one, or data from more than one genome, and the degrees alone do not say which.
 
-Degrees also do not test connectivity. Imagine one cycle on nodes $A,B$ and another on $C,D$. All four nodes balance, but no edge joins the cycles. Any walk remains trapped in the component where it begins. The weak-connectivity condition in @thm-directed-euler-path rules out this case.
+Degrees also do not test connectivity. Two separate cycles, one on nodes $A,B$ and one on $C,D$, balance every node, yet a walk stays trapped in the cycle where it begins. The weak-connectivity condition in @thm-directed-euler-path rules out this case.
 
 ## Constructing a path
 
@@ -201,22 +209,28 @@ Reversing the output gives $A,B,A,C$, which uses every edge once. The earlier de
 
 For `ACGTCGACG` at $k=3$,
 $$K=\{\!\{\texttt{ACG},\texttt{ACG},\texttt{CGT},\texttt{GTC},\texttt{TCG},\texttt{CGA},\texttt{GAC}\}\!\}.$$
-The node `CG` occurs three times in the genome. Between those visits lie two closed excursions: `CG → GT → TC → CG`, which appends `TCG`, and `CG → GA → AC → CG`, which appends `ACG`. The graph records both excursions but loses their order. These are the two routes highlighted in @fig-euler-repeat-graph.
+The node `CG` occurs three times in the genome. Between those visits lie two closed excursions: `CG → GT → TC → CG`, which appends `TCG`, and `CG → GA → AC → CG`, which appends `ACG`. The graph records both excursions but not their order. After the first edge `AC → CG`, taking the TCG excursion first spells `ACGTCGACG`, and taking the ACG excursion first spells `ACGACGTCG`, using the same edges (@fig-euler-repeat-graph).
 
 ::: {#exm-repeat-ambiguity}
 ## Two strings with one composition
 Both `ACGTCGACG` and `ACGACGTCG` have composition $K$. Data consisting only of $K$ cannot favor either reconstruction.
 :::
 
-Starting at `AC`, first append G to reach `CG`. Taking the TCG excursion before the ACG excursion spells `ACGTCGACG`; reversing the two excursions spells `ACGACGTCG`. The same edges are used in each case. By contrast, `TACGACG` has only one closed excursion from `CG` before the walk ends there, so there are no two different excursions to reorder. A repeat creates ambiguity when the graph loses a pairing or ordering that changes the spelled sequence, not merely whenever a node is visited twice.
+The swap works for any node that a complete walk visits three times. Write such a walk as
+$$
+P\;E_1\;E_2\;Q,
+$$
+where $P$ is the part up to the first visit of the node $v$, $E_1$ and $E_2$ are the closed excursions from $v$ back to $v$, and $Q$ is the rest. Because each excursion begins and ends at $v$, $P\,E_2\,E_1\,Q$ is also a walk using exactly the same edges. By @prp-assembly-eulerian it spells a string with the same composition, which differs from the first whenever $E_1$ and $E_2$ spell different letters. A $(k-1)$-mer occurring three times in the genome supplies such a node: in `ACGTCGACG`, CG occurs at positions 2, 5, and 8.
+
+A $(k-1)$-mer that occurs only twice gives one excursion and nothing to reorder, but two such repeats can still cause ambiguity when they interleave. If the walk visits $u$, then $w$, then $u$, then $w$, write it as $P\,A\,B\,C\,Q$, where $A$ and $C$ run from $u$ to $w$ and $B$ runs from $w$ back to $u$. Then $P\,C\,B\,A\,Q$ uses the same edges, and it spells a different string whenever $A$ and $C$ spell different letters. `TACGACG` shows why that last condition matters. Its repeated 2-mers interleave, with AC at positions 2 and 5 and CG at 3 and 6, but both segments from AC to CG are the single word ACG, so the swap returns the same string. A triple repeat or two interleaved repeats whose swapped segments differ is therefore enough to make the genome impossible to recover from its $k$-mers.
 
 ### Existence and uniqueness
 
-The degree theorem answers whether at least one traversal exists. Assembly also asks whether all traversals spell the same string. A node with two outgoing edges does not automatically imply two assemblies: one choice may become stuck before using all edges, or two edge choices may carry identical labels and spell the same symbols. Conversely, the graph in @exm-repeat-ambiguity has two complete traversals that spell different strings.
+The degree theorem says whether at least one traversal exists; assembly also asks whether all traversals spell the same string. A branching node alone does not settle this, because one choice may get stuck before using every edge, or two choices may spell the same letters, as in `TACGACG`.
 
-We can prove non-identifiability by exhibiting two strings with the same input. Once both strings produce $K$, every algorithm receiving only $K$ sees identical data in the two cases. No tie-breaking rule, faster traversal, or clever implementation can recover which string generated it. Additional information must cross the repeat: longer k-mers, paired reads with a known separation, or a long read spanning both flanks.
+Once two strings produce the same $K$, every algorithm receiving only $K$ sees identical data, so no tie-breaking rule or cleverer traversal can recover which string generated it. Additional information must cross the repeat: longer k-mers, paired reads with a known separation, or a long read spanning both flanks.
 
-At $k=4$, the two strings in @exm-repeat-ambiguity no longer have the same composition. For `ACGTCGACG`, the 4-mers are `ACGT, CGTC, GTCG, TCGA, CGAC, GACG`. For `ACGACGTCG`, they are `ACGA, CGAC, GACG, ACGT, CGTC, GTCG`. The first contains `TCGA`; the second contains `ACGA`. Here one extra base of context separates the candidates. This calculation is specific to the example, not a theorem that larger k always gives a unique assembly.
+At $k=4$, the two strings in @exm-repeat-ambiguity no longer have the same composition. For `ACGTCGACG`, the 4-mers are `ACGT, CGTC, GTCG, TCGA, CGAC, GACG`. For `ACGACGTCG`, they are `ACGA, CGAC, GACG, ACGT, CGTC, GTCG`. The first contains `TCGA` and the second `ACGA`, so one extra base of context separates the candidates. A longer repeat would need a correspondingly larger $k$.
 
 ## Errors, tips, and bubbles
 
@@ -236,7 +250,7 @@ Suppose some reads report `ACGTC` and one reports `ACTTC`. The third base differ
 | `ACGTC` | `ACG, CGT, GTC` | `AC → CG → GT → TC` |
 | `ACTTC` | `ACT, CTT, TTC` | `AC → CT → TT → TC` |
 
-All three words in the second read contain the changed base. Both paths begin at `AC` and end at `TC`, but their internal nodes differ. The unchanged two-base flanks are enough for the paths to rejoin. If the changed base were at a read's end, the erroneous path could instead terminate before finding a shared flank.
+All three words in the second read contain the changed base, so the two paths share only their ends, `AC` and `TC`: the unchanged two-base flanks are enough for them to rejoin. If the changed base were at a read's end, the erroneous path could instead stop before reaching a shared flank.
 :::
 
 ```{.python .execute}
@@ -261,15 +275,29 @@ plt.show()
 
 Suppose twenty independently sampled reads spanning these flanks support `ACGTC`, and one supports `ACTTC`. Under a model with rare, independent sequencing errors, this imbalance supports keeping the first route. But the same graph could come from two biological versions of the region, or from similar repeat copies sampled at different depths. Read counts alone cannot distinguish those explanations. Base quality and reads spanning additional flanking sequence can supply evidence beyond this local graph [@compeau2015].
 
-Removing a route changes the set of sequences the graph represents. Bubble detection therefore solves only the structural question, "where do paths disagree?" Choosing a route requires assumptions about the sample and the measurement process. When the evidence remains ambiguous, reporting separate contiguous sequences avoids an unsupported join.
+Bubble detection answers only the structural question of where paths disagree. Choosing a route requires assumptions about the sample and the measurement process, and when the evidence stays ambiguous, ending the contiguous sequences at the bubble avoids an unsupported join.
 
 ### From a graph to contigs
 
-After filtering and graph simplification, real data still contain branches supported by substantial evidence. To identify routes rather than count observations, aggregate repeated observations of the same k-mer into one edge with a count attached. In this topology graph, a maximal path whose internal nodes each have one incoming edge and one outgoing edge has no local choice. Its spelled sequence is a *contig*. Keep the counts as evidence about support; they do not create additional branches merely because a region was sequenced many times.
+After filtering and graph simplification, real data still contain branches supported by substantial evidence. To identify routes rather than count observations, aggregate repeated observations of the same $k$-mer into one edge and keep the count as an attribute of that edge. In this graph, a maximal path whose internal nodes each have exactly one incoming and one outgoing edge involves no choice, so every genome compatible with the graph contains the sequence it spells. That sequence is a *contig*.
 
-For example, two sampled reads `ACGT` give the topology path `AC → CG → GT`, with count two on each edge. Its contig is `ACGT`. In @fig-euler-error-bubble, the two outgoing neighbors of `AC` are genuinely different, so abundance aggregation leaves the bubble intact. A contig ends where a route encounters branching, a coverage gap, or a chromosome end. An isolated component that forms a directed cycle needs separate treatment: choose a starting node and report the circular sequence rather than wait for a branch [@compeau2015].
+Return to the repeat graph of @fig-euler-repeat-graph. With one edge per distinct 3-mer, AC has one incoming and one outgoing edge, and only CG branches, with two edges in and two out. The non-branching paths therefore run from CG back to CG:
+$$
+\texttt{CG}\to\texttt{GT}\to\texttt{TC}\to\texttt{CG}\ \text{spells}\ \texttt{CGTCG},
+\qquad
+\texttt{CG}\to\texttt{GA}\to\texttt{AC}\to\texttt{CG}\ \text{spells}\ \texttt{CGACG}.
+$$
+Both candidate genomes contain both contigs, which overlap only in the repeated CG:
 
-This output separates what the reads determine from what they leave ambiguous. A contig is not necessarily a chromosome, and an assembly with fewer contigs is not automatically more accurate. Joining across an unresolved repeat can produce a longer but false sequence. Paired reads and long reads help because they connect graph regions farther apart than one k-mer overlap.
+```text
+ACGTCGACG        ACGACGTCG
+ CGTCG            CGACG
+    CGACG            CGTCG
+```
+
+An assembler reports these two contigs and leaves their order open, which is exactly what the 3-mers determine. In @fig-euler-error-bubble, the two outgoing neighbors of `AC` are genuinely different, so aggregating counts leaves the bubble intact, and contigs stop at its branch points. A contig ends where a route encounters branching, a coverage gap, or a chromosome end. An isolated component that forms a directed cycle needs separate treatment: choose a starting node and report the circular sequence rather than wait for a branch [@compeau2015].
+
+A contig is not necessarily a chromosome, and an assembly with fewer contigs is not automatically more accurate. Joining across an unresolved repeat can produce a longer but false sequence.
 
 A simplified short-read workflow therefore has several distinct steps:
 

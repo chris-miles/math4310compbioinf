@@ -30,7 +30,7 @@ Suppose treated samples lie on one side of a PCA plot and controls on the other.
 
 In an RNA-sequencing experiment, RNA is sampled, copied into DNA, sequenced in fragments, and the reads are matched to genes. The count $C_{ij}$ records reads assigned to gene $j$ in sample $i$. We retain samples as rows and genes as columns. Lesson 15 held a transformed matrix fixed to study the PCA optimization; here we ask which representation makes the samples comparable and how to interpret the resulting coordinates.
 
-The aim is to investigate whether treated samples have a coordinated expression pattern different from controls. Sample identity, condition, and processing batch belong in a separate *metadata* table, meaning records that describe each sample alongside its gene measurements. A *batch* is a group processed together, perhaps on the same day or instrument. A shared processing difference can affect many genes and create large variance without representing the treatment response. These records help us relate PCA directions to possible biological or technical causes [@holmeshuber2019].
+The aim is to learn whether treated samples share a coordinated expression pattern that controls lack. To judge where a separation comes from, we keep a second table of *metadata*, records describing each sample: its identity, its condition, and its processing *batch*, a group of samples handled together on the same day or instrument. A shared processing difference can shift many genes at once and create large variance that has nothing to do with the treatment, so these records let us relate a PCA direction to a possible biological or technical cause [@holmeshuber2019].
 
 Write $C\in\mathbb Z_{\geq0}^{n\times p}$ for counts from $n\geq2$ samples and $p$ genes. For a synthetic example, keep metadata separate from the numeric counts:
 
@@ -68,7 +68,7 @@ Counts also span a wide range. On the original scale, changing a value from 1000
 $$
 X_{ij}=\log_2(1+R_{ij}).
 $$
-For large $R_{ij}$, doubling it adds approximately one to $X_{ij}$, so multiplicative differences become approximately additive. A twofold change in an abundant gene and a twofold change in a less abundant gene then make comparable contributions. The offset of one count per million makes zeros finite; near zero, it also strongly affects the difference being measured. This illustrative transform does not make all measurements equally reliable.
+For large $R_{ij}$, doubling it adds approximately one to $X_{ij}$, so multiplicative differences become approximately additive. A twofold change in an abundant gene and a twofold change in a less abundant gene then make comparable contributions. The offset of one count per million makes zeros finite; near zero, it also strongly affects the difference being measured.
 
 ::: {.algorithm}
 **Algorithm: prepare a count matrix for this illustrative PCA.**
@@ -155,7 +155,12 @@ plt.show()
 
 ## Scaling changes the optimization problem
 
-For $n\geq2$ samples and $p$ retained genes, recall the centered matrix $Z_{ij}=X_{ij}-\bar x_j$ and covariance $S=Z^\top Z/(n-1)$. Unscaled PCA chooses a unit loading $v\in\mathbb R^p$ to maximize $\|Zv\|^2/(n-1)$. Genes with larger numerical variance can dominate this objective.
+For $n\geq2$ samples and $p$ retained genes, recall the centered matrix $Z_{ij}=X_{ij}-\bar x_j$ and covariance $S=Z^\top Z/(n-1)$. Unscaled PCA chooses a unit loading $v\in\mathbb R^p$ to maximize
+$$
+\frac{\|Zv\|^2}{n-1}=v^\top Sv
+=\sum_{j=1}^p S_{jj}\,v_j^2+\sum_{j\ne k}S_{jk}\,v_jv_k .
+$$
+The first sum weights each gene's variance by its squared loading. If gene $j$ is recorded in units $c$ times larger, its column of $Z$ is multiplied by $c$, so $S_{jj}$ grows by $c^2$ and each covariance $S_{jk}$ by $c$. The objective then gains most by loading on that gene, although the samples' relative positions are unchanged.
 
 For each gene with nonzero sample standard deviation,
 $$
@@ -170,8 +175,10 @@ $$
 $$
 Each difference is measured in units of that gene's standard deviation. A change of one standard deviation contributes one to the squared distance, whatever the original units. Thus scaling changes the weighting of gene differences and the directions PCA prefers. It can expose a coordinated pattern or amplify unreliable low-count measurements. Filtering should have a stated measurement-based purpose, such as excluding genes with too little coverage; choosing genes because they already separate the plotted conditions makes that separation partly a selection artifact.
 
-### Revisit the Lesson 15 matrix
+The four-sample matrix of Lesson 15 shows how much this choice can change the answer.
 
+::: {#exm-pca-rescaling}
+## Rescaling one gene of the four-sample matrix
 Use the same supplied transformed values:
 $$
 X=\begin{pmatrix}4&7&5\\5&6&3\\7&10&3\\8&9&5\end{pmatrix},
@@ -189,6 +196,7 @@ $$
 S_W=\begin{pmatrix}1&0.8&0\\0.8&1&0\\0&0&1\end{pmatrix}.
 $$
 Its eigenvalues are $1.8,1,0.2$, so PC1 again combines genes 1 and 2 but now explains $1.8/3=60\%$. Multiplying gene 3 by ten before standardizing gives the same $W$, because its standard deviation also increases tenfold. Standardization removes that change of units, at the cost of replacing the original variance weighting.
+:::
 
 ```{.python .execute}
 #| label: code-pca-scaling-check
@@ -204,7 +212,29 @@ for representation in (example_Z, rescaled_Z, W):
     print(np.round(squared_singular / squared_singular.sum(), 3))
 ```
 
-The fractions are $(0.75,0.167,0.083)$, $(0.952,0.043,0.005)$, and $(0.6,0.333,0.067)$, agreeing with the hand calculation. A gene's large contribution can reflect the chosen units. Whether to preserve its original variance or give it equal weight is a scientific choice about which differences to summarize.
+The fractions are $(0.75,0.167,0.083)$, $(0.952,0.043,0.005)$, and $(0.6,0.333,0.067)$, agreeing with the hand calculation. @fig-pca-scaling-swing draws the change in the plane of genes 1 and 3, where the two genes are uncorrelated. In the original units gene 1 has the larger variance ($10/3$ against $4/3$) and the best-fitting line lies along it; after gene 3 is multiplied by ten, its variance $400/3$ dominates and the line swings a full right angle. A gene's large contribution can therefore reflect the chosen units. Whether to preserve its original variance or give it equal weight is a scientific choice about which differences to summarize.
+
+```{.python .execute}
+#| label: fig-pca-scaling-swing
+#| echo: false
+#| fig-width: 6
+#| fig-height: 3.3
+#| fig-cap: "Centered genes 1 and 3 of the four-sample matrix, each projected onto its own first principal direction (red crosses), before and after gene 3 is multiplied by ten. The same four samples (in B, s1 and s4 at the top) give a horizontal PC1 in the original units and a vertical PC1 after rescaling: the units decide which gene PCA follows."
+#| fig-alt: "Left panel: points at minus2,1; minus1,minus1; 1,minus1; 2,1 projected onto the horizontal axis. Right panel: the same points with the vertical coordinate scaled to plus or minus 10, projected onto the vertical axis."
+genes_1_and_3 = example_Z[:, [0, 2]]
+panels = [genes_1_and_3, genes_1_and_3 * np.array([1, 10])]
+labels = [["s1", "s2", "s3", "s4"], []]  # right-panel labels would sit on the axis
+fig, axes = plt.subplots(1, 2)
+for ax, points, point_labels in zip(axes, panels, labels):
+    _, _, vt = np.linalg.svd(points)  # vt[0] is the first loading direction
+    cf.pca_projection(ax, points, vt[0], point_labels)
+axes[0].set(ylabel="Centered gene 3", title="Original units")
+axes[1].set(ylabel="10 × centered gene 3", title="Gene 3 multiplied by 10")
+for ax, label in zip(axes, ["A", "B"]):
+    ax.text(-0.12, 1.04, label, transform=ax.transAxes,
+            fontsize=11, fontweight="bold")
+plt.show()
+```
 
 ## A dominant component can be a processing batch
 
@@ -252,7 +282,7 @@ $$
 x_i^{\mathrm{adj}}=x_i-\bar x_{\mathrm{batch}(i)}+\bar x
 =\mu+\tau_i c.
 $$
-It removes the known additive batch shift while preserving the condition contrast. This calculation relies on the balanced design and additive model; it is not evidence that subtracting batch means is safe in any experiment.
+It removes the known additive batch shift while preserving the condition contrast. The calculation relies on the balanced design and the additive model; the next section shows what happens without balance.
 
 ::: {.algorithm}
 **Algorithm: center known batches in the balanced example.** Compute the overall gene means. For each batch, subtract its gene means from its sample rows and add the overall means. Fit PCA to the adjusted matrix and check which planted contrast remains.
@@ -336,6 +366,10 @@ Thus even exact measurements cannot determine the two profiles separately.
 Subtracting batch means in this design subtracts $\mu+\tau_i(a+c)$, leaving only the restored grand mean. It removes the entire condition-associated contrast, including any true biological contribution. Leaving the contrast untouched can retain a technical contribution. Neither choice resolves the missing comparison.
 
 Recording batch labels is essential, but it cannot repair this lack of independent comparisons. Processing both conditions within each batch, with biological replication, provides information that the fully confounded design lacks. Adjustment in less balanced data requires a model and enough design information to separate effects; it cannot manufacture that information [@holmeshuber2019].
+
+::: {.callout-note title="Key idea"}
+PCA reports the largest variation in whatever matrix it receives. Preprocessing decides which differences count, and the experimental design decides whether technical and biological differences can be told apart; adjustment cannot supply a comparison the design never made.
+:::
 
 ## Reading a PCA result as evidence
 

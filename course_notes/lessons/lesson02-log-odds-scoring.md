@@ -26,9 +26,16 @@ cf.use_style()
 
 ## Matches can occur by chance
 
-Suppose we have DNA sequences from two organisms and want to know whether their agreement supports descent from a common ancestral sequence. Sequencing and assembly supply the base strings. For now, take two equal-length segments whose positions have already been paired, with no gaps. A match count summarizes that pairing, but it does not say how much agreement unrelated sequences would produce.
+Suppose we have DNA sequences from two organisms and want to know whether their agreement supports descent from a common ancestral sequence. Sequencing and assembly supply the base strings. For now, take two equal-length segments whose positions have already been paired, with no gaps. A match count summarizes that pairing, and Lesson 1's unit edit costs treat every substitution alike, but neither says how much agreement unrelated sequences would produce or how much a particular pair of letters should count.
 
-For example, suppose ten paired positions contain eight A/A matches and two mismatches. If both sequences come from A-rich DNA, many A/A pairs can occur by chance. @fig-log-odds-chance-pair shows this for one column: each axis represents an independent base draw, and the red area contains pairs where both draws give A. With A frequency $1/4$ in each draw, that area is $(1/4)^2=1/16$; with frequency $0.8$, it is $0.8^2=0.64$. The same matching letters therefore need different scores in those two settings.
+For example, suppose the paired segments are
+$$
+\begin{array}{c}
+\texttt{AAGAAAAACA}\\
+\texttt{AAAAAAAAGA}
+\end{array}
+$$
+with eight A/A matches and two mismatches. The simple rule of $+1$ per match and $-1$ per mismatch awards this pair 6 points. If both sequences come from A-rich DNA, however, many A/A pairs occur by chance. @fig-log-odds-chance-pair shows this for one column: each axis represents an independent base draw, and the red area contains pairs where both draws give A. With A frequency $1/4$ in each draw, that area is $(1/4)^2=1/16$; with frequency $0.8$, it is $0.8^2=0.64$. The same matching letters therefore need different scores in those two settings.
 
 ```{.python .execute}
 #| label: fig-log-odds-chance-pair
@@ -53,7 +60,7 @@ We will assign probabilities to each possible paired column under two explanatio
 For strings $x=x_1\ldots x_n$ and $y=y_1\ldots y_n$, the data are the ordered pairs $(x_i,y_i)$ for $i=1,\ldots,n$. A pair-count table $N_{ab}$ records how often pair $(a,b)$ occurs.
 :::
 
-For $\texttt{ACGT}$ aligned to $\texttt{AGGT}$, the pairs are $AA,CG,GG,TT$. The count table discards their order. That will be sufficient under the independence assumption below.
+For $\texttt{ACGT}$ aligned to $\texttt{AGGT}$, the pairs are $AA,CG,GG,TT$, so $N_{AA}=N_{CG}=N_{GG}=N_{TT}=1$ and every other count is zero. The count table discards the order of the pairs, which will not matter under the independence assumption below.
 
 ## Two probability models
 
@@ -66,11 +73,9 @@ The background model $R$ draws the two letters independently with base probabili
 Both models assume that distinct alignment columns are independent and use the same pair distribution at every column.
 :::
 
-A probability specifies a sampling frequency. If we repeatedly generate aligned pairs under $M$, about a fraction $p_{ab}$ are the pair $(a,b)$. It describes both letters together, so the entire table sums to one. A probability conditional on the first letter being A would instead describe frequencies only among pairs whose first letter is A. Those conditional probabilities would sum to one across that row.
+A probability specifies a sampling frequency: if we repeatedly generate aligned pairs under $M$, about a fraction $p_{ab}$ of them are the pair $(a,b)$. Because $p_{ab}$ describes both letters together, the entire $4\times4$ table sums to one. A probability conditional on the first letter being A would instead describe frequencies only among pairs whose first letter is A, so those values would sum to one across that row.
 
-One way to estimate $p_{ab}$ is to count aligned pairs in representative sequences already known to be related and normalize the counts. Unobserved pairs need a small positive allowance to satisfy our strictly positive model. Background letter frequencies provide $q_a$. In this lesson, we treat the probabilities as calibrated separately and supplied as inputs, rather than estimating them from the candidate pair we want to judge. The choice of related sequences matters: close relatives generally preserve more identities than distant relatives [@durbin1998]. With the probabilities fixed, we can examine the scoring rule without first solving an estimation problem.
-
-A read-mapping model would need to account for sequencing errors as well as sample-to-reference variation; the same mathematical score need not use the same probabilities in both applications.
+One way to estimate $p_{ab}$ is to count aligned pairs in representative sequences already known to be related and normalize the counts. Unobserved pairs need a small positive allowance to satisfy our strictly positive model. Background letter frequencies provide $q_a$. In this lesson, we treat the probabilities as calibrated separately and supplied as inputs, rather than estimating them from the candidate pair we want to judge. The choice of related sequences matters: close relatives generally preserve more identities than distant relatives [@durbin1998], and a model for read mapping must also allow for sequencing errors. With the probabilities fixed, we can examine the scoring rule without first solving an estimation problem.
 
 Consider a synthetic DNA model with $q_a=1/4$ for every base. In the related model, each of the four matching pairs has probability $1/8$, and each of the twelve mismatching pairs has probability $1/24$.
 
@@ -79,7 +84,7 @@ Consider a synthetic DNA model with $q_a=1/4$ for every base. In the related mod
 | Match | 4 | $1/8$ | $1/16$ |
 | Mismatch | 12 | $1/24$ | $1/16$ |
 
-Both tables are normalized. Under $M$, the total probability of a match is $4/8=1/2$. Under $R$, it is $4/16=1/4$. These values are chosen for arithmetic, not fitted to genomic data.
+Both tables are normalized, since $4(1/8)+12(1/24)=1$ and $16(1/16)=1$. A related column is a match with probability $4/8=1/2$, twice the background rate of $4/16=1/4$. These values are chosen for arithmetic, not fitted to genomic data.
 
 For example, AA has probability $1/8$ under $M$ and $1/16$ under $R$: we expect twice as many AA pairs when sampling from $M$. The ratio 2 expresses that relative evidence. Equal probability differences can represent different relative evidence: increasing from 0.01 to 0.02 doubles the probability, whereas increasing from 0.50 to 0.51 gives a ratio of only 1.02. A CG pair has ratio $2/3$, favoring $R$. Independent columns contribute multiplying ratios; logarithms turn the product into a sum that we can compute one column at a time.
 
@@ -136,7 +141,19 @@ $$
 $$
 :::
 
-The product calculation and score calculation are independent ways to check the same result. A score of $+1$ for a match and $-1$ for a mismatch is a convenient teaching convention, but it is not the exact log-odds table derived from these probabilities.
+The exact mismatch score here is $-0.585$ bits, not the $-1$ of the simple match/mismatch rule. Integer scores such as match $+1$ and mismatch $-1$ are common in alignment programs and in our later tables, and running the derivation backward shows what such a table claims about related sequences. Suppose the integer scores are log-odds in some unknown base $u>1$, so that $s(a,b)=\log_u\bigl(p_{ab}/(q_aq_b)\bigr)$, or equivalently
+$$
+p_{ab}=q_aq_b\,u^{s(a,b)}.
+$$
+Every $u$ gives positive numbers, but only particular values make them sum to one. With the uniform background, each of the four match pairs receives $u/16$ and each of the twelve mismatch pairs receives $1/(16u)$, so normalization requires
+$$
+\frac{4u}{16}+\frac{12}{16u}=1
+\quad\Longleftrightarrow\quad
+u^2-4u+3=0
+\quad\Longleftrightarrow\quad
+u=1\ \text{or}\ u=3.
+$$
+The root $u=1$ would make $p_{ab}=q_aq_b$, the background model itself. The related model is therefore $u=3$, under which a column is a match with probability $4\cdot3/16=3/4$. Match $+1$ and mismatch $-1$ thus measure evidence for sequences that are about 75% identical, in units of $\log_23\approx1.58$ bits per point. A heavier mismatch penalty describes closer relatives. The gap score has no such interpretation until we specify a probability model for gaps.
 
 Because the model treats columns identically and independently, the count table from @def-aligned-pair-data also suffices: $S=\sum_{a,b}N_{ab}s(a,b)$. Rearranging the columns leaves this score unchanged. A model that uses neighboring bases would need their order as well.
 
@@ -175,7 +192,7 @@ assert math.isclose(2 ** score, 16 / 3)
 score, 2 ** score
 ```
 
-There are $n$ pair lookups and additions. With a fixed DNA alphabet, scoring takes $\mathcal O(n)$ time and constant extra space. It evaluates one supplied alignment; searching all possible alignments is a different task.
+There are $n$ pair lookups and additions, so with a fixed DNA alphabet, scoring takes $\mathcal O(n)$ time and constant extra space.
 
 ## Expected scores and chance matches
 
@@ -193,7 +210,11 @@ Expectation is a probability-weighted average. It predicts the average over repe
 $$
 \mathbb E_R[s]=\tfrac14(1)+\tfrac34\log_2(2/3)\approx-0.189.
 $$
-One hundred unselected background columns therefore have expected total score about $-18.9$ bits. Averaging the same scores under the uniform related model gives $\mathbb E_M[s]=\tfrac12(1)+\tfrac12\log_2(2/3)\approx0.208$: the two origins predict opposite average directions. Individual chance alignments can still score positively, especially when we search many candidates and retain the best one.
+For a whole alignment of $n$ background columns, the average of the sum is the sum of the column averages, and every column has the same distribution:
+$$
+\mathbb E_R[S]=\sum_{i=1}^n\mathbb E_R[s(x_i,y_i)]=n\,\mathbb E_R[s].
+$$
+One hundred unselected background columns therefore have expected total score about $-18.9$ bits. The total drifts downward along a line of slope $\mathbb E_R[s]$, with random fluctuations around that line. Averaging the same scores under the uniform related model gives $\mathbb E_M[s]=\tfrac12(1)+\tfrac12\log_2(2/3)\approx0.208$: the two origins predict opposite average directions. Individual chance alignments can still score positively, especially when we search many candidates and retain the best one.
 
 ::: {#exm-score-background-change}
 ## Changing the background
@@ -216,7 +237,30 @@ s(A,A)=\log_2(9/8)\approx0.170,\qquad
 s(C,C)=s(G,G)=s(T,T)=3,\qquad
 s(a,b)=-1\quad(a\ne b).
 $$
-An A/A match now supplies little evidence because it is already common by chance. A match of a rare base supplies much more. The opening pair with eight A/A matches and two mismatches scores $8\log_2(9/8)-2\approx-0.641$ bits, favoring the background model even though the simple $+1/-1$ rule awards 6 points.
+An A/A match now supplies little evidence because it is already common by chance, while a match of a rare base supplies much more. The opening pair with eight A/A matches and two mismatches scores $8\log_2(9/8)-2\approx-0.641$ bits, favoring the background model even though the simple $+1/-1$ rule awards 6 points. Compare a pair with the same numbers of matches and mismatches:
+$$
+\begin{array}{c}
+\texttt{ACAAGAATCA}\\
+\texttt{ACAAGAATGT}
+\end{array}
+\qquad
+S=3(3)+5\log_2(9/8)-2\approx7.85\text{ bits}.
+$$
+Its C/C, G/G, and T/T matches each contribute 3 bits. The $+1/-1$ rule gives both pairs 6 points; the calibrated scores separate a pair that chance readily explains from one it does not. The scoring function from earlier reproduces both totals once we supply the A-rich tables.
+
+```{.python .execute}
+#| label: code-log-odds-rich-background
+rich_background = {"A": 0.8, "C": 1 / 15, "G": 1 / 15, "T": 1 / 15}
+rich_pair = {}
+for a in "ACGT":
+    for b in "ACGT":
+        # half independent draws, half a copied letter
+        copied = rich_background[a] if a == b else 0
+        rich_pair[a, b] = 0.5 * rich_background[a] * rich_background[b] + 0.5 * copied
+
+(alignment_log_odds("AAGAAAAACA", "AAAAAAAAGA", rich_pair, rich_background),
+ alignment_log_odds("ACAAGAATCA", "ACAAGAATGT", rich_pair, rich_background))
+```
 
 Averaging this recalibrated table under $R$ gives
 $$
@@ -238,7 +282,11 @@ with equality only when $p=r$.
 Sketch. For $u>0$, the derivative of $u-1-\ln u$ is $1-1/u$, negative below 1 and positive above 1. Its minimum is therefore zero at $u=1$, proving $\ln u\leq u-1$. Apply this inequality to $u=p_{ab}/r_{ab}$, multiply by $r_{ab}$, and sum. The upper bound is $\sum p_{ab}-\sum r_{ab}=0$. Dividing by $\ln2$ converts to bits. Equality requires $p_{ab}/r_{ab}=1$ for every pair, since every weight $r_{ab}$ is positive.
 :::
 
-Thus a properly calibrated log-odds table has negative background expectation unless its two models coincide. This is an average statement for unselected columns. It does not prevent the best candidate in a large search from receiving a positive score.
+Thus a properly calibrated log-odds table has negative background expectation unless its two models coincide. Exchanging the roles of $p$ and $r$ in the same argument shows that the expectation under $M$ is positive.
+
+::: {.callout-note title="Key idea"}
+A log-odds score adds, column by column, the logarithm of how many times more probable each observed pair is under relatedness than under chance. Because both models are normalized, unrelated columns lose score on average and related columns gain it.
+:::
 
 The expectation describes repeated sampling. In @fig-log-odds-composition-walk, the same simulated pairs receive two scores, so the change in behavior comes entirely from calibration.
 
@@ -256,15 +304,10 @@ Draw independent ordered pairs from each supplied model. Score each stream first
 #| fig-width: 6
 #| fig-height: 3.5
 np.random.seed(2)
-rich_background = {"A": 0.8, "C": 1 / 15, "G": 1 / 15, "T": 1 / 15}
-words, random_probabilities, related_probabilities = [], [], []
-for a in "ACGT":
-    for b in "ACGT":
-        random_probability = rich_background[a] * rich_background[b]
-        copy_probability = rich_background[a] if a == b else 0
-        words.append((a, b))
-        random_probabilities.append(random_probability)
-        related_probabilities.append(0.5 * random_probability + 0.5 * copy_probability)
+# reuse the A-rich tables built in code-log-odds-rich-background
+words = list(rich_pair)
+related_probabilities = [rich_pair[word] for word in words]
+random_probabilities = [rich_background[a] * rich_background[b] for a, b in words]
 
 fig, axes = plt.subplots(1, 2)
 for label, probabilities, line_style in [
@@ -290,12 +333,14 @@ axes[1].legend()
 plt.show()
 ```
 
-The derivation scores a supplied ungapped alignment. Adding gap scores creates an alignment objective, but a normalized model for gapped strings needs further assumptions. Searching for the highest-scoring alignment also changes the distribution of the reported score: it selects the best among many candidates.
+The simulated totals follow their expected slopes. Under $+1/-1$ scoring, A-rich background columns match with probability $49/75$ and gain about $0.31$ points each, so the chance stream still climbs steadily, at about half the related rate of $0.65$ points per column, and a long unrelated alignment ends with a large positive total. Under the calibrated table, the background stream loses about $0.198$ bits per column, or about $59$ bits in expectation over 300 columns, while the related stream gains about $0.27$ bits per column. Only the calibrated score makes the direction of the walk tell us which model produced the pairs.
+
+The derivation scores a supplied ungapped alignment. Adding gap scores creates an alignment objective whose best alignment we search for in Lesson 3. Reporting the best of many candidates changes the distribution of the reported score, because the search gives unrelated sequence many opportunities to produce a high score.
 
 ## Exercises
 
 ::: {#exr-log-odds-expected-score}
-Assume each ordered DNA pair is equally likely under the background. Compute the expected score for match $+1$ and mismatch $-1$.
+Assume each ordered DNA pair is equally likely under the background. For match $+1$ and mismatch $-2$, compute the expected background score per column. Then find the base $u>1$ that makes these scores log-odds for a normalized related model, and the match probability that model implies.
 :::
 
 ::: {#exr-log-odds-hand}

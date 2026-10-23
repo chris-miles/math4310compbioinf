@@ -16,6 +16,7 @@ Which map of island-like regions best explains the observed DNA?
 #| code-summary: "Setup: imports and figure style"
 import itertools
 import math
+import random
 import sys
 
 sys.path.insert(0, "../style")
@@ -26,11 +27,9 @@ cf.use_style()
 
 ## The decoding problem
 
-An assembled DNA sequence supplies letters and positions, but no island labels. Suppose the observed stretch is `CGAC`. Under the model from Lesson 10, one possible annotation puts its first two bases in an island and the last two in background; another puts all four in an island. Which complete annotation is better supported? We want one label per base, so consecutive equal labels can be combined into intervals on a genome map.
+An assembled DNA sequence supplies letters and positions, but no island labels. Suppose the observed stretch is `CGAC`. Under the model from Lesson 10, one possible annotation puts its first two bases in an island and the last two in background; another puts all four in an island. Which complete annotation is better supported? Deciding each label from its base alone would ignore the model's preference for regions that continue across neighboring positions, so we must compare whole paths, including the changes of region that each one requires. The winning path gives one label per base, and consecutive equal labels combine into intervals on a genome map.
 
-The hidden-region model assigns a probability to every such explanation. Deciding each label from its base alone would ignore the model's preference for regions that continue across neighboring positions. We must compare whole paths, including the changes of region that each explanation requires.
-
-We retain the model from Lesson 10. Observations are $S$ for C or G and $W$ for A or T, so `CGAC` becomes $x=\texttt{SSWS}$. Hidden labels are background $B$ and island-like $I$, so $Q=\{B,I\}$ and the number of states is $K=2$. This simplified alphabet records GC enrichment, not the dinucleotide dependence used in the earlier CpG classifier. *Viterbi decoding* chooses the most probable complete path, balancing emissions against state transitions. Its output is an annotation under this model, rather than a confidence value for each base.
+We retain the model from Lesson 10: observations are $S$ for C or G and $W$ for A or T, so `CGAC` becomes $x=\texttt{SSWS}$, and hidden labels are background $B$ and island-like $I$, so $Q=\{B,I\}$ and $K=2$. *Viterbi decoding* chooses the most probable complete path, balancing emissions against state transitions, and computes it with the same kind of table-filling dynamic program that found optimal alignments. Its output is an annotation under this model, not a confidence value for each base.
 
 Recall the fixed illustrative parameters:
 $$
@@ -53,11 +52,22 @@ $$
 $$
 :::
 
-Because $P(x)$ is fixed once $x$ is observed, this also maximizes $P(\pi\mid x)=P(x,\pi)/P(x)$. With $K$ states, direct enumeration evaluates $K^n$ paths. The B/I model already has more than a million paths at $n=20$.
+Because $P(x)$ is fixed once $x$ is observed, this also maximizes $P(\pi\mid x)=P(x,\pi)/P(x)$. With $K$ states, direct enumeration evaluates $K^n$ paths, more than a million for the B/I model at $n=20$.
 
 ## Best prefixes
 
-The alignment dynamic program kept one best score for each pair of consumed prefixes. Here the corresponding subproblem is a sequence prefix ending in a specified hidden state. Different histories can reach the same state at the same position. Once there, the HMM assigns either history the same probability factors for any specified continuation: future transitions depend on the current state, and emissions depend on the states that produce them. Multiplying by these same nonnegative factors preserves which prefix is better. We therefore keep only one best score per state and position.
+Decoding is an alignment problem in a new setting. Draw a grid, called a *trellis*, with one row per state and one column per position. A hidden path picks one node in each column, so it is a left-to-right route through the grid, just as a global alignment was a route through the alignment table $F(i,j)$. Taking logarithms turns the path probability into a sum of node and edge scores:
+$$
+\ln P(x,\pi)=
+\underbrace{\ln p_{\pi_1}+\ln e_{\pi_1}(x_1)}_{\text{first node}}
++\sum_{i=2}^{n}\Bigl[
+\underbrace{\ln a_{\pi_{i-1}\pi_i}}_{\text{edge into column } i}
++\underbrace{\ln e_{\pi_i}(x_i)}_{\text{node in column } i}
+\Bigr].
+$$
+Read from left to right, the sum starts at a node in column 1 and then, at each later column, adds the score of the edge taken and the emission score of the node reached. Decoding therefore asks for the highest-scoring route through the trellis, as global alignment asked for the highest-scoring route through its table, and we solve it the same way: one best score per cell, filled column by column.
+
+The alignment program kept one best score for each pair of consumed prefixes. Here the subproblem is a sequence prefix ending in a specified hidden state, which is one node of the trellis. Different histories can reach the same node. Once there, the HMM assigns both histories the same probability factors for any continuation, because future transitions depend only on the current state and each future emission depends only on its own state. Multiplying two prefix probabilities by the same nonnegative factors preserves which one is larger, so we keep only one best score per state and position.
 
 ::: {#def-viterbi-score}
 ## Viterbi score
@@ -201,7 +211,15 @@ $$
 \left(\frac{0.8}{0.3}\right)^r
 =\frac{2^{r-1}}{3}.
 $$
-The numerator pays for entering I, staying there, and returning to B. Each S favors I through the emission ratio $0.8/0.3$. For run lengths 1, 2, and 3, the combined ratios are $1/3$, $2/3$, and $4/3$: the three-S run favors the island candidate. This comparison explains how several individually ambiguous bases can support a region together. It assumes fixed flanking labels; Viterbi also compares paths with different boundaries.
+The numerator pays for entering I, staying there, and returning to B. Each S favors I through the emission ratio $0.8/0.3$. For run lengths 1, 2, and 3, the combined ratios are $1/3$, $2/3$, and $4/3$: roughly three S symbols are needed to pay for entering an island and leaving it again. This comparison explains how several individually ambiguous bases can support a region together. It assumes fixed flanking labels; Viterbi also compares paths with different boundaries.
+
+The same accounting runs in reverse inside an island. Put $r$ W symbols between two positions fixed to I, and compare keeping the whole run in I with dropping it into B:
+$$
+\frac{P(\text{all-I candidate},x)}{P(\text{gap candidate},x)}
+=\frac{(0.6)^{r+1}}{0.4(0.8)^{r-1}(0.2)}
+\left(\frac{0.2}{0.7}\right)^r .
+$$
+For one W the ratio is $(0.36/0.08)(2/7)\approx1.29$, so the island continues through a single W. For two W symbols it is $(0.216/0.064)(4/49)\approx0.28$, and the island breaks. With fixed flanks, then, an island under this model absorbs an isolated A or T but not two in a row.
 
 ## Log-space implementation
 
@@ -300,7 +318,7 @@ Sketch. The claim holds at $i=1$ by initialization. Assume it holds at $i-1$. Ev
 
 There are $nK$ table entries. Each entry considers $K$ previous states, so the time cost is $\mathcal{O}(nK^2)$. Scores for only two columns require $\mathcal{O}(K)$ space. Reconstructing the path needs $\mathcal{O}(nK)$ stored backpointers.
 
-The trellis is a directed acyclic graph. Viterbi is a longest-path dynamic program after transition and emission probabilities are replaced by their logs. This is the same optimal-substructure argument used for alignment, with states replacing alignment moves.
+In the language of the log-score display, the trellis is a directed acyclic graph and Viterbi finds its highest-scoring path; the proof above is the alignment table's optimal-substructure argument with states in place of alignment moves.
 
 ### Validation by enumeration
 
@@ -337,7 +355,111 @@ for candidate, probability in ranked_paths[:3]:
 
 The dynamic program agrees with direct enumeration on this instance. Two additional checks catch boundary errors: a length-one sequence must return $\arg\max_k p_ke_k(x_1)$, and deterministic emissions must force the only compatible path.
 
-A decoded path becomes intervals by merging consecutive equal labels. For IIBB, positions 1 through 2 form the predicted island-like region. This is a concrete annotation under the model, but it leaves a new question: how much support does each label have? The best path accounts for only $0.0129024/0.060576\approx21.3\%$ of the probability conditional on SSWS. The next lesson adds the probabilities of alternative paths to assess individual positions.
+## Decoding a simulated sequence
+
+The four-position example shows the recurrence at work but cannot show whether decoding recovers regions; for that we need a sequence with known true labels. Lesson 10 simulated 300 positions from a sticky variant of the model, with $p$ and $E$ unchanged and transitions
+$$
+A_{\text{sticky}}=
+\begin{array}{c|cc}
+ & B&I\\\hline
+B&0.98&0.02\\
+I&0.05&0.95
+\end{array}.
+$$
+The chunk below regenerates that sequence and decodes it with `viterbi` under the sticky transitions that generated it. For comparison, it also makes window calls in the spirit of Lesson 9: center a window of odd width $w$ at position $i$, add the emission log ratios of its symbols, and call position $i$ island when the total is positive:
+$$
+\Lambda_w(i)=\sum_{j=i-h}^{i+h}\log_2\frac{e_I(x_j)}{e_B(x_j)}>0,
+\qquad h=\frac{w-1}{2}.
+$$
+Each S adds $\log_2(0.8/0.3)\approx1.42$ bits and each W adds $\log_2(0.2/0.7)\approx-1.81$ bits, so a window is called island when more than about 56% of its symbols are S; windows are truncated at the sequence ends.
+
+```{.python .execute}
+#| label: fig-viterbi-simulated
+#| code-fold: true
+#| code-summary: "Simulate, decode, and call windows"
+#| fig-width: 6
+#| fig-height: 2.8
+#| fig-cap: "One simulated sequence of 300 positions from the sticky variant, decoded three ways. Ticks mark observed S symbols; grey bars and shading show the true island runs. Viterbi (red) recovers the six longer islands with nearly correct boundaries, while short windows (w = 5) flicker and call false islands and long windows (w = 31) miss or blur the shorter islands."
+#| fig-alt: "Five rows over positions 1 to 300: tick marks for S symbols, then grey bars for true islands, red bars for the Viterbi path, and blue bars for window calls of width 5 and 31. Light grey shading behind all rows marks the true islands."
+def simulate_hmm(
+    n: int,
+    initial: dict[str, float],
+    transition: dict[str, dict[str, float]],
+    emission: dict[str, dict[str, float]],
+    rng: random.Random,
+) -> tuple[str, str]:
+    """Draw observations and a hidden path of length n (as in Lesson 10)."""
+
+    def draw(distribution: dict[str, float]) -> str:
+        """Draw one outcome with the probabilities stored as values."""
+        return rng.choices(list(distribution), weights=list(distribution.values()))[0]
+
+    state = draw(initial)
+    path = [state]
+    observations = [draw(emission[state])]
+    for _ in range(1, n):
+        state = draw(transition[state])
+        path.append(state)
+        observations.append(draw(emission[state]))
+    return "".join(observations), "".join(path)
+
+
+def window_calls(
+    observations: str, width: int, emission: dict[str, dict[str, float]]
+) -> str:
+    """Label each position by the sign of its centered window's log ratio."""
+    half = width // 2
+    labels = []
+    for i in range(len(observations)):
+        window = observations[max(0, i - half):i + half + 1]
+        score = 0.0
+        for symbol in window:
+            score += math.log2(emission["I"][symbol] / emission["B"][symbol])
+        labels.append("I" if score > 0 else "B")
+    return "".join(labels)
+
+
+sticky_transition = {
+    "B": {"B": 0.98, "I": 0.02},
+    "I": {"B": 0.05, "I": 0.95},
+}
+x_sim, path_sim = simulate_hmm(
+    300, initial, sticky_transition, emission, random.Random(6)
+)
+viterbi_sim, _ = viterbi(x_sim, states, initial, sticky_transition, emission)
+rows = {
+    "True states": path_sim,
+    "Viterbi path": viterbi_sim,
+    "Windows, w = 5": window_calls(x_sim, 5, emission),
+    "Windows, w = 31": window_calls(x_sim, 31, emission),
+}
+colors = [cf.RULE, cf.EMPHASIS, cf.SECOND, cf.SECOND]
+
+fig, ax = plt.subplots()
+true_island = [i + 1 for i, state in enumerate(path_sim) if state == "I"]
+ax.bar(true_island, 6.1, bottom=-0.5, width=1, color=cf.LIGHT, linewidth=0)
+s_positions = [i + 1 for i, symbol in enumerate(x_sim) if symbol == "S"]
+ax.vlines(s_positions, 4.6, 5.4, color=cf.INK, linewidth=0.6)
+# One row per labeling; each island position is a unit-width bar.
+for row, (labels, color) in enumerate(zip(rows.values(), colors)):
+    island = [i + 1 for i, label in enumerate(labels) if label == "I"]
+    ax.bar(island, 0.6, bottom=2.7 - row, width=1, color=color, linewidth=0)
+ax.set_yticks([5, 3, 2, 1, 0], ["Observed S"] + list(rows))
+ax.tick_params(axis="y", length=0)
+ax.spines["left"].set_visible(False)
+ax.set(xlim=(0.5, 300.5), ylim=(-0.5, 5.6), xlabel="Position")
+plt.show()
+```
+
+@fig-viterbi-simulated compares the three answers with the truth. Viterbi recovers the six longer islands, usually within a few positions of their true boundaries, and every island it calls overlaps a true one. It misses the two-position island at the start, and it extends the last island 11 positions into background that happened to emit S at 7 of them. Both behaviors follow from the price of switching: under the sticky transitions, the fixed-flank comparison for a run of $r$ S symbols becomes
+$$
+\frac{0.02\,(0.95)^{r-1}(0.05)}{(0.98)^{r+1}}\left(\frac{0.8}{0.3}\right)^r,
+$$
+which first exceeds one at $r=8$. A short burst of S therefore cannot pay to open an island, while a long S-rich run can.
+
+The windows have no switching price, only a width. Width 5 reacts quickly but flickers, splitting one island in two and calling seven short false islands where a few S symbols cluster in background. Width 31 removes the flicker but dilutes shorter islands with surrounding background, missing those near positions 100 and 220 and nearly all of the one at 183 to 202. The HMM replaces the window width by transition probabilities, which state how long regions are expected to last, and lets each boundary fall wherever the whole sequence supports it best.
+
+Merging consecutive equal labels turns a decoded path into intervals: for IIBB, positions 1 and 2 form the predicted island, and the Viterbi row of @fig-viterbi-simulated lists six intervals. A single path cannot say how firmly each label is supported. It draws a boundary as sharply as an island's interior, although letters near a boundary often fit several nearby endpoints almost equally well, and on SSWS the best path holds only $0.0129024/0.060576\approx21.3\%$ of the probability conditional on the observations. Measuring the support for each label requires adding the probabilities of the alternative paths, which is the computation of the next lesson.
 
 ## Exercises
 
