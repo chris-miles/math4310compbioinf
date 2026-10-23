@@ -372,11 +372,15 @@ K-means puts 27 of the 30 compact cells in a cluster with 27 curve cells, while 
 
 *Scale.* For $n=10^5$ cells, average linkage needs all $n(n-1)/2\approx5\times10^9$ pairwise distances, while a $k$-nearest-neighbor graph stores at most $nk$ edges, $10^6$ for $k=10$. Large analyses find neighbors approximately, without comparing every pair, and run community search on the sparse graph.
 
-*Dimension.* A cell measured on thousands of genes accumulates noise in every coordinate. Suppose two cells differ only by independent noise, each coordinate a standard normal value. Each coordinate difference then has variance 2, and its square has mean 2 and variance 8, so the squared distance over $p$ coordinates has mean $2p$ and standard deviation $\sqrt{8p}$. The relative spread
+*Dimension.* With thousands of noisy genes, distances between cells tend to look alike, so noise can decide which cell is nearest. Single-cell workflows therefore reduce the matrix with PCA first, keeping 10 to 50 component scores in which coordinated variation across many genes is concentrated, and build the neighbor graph on those scores. That graph and its communities are where Lesson 20 begins, when it asks how to draw the cells in two dimensions.
+
+:::: {.callout-note collapse="true" title="Going deeper: why distances concentrate"}
+A cell measured on thousands of genes accumulates noise in every coordinate. Suppose two cells differ only by independent noise, each coordinate a standard normal value. Each coordinate difference then has variance 2, and its square has mean 2 and variance 8, so the squared distance over $p$ coordinates has mean $2p$ and standard deviation $\sqrt{8p}$. The relative spread
 $$
 \frac{\sqrt{8p}}{2p}=\sqrt{\frac2p}
 $$
-is $1$ for $p=2$ but $0.01$ for $p=20{,}000$: all distances look alike, and noise largely decides which cell is "nearest." Single-cell workflows therefore reduce the matrix with PCA first, keeping 10 to 50 component scores in which coordinated variation across many genes is concentrated, and build the neighbor graph on those scores. That graph and its communities are where Lesson 20 begins, when it asks how to draw the cells in two dimensions.
+is $1$ for $p=2$ but $0.01$ for $p=20{,}000$: all distances look alike, and noise largely decides which cell is "nearest."
+::::
 
 ## What a cluster supports
 

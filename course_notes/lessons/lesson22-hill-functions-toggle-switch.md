@@ -322,7 +322,7 @@ Consider @eq-toggle with $a>0$.
 2. If $n=2$, the system is bistable exactly when $a>2$. Then the stable states are $\bigl((a\pm\sqrt{a^2-4})/2,\,(a\mp\sqrt{a^2-4})/2\bigr)$, with eigenvalues $-1\pm2/a$, and $(s,s)$ is a saddle.
 :::
 
-::: {.proof}
+:::: {.callout-note collapse="true" title="Going deeper: proof of the bistability condition"}
 A symmetric state satisfies $s(1+s^n)=a$, so $a/(1+s^n)=s$ and $|H'(s)|=a\,n\,s^{n-1}/(1+s^n)^2=n\,s^n/(1+s^n)<n$; its eigenvalues are $-1\pm|H'(s)|$.
 
 For $n=1$, the steady-state equations are $u(1+v)=a$ and $v(1+u)=a$. Subtracting gives $u-v=0$, so every steady state is symmetric, and $s+s^2=a$ has one positive root. There $|H'(s)|<1$, so both eigenvalues are negative.

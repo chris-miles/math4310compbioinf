@@ -68,9 +68,9 @@ In @fig-noisy-dynamics-traces, each cell rises toward the steady concentration $
 #| code-summary: "Plot the four reporter time courses"
 #| fig-width: 6
 #| fig-height: 3.6
-#| fig-cap: "Simulated readings for four cells after production switches on, with the deterministic response (dashed). The plot alone does not say whether the cells or the camera produce the scatter."
+#| fig-cap: "Simulated readings for four cells after production switches on, with the noise-free Euler response (dashed). The plot alone does not say whether the cells or the camera produce the scatter."
 #| fig-alt: "Four panels, cells c1 to c4; black points rise from zero to about two, scattered around a grey dashed curve."
-deterministic = 2 * (1 - np.exp(-times))
+deterministic = 2.0 * (1 - (1 - h * 1.0) ** np.arange(len(times)))  # Euler steps with no noise
 fig, axes = plt.subplots(2, 2, sharex=True, sharey=True)
 for ax, (name, (x, y)) in zip(axes.flat, cells.items()):
     ax.plot(times, deterministic, "--", color=cf.RULE, linewidth=1)
@@ -294,6 +294,7 @@ Several claims remain out of reach of one trajectory. Photobleaching or focus dr
 
 Process noise has biological causes, and Elowitz and colleagues separated two kinds [@elowitz2002]. Their *E. coli* strains carried two copies of the same promoter, one driving a cyan and one a yellow fluorescent protein, in one cellular environment. *Intrinsic* noise, the randomness of each gene's own transcription and translation, affects the copies independently. *Extrinsic* noise, from variation in other cellular components such as ribosome numbers, moves both copies together. They reported that both kinds contribute substantially to the overall variation.
 
+:::: {.callout-note collapse="true" title="Going deeper: a two-reporter simulation"}
 A toy version uses our model twice per cell: cell $j$ has a production rate $\beta_j$ shared by both reporters (extrinsic), and each reporter has its own disturbances (intrinsic). At a snapshot,
 $$
 A_j=S_j+I^A_j,\qquad B_j=S_j+I^B_j,
@@ -332,6 +333,7 @@ for ax, (title, var_s, var_i) in zip(axes, settings):
 axes[0].set_ylabel("Reporter B reading")
 plt.show()
 ```
+::::
 
 Intrinsic versus extrinsic is a different question from process versus measurement: both are process noise, changes in the cell that the instrument then reports. The two distinctions still interact, because independent measurement error in each color channel enters $A-B$ and inflates the apparent intrinsic noise by $r$ (@exr-noisy-dynamics-two-channel). The two-reporter experiment therefore needs a calibrated $r$ before its spread across the diagonal can be read as biology.
 

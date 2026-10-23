@@ -26,7 +26,7 @@ cf.use_style()
 
 ## Sequences as random variables
 
-Sequencing and assembly turn a genome into a long string of letters. Here are the first 60 bases of the bacteriophage phiX174 genome as stored in the [course FASTA file](../data/phix174-NC_001422.1.fasta):
+Lessons 6 and 7 recovered a genome's sequence from its reads. The next question is what that sequence contains, and the first step is to say which patterns of letters chance alone would produce. Sequencing and assembly turn a genome into a long string of letters. Here are the first 60 bases of the bacteriophage phiX174 genome as stored in the [course FASTA file](../data/phix174-NC_001422.1.fasta):
 
 ```text
 GAGTTTTATCGCTTCCATGACGCAGAAGTTAACACTTTCGGATATTTCTGATGAGTCGAA

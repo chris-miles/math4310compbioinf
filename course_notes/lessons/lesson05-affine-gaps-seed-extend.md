@@ -255,6 +255,8 @@ exact_seed_hits("ACGTAC", "AGGTTC", 3), exact_seed_hits("ACGTAC", "AGGTTC", 2)
 
 The function returns pairs of zero-based start positions `(query_start, target_start)`, not alignments. The difference `target_start - query_start` identifies a candidate ungapped offset, along which extension is cheap because the base pairing is fixed. An insertion or deletion changes the offset, so gapped extension must be able to leave that diagonal; a window or band limits the cells examined, and an alignment that leaves it can still be missed.
 
+To see one extension, take the query `TGATACGTAC` and the target `CCATACGTTCAG` with $k=4$, scores $+1$ and $-1$, and a rule that stops when the running score falls 2 below its best. The word ACGT hits at `(4, 4)`. Extending right pairs A/T (running score $-1$) and C/C (running 0) before the query ends, so the right side adds nothing. Extending left pairs T/T and A/A (running 1, then 2), then G/C and T/C (running 1, then 0); the score is now 2 below its best, so extension stops and keeps the two matched letters. The result is ATACGT over ATACGT with score $4+2+0=6$. The hits of TACG at `(3, 3)` and ATAC at `(2, 2)` lie on the same offset and extend to the same alignment, so a search reports it once.
+
 Exact DNA words keep the search rule easy to inspect. The original BLAST algorithm also admits high-scoring protein words that need not match exactly, then extends its word hits in the same way [@altschul1990; @durbin1998].
 
 ## Seed sensitivity

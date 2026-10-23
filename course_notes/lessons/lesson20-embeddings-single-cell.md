@@ -296,6 +296,8 @@ In the code, $\sum_jF_{ij}(y_i-y_j)$ with $F_{ij}=(p_{ij}-q_{ij})w_{ij}$ is comp
 
 ```{.python .execute}
 #| label: code-single-cell-tsne
+#| code-fold: true
+#| code-summary: "t-SNE by gradient descent (implementation)"
 def tsne(T: np.ndarray, target: float, seed: int = 0,
          n_iter: int = 1000, step: float = 200.0) -> np.ndarray:
     """Two-dimensional t-SNE embedding of the rows of T by gradient descent."""
