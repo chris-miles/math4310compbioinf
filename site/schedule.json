@@ -137,7 +137,7 @@
         7
       ],
       "assignment": {
-        "id": "ps03",
+        "id": "ps03-local-alignment-seeds",
         "label": "Problem set 3",
         "due": "2027-02-10"
       },
@@ -162,7 +162,7 @@
         9
       ],
       "assignment": {
-        "id": "ps04",
+        "id": "ps04-assembly",
         "label": "Problem set 4",
         "due": "2027-02-17"
       },
@@ -203,7 +203,7 @@
         11
       ],
       "assignment": {
-        "id": "ps05",
+        "id": "ps05-markov-cpg",
         "label": "Problem set 5",
         "due": "2027-03-03"
       },
@@ -228,7 +228,7 @@
         13
       ],
       "assignment": {
-        "id": "ps06",
+        "id": "ps06-hmm-decoding",
         "label": "Problem set 6",
         "due": "2027-03-17"
       },
@@ -262,7 +262,7 @@
         15
       ],
       "assignment": {
-        "id": "ps07",
+        "id": "ps07-evolutionary-trees",
         "label": "Problem set 7",
         "due": "2027-03-24"
       },

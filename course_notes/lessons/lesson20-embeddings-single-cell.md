@@ -285,16 +285,7 @@ $$
 $$ {#eq-tsne-gradient}
 Gradient descent moves $y_i$ against this vector, so each cell $j$ exerts a force along the line joining $y_i$ and $y_j$. The $p_{ij}$ part pulls $y_i$ toward input neighbors; the $q_{ij}$ part pushes it away from every cell it currently sits near. For two cells in well-separated groups, $p_{ij}\approx0$ and only the push remains, with size proportional to $w_{ij}^2\|y_i-y_j\|$, which falls like $\|y_i-y_j\|^{-3}$. Once two islands have separated, the forces between them are negligible, so their final distance reflects where the optimization left them rather than how different their expression is [@kobak2019].
 
-::: {#prp-tsne-rigid-motion}
-## The cost ignores rotations, reflections, and translations
-If $y_i'=Ry_i+b$ for every cell, with $R$ a $2\times2$ orthogonal matrix and $b\in\mathbb R^2$, then $\mathcal C(Y')=\mathcal C(Y)$. Consequently a minimizer of $\mathcal C$ is never unique.
-:::
-
-::: {.proof}
-Orthogonal matrices preserve length, so $\|y_i'-y_j'\|=\|R(y_i-y_j)\|=\|y_i-y_j\|$. Every $w_{ij}$, hence every $q_{ij}$ and the cost, is unchanged. Rotating a configuration of distinct points by a small angle gives a different configuration with the same cost.
-:::
-
-The axes of a t-SNE plot therefore mean nothing, unlike PCA axes, which are fixed gene combinations. The cost is also not convex, so different random starts can reach different local minima with islands arranged differently.
+Rotating, reflecting, or shifting every point by $y_i'=Ry_i+b$, with $R$ an orthogonal $2\times2$ matrix, leaves every distance $\|y_i-y_j\|$ unchanged, hence every $w_{ij}$, every $q_{ij}$, and the cost. A minimizer is therefore never unique, and the axes of a t-SNE plot mean nothing, unlike PCA axes, which are fixed gene combinations. The cost is also not convex, so different random starts can reach different local minima with islands arranged differently.
 
 ::: {.algorithm}
 **Algorithm: t-SNE by gradient descent.**
@@ -395,9 +386,9 @@ Island area is unreliable too. Every simulated type has the same variation aroun
 A t-SNE or UMAP plot can support the claim that cells in one island were each other's neighbors in the input. It does not show how different two islands are, how variable a group is, or that an empty region contains no intermediate cells.
 :::
 
-UMAP, the other widely used embedding, makes the neighbor graph explicit [@mcinnes2018]. It joins each cell to its $k$ nearest neighbors with weights that decrease with distance, collects them in a matrix $A$, and symmetrizes by $B=A+A^\top-A\circ A^\top$, where $\circ$ multiplies entries one by one. If $A_{ij}$ is the probability that the edge from $i$ to $j$ exists, $B_{ij}$ is the probability that at least one direction exists, a weighted form of Lesson 19's union rule. The layout pulls the ends of each edge together and pushes sampled non-neighbors apart with a heavy-tailed similarity, and $k$ plays the role of perplexity. UMAP is faster, and its authors argue that it keeps more of the global arrangement, but the warning above applies unchanged.
+UMAP, the other widely used embedding, builds the $k$-nearest-neighbor graph of Lesson 19 explicitly, with $k$ playing the role of perplexity, and lays it out by pulling neighbors together and pushing sampled non-neighbors apart [@mcinnes2018]. It is faster than t-SNE, but the warning above applies to it unchanged.
 
-A typical single-cell analysis chains these ideas. Counts are normalized and log-transformed; PCA keeps perhaps 20 to 50 scores; a $k$-nearest-neighbor graph is built on them; a graph-clustering algorithm splits it into densely connected groups; genes distinguishing each group are listed; and a person names each group by recognizing known marker genes. The embedding is drawn alongside for display, and clusters are computed on the graph, not read off the picture. The final naming is a biological claim layered on a cluster. The colors in @fig-single-cell-retina-atlas are such claims, made in the original study from marker-gene expression [@macosko2015].
+In a typical analysis, clusters are computed on the neighbor graph built from PCA scores, as in Lesson 19, and the embedding is drawn alongside for display, not used to define them. Naming a cluster as a cell type is a further biological claim, made from marker genes; the colors in @fig-single-cell-retina-atlas are such claims [@macosko2015].
 
 ## Exercises
 

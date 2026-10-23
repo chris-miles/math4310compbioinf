@@ -92,7 +92,7 @@ The global and local algorithms differ in four connected rules:
 
 : Four changes from global to local alignment. {#tbl-global-local}
 
-The zero candidate means "discard the alignment built so far and start after this coordinate." Suppose a prefix has score $-2$ and a later run would add 3. Keeping the prefix gives 1; restarting gives 3. Because a local alignment is allowed to omit that prefix, keeping its loss can never help. A restart replaces all negative alternatives by zero, while a positive extension keeps accumulating evidence.
+The zero candidate means "discard the alignment built so far and start after this coordinate." Suppose a prefix has score $-2$ and a later run would add 3. Keeping the prefix gives 1; restarting gives 3.
 
 ::: {.callout-note title="Key idea"}
 The zero candidate starts a new alignment wherever every way of continuing the old one has a negative score. One table therefore maximizes over all starting points at once, and its largest entry chooses where the shared region ends.
@@ -120,7 +120,7 @@ $$
 The next diagonal T/G mismatch is also discarded. Pairing the following A/A, C/C, and G/G gives $H(3,3)=1$, $H(4,4)=2$, and $H(5,5)=3$. Continuing through the two C/A mismatches lowers the diagonal scores to 2 and then 1. The largest score, rather than the final cell, selects the end of the core.
 :::
 
-The local alignment is ACG/ACG with score 3. The global alignment TTACGCC/GGACGAA scores $-2+3-2=-1$, because its four flank mismatches cancel more than the core earns. Here the core occupies positions 3 to 5 in both strings, so global alignment still pairs the right letters; it fails only by burying a perfect three-letter agreement inside a negative total. When the shared region sits at different positions in the two records, global alignment can also choose the wrong correspondence.
+The local alignment is ACG/ACG with score 3. The global alignment TTACGCC/GGACGAA scores $-2+3-2=-1$, because its four flank mismatches cancel more than the core earns. Here the core occupies positions 3 to 5 in both strings, so global alignment still pairs the right letters; it reports a negative total that hides the three-letter agreement. When the shared region sits at different positions in the two records, global alignment can also choose the wrong correspondence.
 
 ::: {#exm-local-global-shift}
 ## A shared core that global alignment misplaces
@@ -271,7 +271,7 @@ The restart rule finds the edges of a shared region only if unrelated sequence t
 $$
 \mathbb E_R[s]=\sum_{a,b}q_aq_b\,s(a,b).
 $$
-The sum weights each letter pair's score by how often unrelated sequence produces that pair, then adds. For uniform DNA with match $+1$ and mismatch $-1$, a column matches with probability $1/4$, so $\mathbb E_R[s]=\tfrac14(1)+\tfrac34(-1)=-\tfrac12$, and $\ell$ unrelated columns cost about $\ell/2$ points on average. A calibrated log-odds table always has negative background expectation.
+In Lesson 2's notation the background pair probability is $r_{ab}=q_aq_b$, so the sum weights each letter pair's score by how often unrelated sequence produces that pair, then adds. For uniform DNA with match $+1$ and mismatch $-1$, a column matches with probability $1/4$, so $\mathbb E_R[s]=\tfrac14(1)+\tfrac34(-1)=-\tfrac12$, and $\ell$ unrelated columns cost about $\ell/2$ points on average. A calibrated log-odds table always has negative background expectation.
 
 To see what this does to the recurrence, follow one diagonal of a longer simulated pair and ignore gaps. With $s_k$ the score of column $k$, the running total and the restarted score are
 $$

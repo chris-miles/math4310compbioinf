@@ -285,7 +285,7 @@ Shorter seeds improve sensitivity, but they also produce more chance hits, and e
 $$
 \mathbb E[h]=(n-k+1)(N-k+1)\,4^{-k}.
 $$
-The first two factors count the comparisons the index makes implicitly; the last is the chance that any one of them succeeds. Overlapping words make hit events dependent, but an expected count still adds over events. Lengthening the seed by one letter divides the expected number of chance hits by about four, while the number of position pairs barely changes. For a length-100 query against a length-1,000 target, $k=4$ gives $97\cdot997/256\approx378$ expected chance hits and $k=8$ gives $93\cdot993/65536\approx1.4$.
+The first two factors count the comparisons the index makes implicitly; the last is the chance that any one of them succeeds. Overlapping words make hit events dependent, but an expected count still adds over events. Lengthening the seed by one letter multiplies the expected number of chance hits by $4^{-(k+1)}/4^{-k}=1/4$, while the number of position pairs barely changes. For a length-100 query against a length-1,000 target, $k=4$ gives $97\cdot997/256\approx378$ expected chance hits and $k=8$ gives $93\cdot993/65536\approx1.4$.
 
 ```{.python .execute}
 #| label: fig-affine-seed-dotplot
@@ -323,7 +323,7 @@ axes[1].legend(loc="lower right", markerscale=2)
 plt.show()
 ```
 
-@fig-affine-seed-dotplot runs `exact_seed_hits` on such a pair, with one planted region of 80% identity. At $k=4$ the 376 chance hits agree with the predicted 378, and each would send the search to an extension that finds nothing. At $k=8$ one chance hit remains, but the true diagonal has lost its seeds wherever substitutions fall closer together than eight letters. A region with slightly lower identity could lose all of them, and an alignment containing no accepted seed is never proposed; unlike full dynamic programming, the search can miss the best alignment. Spaced seeds, which require matches only at selected positions within a longer window, are one way to keep the low chance-hit rate of a long seed while tolerating some substitutions.
+@fig-affine-seed-dotplot runs `exact_seed_hits` on such a pair, with one planted region of 80% identity. At $k=4$ the 376 chance hits agree with the predicted 378, since off the true diagonal the two sequences are still unrelated, and each would send the search to an extension that finds nothing. At $k=8$ one chance hit remains, but the true diagonal has lost its seeds wherever substitutions fall closer together than eight letters. A region with slightly lower identity could lose all of them, and an alignment containing no accepted seed is never proposed; unlike full dynamic programming, the search can miss the best alignment. Spaced seeds, which require matches only at selected positions within a longer window, are one way to keep the low chance-hit rate of a long seed while tolerating some substitutions.
 
 :::: {.callout-note collapse="true" title="Going deeper: a bounded-mismatch guarantee"}
 
@@ -346,15 +346,7 @@ For $L=20$ and $t=3$, some run has at least five matches, guaranteeing a 5-mer s
 
 ::::
 
-:::: {.callout-note collapse="true" title="Going deeper: database size and E-values"}
-
-## Database size and E-values
-
-A raw local-alignment score is less surprising in a large search than in a small one. BLAST reports an E-value: the expected number of chance hits scoring at least this well in a search of the stated size under its background model. An E-value of $0.01$ means one such chance hit per 100 comparable searches on average. It is not the probability that the reported sequences are unrelated.
-
-For fixed $k$, building the index costs $\mathcal O(N)$ expected time with a hash table. Looking up query words and listing $h$ hits costs $\mathcal O(n+h)$ before extension. Repeated words can make $h$ as large as $\mathcal O(nN)$, so indexing does not guarantee a speedup on every input.
-
-::::
+For fixed $k$, building the index takes $\mathcal O(N)$ expected time with a hash table, and looking up the query's words and listing $h$ hits takes $\mathcal O(n+h)$ before any extension. Repeated words can make $h$ as large as $\mathcal O(nN)$, so the index speeds up typical searches but not every input.
 
 ## Limitations
 

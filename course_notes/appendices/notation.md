@@ -65,7 +65,7 @@ Symbols are defined when they first appear in a lesson. Some letters have differ
 | $p_j$ | Calibrated p-value for feature $j$ in the testing lessons |
 | $V$, $R$, $\mathrm{FDP}=V/\max(R,1)$ | False rejections, total rejections, and realized false discovery proportion |
 | $\mathrm{FDR}=E[\mathrm{FDP}]$ | Expected false discovery proportion |
-| $m$, $m_0$, $\mathcal H_0$ | Number of genes tested, number with a true null hypothesis, and the set of those genes |
+| $m$, $m_0$, $\mathcal N$ | Number of genes tested, number with a true null hypothesis, and the set of those null genes |
 | $q$, $p_{(i)}$ | Target FDR level, and the $i$-th smallest of the $m$ p-values |
 | $x(t)$, $\beta$, $\alpha$ | Gene-product abundance, production rate, and removal-rate constant in the scalar ODE |
 | $x^*=\beta/\alpha$ | Steady abundance for constant production and removal |

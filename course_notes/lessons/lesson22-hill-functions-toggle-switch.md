@@ -26,7 +26,7 @@ cf.use_style()
 
 ## A circuit that remembers
 
-In Lesson 21, a protein made at a constant rate $\beta$ and removed at rate $\alpha x$ approached the single steady state $x^*=\beta/\alpha$ from every starting abundance. Any earlier treatment was forgotten within a few relaxation times $1/\alpha$. Yet a differentiated cell keeps its identity long after the signals that set it have disappeared, while neighbors with the same genome keep a different one. Describing that memory needs regulation in which the cell's current state shapes its future production.
+In Lesson 21, a protein made at a constant rate $\beta$ and removed at rate $\alpha x$ approached the single steady state $x^*=\beta/\alpha$ from every starting concentration. Any earlier treatment was forgotten within a few relaxation times $1/\alpha$. Yet a differentiated cell keeps its identity long after the signals that set it have disappeared, while neighbors with the same genome keep a different one. Describing that memory needs regulation in which the cell's current state shapes its future production.
 
 Gardner, Cantor, and Collins built such a circuit in the bacterium *Escherichia coli* [@gardner2000]. A plasmid carried two repressor genes, each behind a promoter that the other repressor blocks: LacI and a temperature-sensitive repressor from bacteriophage λ. The gene for green fluorescent protein (GFP) is transcribed with the λ repressor, so a green cell is making the λ repressor while LacI production is shut off. Two transient inputs push the circuit: the chemical IPTG disables LacI, and a pulse of heat disables the λ repressor.
 
@@ -61,7 +61,7 @@ axes[-1].set_xlabel("GFP fluorescence (a.u., log scale)")
 plt.show()
 ```
 
-The middle histogram is the memory: the input is gone, yet the culture has not returned to the top histogram. The bottom one shows cells under a single condition occupying one of two states. As a mathematical problem, the input is the regulatory wiring, written as a model $\dot{\mathbf{x}}=f(\mathbf{x})$ for the protein abundances. The output is its steady states, which of them attract nearby states, and the parameter conditions under which two do. An attracting steady state is a candidate persistent cell state, and the boundary between their attraction regions is the threshold a transient input must push a cell across.
+The middle histogram is the memory: the input is gone, yet the culture has not returned to the top histogram. The bottom one shows cells under a single condition occupying one of two states. As a mathematical problem, the input is the regulatory wiring, written as a model $\dot{\mathbf{x}}=f(\mathbf{x})$ for the protein concentrations. The output is its steady states, which of them attract nearby states, and the parameter conditions under which two do. An attracting steady state is a candidate persistent cell state, and the boundary between their attraction regions is the threshold a transient input must push a cell across.
 
 ## Hill functions: how a repressor sets production
 
@@ -100,7 +100,7 @@ ax.legend()
 plt.show()
 ```
 
-Compare a fourfold change in repressor, from $r=K/2$ to $r=2K$ (@fig-switch-hill-curves). With $n=1$, production falls from $1/(1+0.5)=0.67$ to $1/(1+2)=0.33$ of maximum, a factor of two. With $n=4$, it falls from $1/(1+0.5^4)=0.94$ to $1/(1+2^4)=0.06$, a factor of sixteen. A cooperative repressor therefore turns a modest change in its own abundance into a nearly all-or-none change in its target's production, and the switches below depend on that steepness. An *activator* that must bind to turn its gene on gives the complementary form $\beta (r/K)^n/(1+(r/K)^n)$, which rises from zero to $\beta$.
+Compare a fourfold change in repressor, from $r=K/2$ to $r=2K$ (@fig-switch-hill-curves). With $n=1$, production falls from $1/(1+0.5)=0.67$ to $1/(1+2)=0.33$ of maximum, a factor of two. With $n=4$, it falls from $1/(1+0.5^4)=0.94$ to $1/(1+2^4)=0.06$, a factor of sixteen. A cooperative repressor therefore turns a modest change in its own concentration into a nearly all-or-none change in its target's production, and the switches below depend on that steepness. An *activator* that must bind to turn its gene on gives the complementary form $\beta (r/K)^n/(1+(r/K)^n)$, which rises from zero to $\beta$.
 
 ## One gene that activates itself
 
@@ -125,7 +125,7 @@ Set $a=3$. The equation $3x^2/(1+x^2)=x$ has the root $x=0$. For $x>0$, divide b
 $$
 x^*\in\Bigl\{0,\ \tfrac{3-\sqrt5}{2},\ \tfrac{3+\sqrt5}{2}\Bigr\}\approx\{0,\ 0.382,\ 2.618\}.
 $$
-At $x=1$, between the second and third crossings, $f(1)=3/2-1=0.5>0$, so abundance rises toward $2.618$. At $x=0.2$, $f(0.2)=0.12/1.04-0.2\approx-0.085<0$, so abundance falls toward $0$.
+At $x=1$, between the second and third crossings, $f(1)=3/2-1=0.5>0$, so concentration rises toward $2.618$. At $x=0.2$, $f(0.2)=0.12/1.04-0.2\approx-0.085<0$, so concentration falls toward $0$.
 :::
 
 A precise test of which steady states attract uses the slope of $f$, extending Lesson 21's deviation argument to a nonlinear rate.
@@ -141,7 +141,7 @@ Sketch. Write $e=x-x^*$ for the deviation. Because $f(x^*)=0$, the tangent-line 
 
 Here $f'(x)=6x/(1+x^2)^2-1$. At $0$ the slope is $-1$; at $0.382$ it is $+0.745$; at $2.618$ it is $-0.745$. The off state and the on state are stable, and the middle crossing is unstable. The unstable state is the threshold: below it removal wins, above it production wins (@fig-switch-self-activation, panel A).
 
-That threshold explains memory. Add a transient input that raises production by $s$ for a while, $\dot x=s+P(x)-x$. A strong enough input lifts the production curve until the low crossings vanish, and $x$ climbs. When the input ends, the original equation returns, and what matters is only which side of $0.382$ the abundance has reached. We simulate a pulse with Lesson 21's Euler step, $x_{k+1}=x_k+h\bigl(s_k+P(x_k)-x_k\bigr)$, where $s_k$ is the input level during the pulse and zero otherwise.
+That threshold explains memory. Add a transient input that raises production by $s$ for a while, $\dot x=s+P(x)-x$. A strong enough input lifts the production curve until the low crossings vanish, and $x$ climbs. When the input ends, the original equation returns, and what matters is only which side of $0.382$ the concentration has reached. We simulate a pulse with Lesson 21's Euler step, $x_{k+1}=x_k+h\bigl(s_k+P(x_k)-x_k\bigr)$, where $s_k$ is the input level during the pulse and zero otherwise.
 
 ```{.python .execute}
 #| label: code-switch-pulse
@@ -164,12 +164,12 @@ def pulse_response(duration: float, level: float = 1.0, start: float = 1.0,
 
 short_pulse = pulse_response(0.25)
 long_pulse = pulse_response(0.5)
-# Abundance when each pulse ends (step t / h) and at t = 8.
+# Concentration when each pulse ends (step t / h) and at t = 8.
 print(f"short: {short_pulse[125]:.3f} -> {short_pulse[-1]:.3f}")
 print(f"long:  {long_pulse[150]:.3f} -> {long_pulse[-1]:.3f}")
 ```
 
-The short pulse leaves the abundance at $0.234$, below the threshold, and the cell drifts back to the off state. The pulse twice as long reaches $0.480$, just past $0.382$, and the cell continues to the on state at $2.618$ after the input has stopped. Two inputs that differ only slightly produce permanently different cells.
+The short pulse leaves the concentration at $0.234$, below the threshold, and the cell drifts back to the off state. The pulse twice as long reaches $0.480$, just past $0.382$, and the cell continues to the on state at $2.618$ after the input has stopped. Two inputs that differ only slightly produce permanently different cells.
 
 ```{.python .execute}
 #| label: fig-switch-self-activation
@@ -177,7 +177,7 @@ The short pulse leaves the abundance at $0.234$, below the threshold, and the ce
 #| code-summary: "Draw the rate balance and the pulse responses"
 #| fig-width: 6
 #| fig-height: 3
-#| fig-cap: "(A) Production 3x^2/(1 + x^2) and removal x; filled and open circles are stable and unstable steady states, and arrows below give the direction of change. (B) Responses to input pulses of level 1 lasting 0.25 or 0.5 (shaded) time units. Only the pulse that carries abundance past the unstable state at 0.382 (dotted) leaves a lasting change."
+#| fig-cap: "(A) Production 3x^2/(1 + x^2) and removal x; filled and open circles are stable and unstable steady states, and arrows below give the direction of change. (B) Responses to input pulses of level 1 lasting 0.25 or 0.5 (shaded) time units. Only the pulse that carries concentration past the unstable state at 0.382 (dotted) leaves a lasting change."
 #| fig-alt: "Left: an S-shaped curve crosses a line at 0, 0.38, and 2.62, with arrows toward 0 and 2.62. Right: a dashed time course rises to 0.23 and decays; a solid one passes a dotted line and climbs to 2.6."
 times = np.arange(len(long_pulse)) * 0.01
 threshold = (3 - np.sqrt(5)) / 2
@@ -185,7 +185,7 @@ fig, axes = plt.subplots(1, 2)
 cf.rate_balance(
     axes[0], production, lambda x: x, (0, 3.5),
     fixed_points=[(0.0, True), (threshold, False), ((3 + np.sqrt(5)) / 2, True)],
-    xlabel="Abundance, $x$ (scaled)", ylabel="Rate (scaled)",
+    xlabel="Concentration, $x$ (scaled)", ylabel="Rate (scaled)",
 )
 for line in axes[0].lines:
     line.set_clip_on(False)  # keep the markers at x = 0 whole
@@ -193,7 +193,7 @@ axes[1].axvspan(1, 1.5, color=cf.LIGHT)
 axes[1].plot(times, long_pulse, "-", label="0.5-unit pulse")
 axes[1].plot(times, short_pulse, "--", label="0.25-unit pulse")
 axes[1].axhline(threshold, color=cf.RULE, linestyle=":", linewidth=1)
-axes[1].set(xlabel="Time, $t$ (scaled)", ylabel="Abundance, $x$ (scaled)")
+axes[1].set(xlabel="Time, $t$ (scaled)", ylabel="Concentration, $x$ (scaled)")
 axes[1].legend(loc="upper left", bbox_to_anchor=(0.22, 1.0))
 for ax, letter in zip(axes, "AB"):
     ax.set_title(letter, loc="left", fontweight="bold", fontsize=11)
@@ -210,7 +210,7 @@ the model of @gardner2000, in its symmetric form, is
 $$
 \dot u=H(v)-u,\qquad \dot v=H(u)-v .
 $$ {#eq-toggle}
-Each line is Lesson 21's balance with production set by the other protein. A point $(u,v)$ describes both abundances in one cell, and its motion is a trajectory of that cell's state.
+Each line is Lesson 21's balance with production set by the other protein. A point $(u,v)$ describes both concentrations in one cell, and its motion is a trajectory of that cell's state.
 
 ::: {#def-bistable}
 ## Bistability
@@ -225,11 +225,11 @@ Steady states satisfy $u(1+v^2)=3$ and $v(1+u^2)=3$. Subtracting the second equa
 $$
 (u-v)(1-uv)=0 .
 $$
-Either the two abundances are equal or their product is one.
+Either the two concentrations are equal or their product is one.
 
-*Equal abundances.* With $u=v=s$, the condition is $s+s^3=3$. The left side increases with $s$, so there is exactly one root; $1.2+1.2^3=2.928$ and $1.22+1.22^3=3.036$ bracket it, and the root is $s\approx1.213$.
+*Equal concentrations.* With $u=v=s$, the condition is $s+s^3=3$. The left side increases with $s$, so there is exactly one root; $1.2+1.2^3=2.928$ and $1.22+1.22^3=3.036$ bracket it, and the root is $s\approx1.213$.
 
-*Product one.* With $v=1/u$, the first equation becomes $u+1/u=3$, so $u+v=3$ and $uv=1$. The two abundances are the roots of $w^2-3w+1=0$, giving
+*Product one.* With $v=1/u$, the first equation becomes $u+1/u=3$, so $u+v=3$ and $uv=1$. The two concentrations are the roots of $w^2-3w+1=0$, giving
 $$
 (u,v)=\Bigl(\tfrac{3+\sqrt5}{2},\tfrac{3-\sqrt5}{2}\Bigr)\approx(2.618,0.382)
 $$
@@ -340,7 +340,7 @@ The bound $|H'(s)|<n$ is the heart of the matter: the Hill coefficient caps how 
 
 The model accounts qualitatively for the first two histograms. The near-threshold histogram exposes its main omission: in @eq-toggle, cells with the same starting point follow the same trajectory, so the model alone would put a whole culture on one side of the boundary. Gardner and colleagues attributed the two populations to fluctuations in gene expression that scatter cells near the threshold [@gardner2000]. Mutually repressing transcription factors, such as PU.1 and GATA1 in blood progenitor cells, have been modeled with circuits of this kind as an account of how a cell-fate decision is held in place [@bhattacharya2011].
 
-Fluctuations raise a question the deterministic model cannot answer. A real fluctuation in abundance that carries a cell across the diagonal leaves it in the other persistent state, while an error that moves only the recorded reading changes nothing about the cell. When a reporter trace jumps toward the other state, how can we tell which happened? Lesson 23 separates these two kinds of noise.
+Fluctuations raise a question the deterministic model cannot answer. A real fluctuation in concentration that carries a cell across the diagonal leaves it in the other persistent state, while an error that moves only the recorded reading changes nothing about the cell. When a reporter trace jumps toward the other state, how can we tell which happened? Lesson 23 separates these two kinds of noise.
 
 ## Exercises
 

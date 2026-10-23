@@ -29,7 +29,7 @@ cf.use_style()
 
 Lesson 17 asked whether a drug changes the expression of one stress-response gene in a human cell line. Comparing treated and control cultures produced two numbers for that gene: an effect size $\widehat\Delta_j$, the difference in mean expression, and a permutation p-value $p_j$ measuring how unusual that difference is among relabelings of the cultures. The sequencing run behind that comparison measured far more than one gene. RNA sequencing counts reads from every expressed gene in each culture, so the expression matrix $X$ has a column for every measured gene, roughly 20,000 protein-coding genes for human cells, and nothing stops us from repeating the comparison on every column.
 
-The result is a table with one row per gene. On the $\log_2(1+\text{CPM})$ scale of Lesson 16, $\widehat\Delta_j=1$ means the treated cultures have about twice the typical abundance of the controls. Here are the first rows of a simulated screen that we will use throughout:
+The result is a table with one row per gene. On the $\log_2(1+\text{CPM})$ scale, $\widehat\Delta_j=1$ means the treated cultures have about twice the typical abundance of the controls. Here are the first rows of a simulated screen that we will use throughout:
 
 ```{.python .execute}
 #| label: code-fdr-simulate-screen
@@ -77,22 +77,22 @@ A p-value is useful because we know how it behaves when the gene's null hypothes
 $$
 P(p_j\le a)\le a\qquad\text{for every } 0\le a\le 1 ,
 $$
-where the probability is over repeated experiments with fresh cultures. When equality holds for every $a$, the null p-value is *uniform* on $[0,1]$, as likely to fall in $[0,0.05]$ as in $[0.50,0.55]$. Permutation p-values take a limited set of values, so for them the inequality can be strict.
+Lesson 17 proved this by relabeling with the measurements held fixed. The same bound holds when the whole experiment is repeated with fresh cultures, and that is the view we take here: probabilities and averages are over repeated experiments, in which each gene's cultures are measured independently of the other genes'. When equality holds for every $a$, the null p-value is *uniform* on $[0,1]$, as likely to fall in $[0,0.05]$ as in $[0.50,0.55]$. Permutation p-values take a limited set of values, so for them the inequality can be strict.
 
-Suppose we flag every gene with $p_j\le t$ for some threshold $t$. Let $\mathcal H_0$ be the set of genes whose null hypothesis is true and $m_0=|\mathcal H_0|$. We do not know which genes these are, and that is the whole difficulty. The number of falsely flagged genes is
+Suppose we flag every gene with $p_j\le t$ for some threshold $t$. Let $\mathcal N$ be the set of *null genes*, those whose $H_0$ is true, and $m_0=|\mathcal N|$. We do not know which genes these are. The number of falsely flagged genes is
 $$
-V(t)=\sum_{j\in\mathcal H_0}\mathbf 1[p_j\le t],
+V(t)=\sum_{j\in\mathcal N}\mathbf 1[p_j\le t],
 $$
 where the indicator $\mathbf 1[\cdot]$ is 1 when its condition holds and 0 otherwise. Recall from Lesson 2 that an expectation is a long-run average over repeated experiments. The average of a sum is the sum of the averages, and the average of an indicator is the probability of its event, so
 $$
-E[V(t)]=\sum_{j\in\mathcal H_0}P(p_j\le t)\le m_0\,t .
+E[V(t)]=\sum_{j\in\mathcal N}P(p_j\le t)\le m_0\,t .
 $$ {#eq-fdr-expected-false}
 
 Each null gene has at most a $t$ chance of slipping under the threshold, and there are $m_0$ of them. If all $m=20{,}000$ genes are null and $t=0.05$, we expect $20{,}000\times0.05=1{,}000$ flagged genes, every one a false lead, from an experiment in which the drug did nothing. Each test behaved exactly as designed; the false leads come from asking the same question 20,000 times.
 
 ### A simulated screen with known answers
 
-Real data never reveal which genes are null, so we simulate a screen where we know. Six control and six treated cultures are measured for $m=5000$ genes. For 500 of them the drug shifts mean $\log_2$ expression by between $0.3$ and $2$ in either direction; the other 4500 are null. Each gene gets the exact two-sided permutation p-value of Lesson 17, computed over all $\binom{12}{6}=924$ relabelings.
+In a simulated screen we know which genes are null, so we can count false selections. Six control and six treated cultures are measured for $m=5000$ genes. For 500 of them the drug shifts mean $\log_2$ expression by between $0.3$ and $2$ in either direction; the other 4500 are null. Each gene gets the exact two-sided permutation p-value of Lesson 17, computed over all $\binom{12}{6}=924$ relabelings.
 
 ```{.python .execute}
 #| label: code-fdr-flag-005
@@ -101,7 +101,7 @@ print("p <= 0.05:", flagged.sum(), "genes, of which null:", (flagged & is_null).
 print("p <= 0.05 / m (Bonferroni):", (p_values <= 0.05 / len(p_values)).sum(), "genes")
 ```
 
-Flagging every gene with $p_j\le0.05$ selects 634 genes, and 225 of them are null, matching the $4500\times0.05=225$ predicted by @eq-fdr-expected-false. About 35% of this list would be wasted follow-up.
+Flagging every gene with $p_j\le0.05$ selects 634 genes, and 225 of them are null, close to the $4500\times0.05=225$ predicted by @eq-fdr-expected-false. About 35% of this list would be wasted follow-up.
 
 @fig-fdr-screen shows two standard pictures of such a screen. The *volcano plot* places each gene by its effect size and by $-\log_{10}p_j$, so genes with strong evidence rise toward the top. The *p-value histogram* is the more useful diagnostic for multiple testing [@holmeshuber2019]. Because null p-values are uniform, the null genes spread evenly across the bars and form a flat floor about $m_0$ times the bar width high, while genes that truly changed pile up near zero. The first bar mixes real responses with its share of the floor, and the floor's height says roughly how many small p-values to distrust.
 
@@ -140,12 +140,12 @@ If every null p-value is calibrated and we select the genes with $p_j\le\alpha/m
 :::
 
 ::: {.proof}
-A count of at least one is at least one, so $V\ge\mathbf 1[V\ge1]$. Averaging both sides over repeated experiments gives $P(V\ge1)\le E[V]$, and @eq-fdr-expected-false with $t=\alpha/m$ gives $E[V]\le m_0\alpha/m\le\alpha$.
+A count of at least one is at least one, so $V\ge\mathbf 1[V\ge1]$. Averaging both sides over repeated experiments gives $P(V\ge1)\le E[V]$, and @eq-fdr-expected-false with $t=\alpha/m$ gives $E[V]\le m_0\alpha/m\le\alpha$. Only the average $E[V]$ entered, and averages add whether or not the genes are independent, so the bound holds however the genes depend on one another.
 :::
 
 For 20,000 genes at $\alpha=0.05$ the threshold is $2.5\times10^{-6}$. With six cultures per condition the smallest possible permutation p-value is $2/924\approx0.0022$, nearly a thousand times larger, so the Bonferroni list is empty however strongly a gene responds. In our screen the threshold is $10^{-5}$, and Bonferroni selects nothing although 500 genes changed, many of them by a factor of two or more.
 
-FWER suits settings where one false claim is costly, such as declaring a forensic DNA match. A discovery screen feeds further experiments that retest each selected gene, so a few false leads are tolerable if they are a small share of the list. We should control a fraction instead.
+FWER suits settings where a single false claim is costly. A discovery screen feeds further experiments that retest each selected gene, so a few false leads are tolerable if they are a small share of the list. We should control a fraction instead.
 
 ## False discovery proportion and rate
 
@@ -158,7 +158,11 @@ $$
 and the *false discovery rate* is its expectation, $\mathrm{FDR}=E[\mathrm{FDP}]$.
 :::
 
-The $\max(R,1)$ only handles an empty list, whose FDP is defined to be $0$. FDP is the fraction of wasted follow-ups in one particular list; it belongs to one experiment and cannot be computed from real data because $V$ is hidden. FDR is the average of FDP over repetitions of the experiment, and a selection rule can guarantee something about it. Thresholding our screen at $0.05$ gave FDP $=225/634\approx0.35$, far too high for a follow-up list.
+The $\max(R,1)$ only handles an empty list, whose FDP is defined to be $0$. FDP is the fraction of wasted follow-ups in one particular list; it belongs to one experiment and cannot be computed from real data because $V$ is hidden. FDR is the average of FDP over repetitions of the experiment: if experiments $s=1,\ldots,N$ produce $V_s$ false and $R_s$ total selections, then for large $N$
+$$
+\mathrm{FDR}\approx\frac1N\sum_{s=1}^{N}\frac{V_s}{\max(R_s,1)} ,
+$$
+and @fig-fdr-repeated-fdp below shows this average for a real rule. A selection rule cannot control the FDP of one list, but it can guarantee something about the FDR. Thresholding our screen at $0.05$ gave FDP $=225/634\approx0.35$, far too high for a follow-up list.
 
 ## From the histogram to Benjamini–Hochberg
 
@@ -199,8 +203,6 @@ def benjamini_hochberg(p_values: np.ndarray, q: float) -> np.ndarray:
     return selected
 ```
 
-Sorting dominates the cost, $\mathcal O(m\log m)$ comparisons, which is negligible beside computing the p-values.
-
 ## Benjamini–Hochberg on ten genes
 
 ::: {#exm-bh-ten-genes}
@@ -224,8 +226,6 @@ Compare ranks 3 and 4. Stopping after three genes uses $t=0.018$, so the estimat
 
 The same table gives three different lists: thresholding each gene at $0.05$ selects seven genes, Bonferroni at $0.05/10=0.005$ selects two, and BH at $q=0.05$ selects four.
 :::
-
-The function agrees with the hand calculation.
 
 ```{.python .execute}
 #| label: code-fdr-ten-genes
@@ -266,7 +266,9 @@ ax_screen.step(screen_ranks, np.sort(p_values)[:450], where="post", color=cf.INK
                label="sorted $p_{(i)}$")
 ax_screen.plot(screen_ranks, screen_ranks * 0.1 / len(p_values), color=cf.SERIES[0],
                label="BH: $iq/m$")
-ax_screen.axvline(benjamini_hochberg(p_values, 0.1).sum(), color=cf.EMPHASIS)
+k_screen = benjamini_hochberg(p_values, 0.1).sum()
+ax_screen.axvline(k_screen, color=cf.EMPHASIS)
+ax_screen.text(k_screen + 6, 0.0108, f"$k={k_screen}$", color=cf.EMPHASIS, fontsize=8)
 ax_screen.set(xlabel="rank $i$", ylabel="p-value", ylim=(0, 0.012))
 ax_screen.legend(loc="upper left")
 ax_toy.set_title("A", loc="left", fontweight="bold", fontsize=11)
@@ -284,7 +286,7 @@ On the screen, BH at $q=0.1$ selects 328 genes, 27 of them null, an FDP of $27/3
 
 ## Why Benjamini–Hochberg controls the FDR
 
-BH was derived from an estimate, so we still need to show that it keeps its promise.
+The derivation used an estimate of FDP; the theorem shows that the rule bounds the true FDR.
 
 ::: {#thm-benjamini-hochberg}
 ## Benjamini–Hochberg controls the FDR
@@ -297,7 +299,7 @@ $$
 The argument rests on a cancellation. When BH makes $R$ selections, it selects exactly the genes with $p_j\le Rq/m$: rank $R$ passes, and if a gene beyond rank $R$ also had $p_j\le Rq/m$, rank $R+1$ would pass too. A null gene $j$ therefore contributes $\mathbf 1[p_j\le Rq/m]/R$ to the FDP. If $R$ were a fixed number $k$, that contribution would average to $(kq/m)/k=q/m$. A longer list makes each null gene more likely to be selected, in exact proportion to how much it dilutes each false selection.
 
 ::: {.proof}
-Sketch. Write $\mathrm{FDP}=\sum_{j\in\mathcal H_0}\mathbf 1[p_j\le Rq/m]/\max(R,1)$. Since $R$ depends on $p_j$, it is not fixed. Let $R_j\ge1$ be the number of genes BH would select if $p_j$ were replaced by $0$, which depends only on the other p-values. If gene $j$ is selected, lowering $p_j$ to $0$ leaves the same genes in the first $R$ ranks and the same values above them, so $R_j=R$; conversely, if $p_j\le R_jq/m$, restoring $p_j$ from $0$ keeps the first $R_j$ ranks passing and cannot make a higher rank pass, so gene $j$ is selected with $R=R_j$. Gene $j$'s term therefore equals $\mathbf 1[p_j\le R_jq/m]/R_j$. Hold the other p-values fixed, so that $R_j=k$. By independence and calibration, $P(p_j\le kq/m)\le kq/m$, so the term averages to at most $q/m$ for every $k$. Summing over the $m_0$ null genes gives $\mathrm{FDR}\le m_0q/m$.
+Sketch. Write $\mathrm{FDP}=\sum_{j\in\mathcal N}\mathbf 1[p_j\le Rq/m]/\max(R,1)$. Since $R$ depends on $p_j$, it is not fixed. Let $R_j\ge1$ be the number of genes BH would select if $p_j$ were replaced by $0$, which depends only on the other p-values. If gene $j$ is selected, lowering $p_j$ to $0$ leaves the same genes in the first $R$ ranks, and the p-values at ranks $R+1,\ldots,m$ are unchanged, so no higher rank starts to pass and $R_j=R$; conversely, if $p_j\le R_jq/m$, restoring $p_j$ from $0$ keeps the first $R_j$ ranks passing and cannot make a higher rank pass, so gene $j$ is selected with $R=R_j$. Gene $j$'s term therefore equals $\mathbf 1[p_j\le R_jq/m]/R_j$. Hold the other p-values fixed, so that $R_j=k$. By independence and calibration, $P(p_j\le kq/m)\le kq/m$, so the term averages to at most $q/m$ for every $k$. Summing over the $m_0$ null genes gives $\mathrm{FDR}\le m_0q/m$.
 :::
 
 The theorem bounds an average over experiments. The next chunk runs the simulated screen 200 times with $m=2000$ genes, 200 of them changed, and records the realized FDP of each list.
@@ -344,9 +346,11 @@ The FDR describes a list, not a gene. Selecting four genes at $q=0.05$ in @exm-b
 
 A small p-value also does not mean a large change. Gene g07 has the strongest evidence but an estimated change of $0.15$ $\log_2$ units, about 11%; its cultures vary so little that a small shift is easy to detect. Such genes sit high and near the center of the volcano plot in @fig-fdr-screen. Follow-up lists are therefore usually filtered on both axes, requiring evidence that the change is real and a change large enough to matter for the biological question.
 
-Real screens need care with the theorem's assumptions. BH takes each p-value at face value. If cultures were sequenced in batches confounded with the drug, or technical replicates were relabeled as if they were separate cultures (pseudoreplication), null p-values come out too small across the board, the histogram's floor rises toward zero, and the guarantee is lost; no list-level procedure repairs a miscalibrated test. Independence is the second assumption. Co-regulated genes rise and fall together, so their p-values are dependent. BH still controls the FDR under a form of positive dependence that covers many such cases, and a more conservative variant works under any dependence [@benjamini2001], but strong dependence makes the realized FDP vary more from run to run.
+Real screens need care with the theorem's assumptions. BH takes each p-value at face value, so the confounded batches and pseudoreplication of Lesson 17, which make null p-values too small across the board, void the guarantee; no list-level procedure repairs a miscalibrated test. Independence is the second assumption. Co-regulated genes rise and fall together, so their p-values are dependent. BH still controls the FDR under a form of positive dependence that covers many such cases, and a more conservative variant works under any dependence [@benjamini2001], but strong dependence makes the realized FDP vary more from run to run.
 
-Finally, the design must be able to produce small p-values. With three cultures per condition, the design of Lesson 17, every permutation p-value is at least $0.1$. BH at $q=0.05$ then selects nothing for any number of genes, because no p-value can meet even the largest threshold $mq/m=q$. This is one reason expression studies use more replicates, or model-based tests that share information across genes.
+Finally, the design must be able to produce small p-values: with Lesson 17's three cultures per condition every permutation p-value is at least $0.1$, so BH at $q=0.05$ selects nothing however many genes are tested.
+
+Every comparison so far began from labels we assigned, treated or control. Lesson 19 turns to cells and samples that arrive without labels and asks which of them belong together.
 
 ## Exercises
 
