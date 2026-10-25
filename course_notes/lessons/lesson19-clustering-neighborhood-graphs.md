@@ -1,5 +1,5 @@
 ---
-published: false
+published: true
 title: "Distances, Clustering, and Neighborhood Graphs"
 subtitle: "Lesson 19 · 2027-04-05 · Week 13"
 nocite: |

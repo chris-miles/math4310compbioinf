@@ -1,5 +1,5 @@
 ---
-published: false
+published: true
 title: "Multiple Testing and False Discovery Rates"
 subtitle: "Lesson 18 · 2027-03-29 · Week 12"
 nocite: |

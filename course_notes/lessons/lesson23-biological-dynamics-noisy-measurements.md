@@ -1,5 +1,5 @@
 ---
-published: false
+published: true
 title: "Biological Dynamics and Noisy Measurements"
 subtitle: "Lesson 23 · 2027-04-19 · Week 15"
 nocite: |

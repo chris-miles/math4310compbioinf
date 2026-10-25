@@ -1,5 +1,5 @@
 ---
-published: false
+published: true
 title: "Modern Frontiers in Bioinformatics"
 subtitle: "Lesson 24 · 2027-04-21 · Week 15"
 nocite: |

@@ -1,5 +1,5 @@
 ---
-published: false
+published: true
 title: "Comparing Biological Conditions"
 subtitle: "Lesson 17 · 2027-03-24 · Week 11"
 nocite: |

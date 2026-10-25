@@ -1,5 +1,5 @@
 ---
-published: false
+published: true
 title: "Biological Switches and Cell States"
 subtitle: "Lesson 22 · 2027-04-14 · Week 14"
 nocite: |
