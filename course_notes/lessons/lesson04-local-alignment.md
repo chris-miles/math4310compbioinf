@@ -24,9 +24,24 @@ cf.use_style()
 
 ## Substrings instead of whole strings
 
-Suppose a DNA assembly contains a predicted gene whose protein function is unknown. Reading its coding sequence in three-base groups gives the predicted protein's amino-acid string, which we can compare with a protein whose function has been studied. A *domain* is a protein region that often folds as a unit and carries a particular activity, such as binding another molecule [@ebi-domains]. Finding a shared domain can suggest an activity to test, even when the proteins have different regions around it.
+Suppose a DNA assembly contains a predicted gene whose protein function is unknown. Reading its coding sequence in three-base groups gives the predicted protein's amino-acid string, which we can compare with a protein whose function has been studied. A *domain* is a protein region that often folds as a unit and carries a particular activity, such as binding another molecule [@ebi-domains]. Finding a shared domain can suggest an activity to test, even when the proteins have different regions around it. Homeobox proteins, which direct body patterning in animal embryos, are a standard case: two of them from distant species can share little beyond the homeodomain, a DNA-binding segment of roughly 60 residues that has barely changed over evolution [@compeau2015]. A homeodomain in a new protein suggests that the protein binds DNA to control other genes.
 
-Global alignment requires every letter in both records. Its penalties for those surrounding regions can outweigh the evidence in the shared domain. For a short calculation, use DNA strings $x=\texttt{TTACGCC}$ and $y=\texttt{GGACGAA}$ with match $+1$, mismatch $-1$, and gap $-2$. The whole-string alignment scores $-1$, while the interior ACG/ACG scores 3. The same issue arises with amino-acid strings: the useful correspondence may cover only part of each record.
+Global alignment requires every letter in both records. Its penalties for those surrounding regions can outweigh the evidence in the shared domain (@fig-local-shared-domain).
+
+```{.python .execute}
+#| label: fig-local-shared-domain
+#| code-fold: true
+#| code-summary: "Draw two proteins that share one domain"
+#| fig-cap: "Two hypothetical homeobox proteins, 360 and 280 residues long, share a 60-residue homeodomain (red) at different positions. A global alignment must pair them end to end (left, grey band), so it scores mostly unrelated residues and can set each domain opposite unrelated sequence; a local alignment pairs only the domains (right)."
+#| fig-alt: "Two panels, each with two horizontal bars labeled protein 1 and protein 2; the upper bar has a red block near its right end and the lower bar has one near its left end. On the left, a wide grey band joins the bars along their full lengths. On the right, a narrow grey band joins only the two red blocks."
+#| fig-width: 6
+#| fig-height: 1.7
+fig, ax = plt.subplots()
+cf.shared_domain(ax, lengths=(360, 280), starts=(270, 40), width=60)
+plt.show()
+```
+
+For a short calculation, use DNA strings $x=\texttt{TTACGCC}$ and $y=\texttt{GGACGAA}$ with match $+1$, mismatch $-1$, and gap $-2$. The whole-string alignment scores $-1$, while the interior ACG/ACG scores 3.
 
 ```{.python .execute}
 #| label: fig-local-whole-versus-region
@@ -56,7 +71,9 @@ Which letters must appear in the answer depends on the biological task:
 
 ::: {#def-local-alignment}
 ## Local alignment problem
-Given strings $x$ and $y$ and additive column scores, find substrings of $x$ and $y$ whose alignment has maximum score. The empty alignment, with score zero, is allowed.
+**Input:** strings $x$ and $y$ and additive column scores.
+
+**Output:** a substring of $x$, a substring of $y$, and an alignment of the two with maximum score over all such choices. The empty alignment, with score zero, is allowed.
 :::
 
 Neither end of the shared region is known in advance. Fix a candidate endpoint $(i,j)$ for the moment, so that the region ends at $x_i$ and $y_j$. Its start could be any position up to $i$ in $x$, and likewise in $y$; those choices are the suffixes of $x_1\cdots x_i$ and $y_1\cdots y_j$. Write $\operatorname{opt}(u,v)$ for the best global-alignment score of two strings $u$ and $v$, with $\operatorname{opt}=0$ when both are empty. The table entry we want is
@@ -92,7 +109,7 @@ The global and local algorithms differ in four connected rules:
 
 : Four changes from global to local alignment. {#tbl-global-local}
 
-The zero candidate means "discard the alignment built so far and start after this coordinate." Suppose a prefix has score $-2$ and a later run would add 3. Keeping the prefix gives 1; restarting gives 3.
+The zero candidate means "discard the alignment built so far and start after this coordinate." Suppose a prefix has score $-2$ and a later run would add 3. Keeping the prefix gives 1; restarting gives 3. In the grid, the zero acts as a free ride from $(0,0)$ to $(i,j)$ that skips the unused prefixes, and taking the answer at the largest cell is a second free ride from the region's end to $(n,m)$ [@compeau2015].
 
 ::: {.callout-note title="Key idea"}
 The zero candidate starts a new alignment wherever every way of continuing the old one has a negative score. One table therefore maximizes over all starting points at once, and its largest entry chooses where the shared region ends.
@@ -135,7 +152,7 @@ $$
 The ungapped alignment is the unique global optimum. It pairs A with G and G with A, and its one match is a coincidental C/C in column 4. Local alignment pays for none of those gaps: $H$ climbs along the diagonal from $(0,2)$ to $H(3,5)=3$, and traceback selects $x_1x_2x_3=y_3y_4y_5=\texttt{ACG}$.
 :::
 
-In the protein comparison, global alignment would report a negative score and line up the domain of one protein with unrelated residues of the other. Local alignment reports the shared region and its coordinates in both records, which is what we need to choose a region whose activity to test.
+For two homeobox proteins, global alignment can report a low score and can line up the homeodomain of one with unrelated residues of the other. Local alignment reports the shared region and its coordinates in both proteins, which is what we need to choose a region whose activity to test.
 
 The function returns the score, the two gapped strings, and the grid coordinates $(i_0,j_0)$ where traceback stops and $(i_1,j_1)$ where it starts. The selected letters are $x_{i_0+1}\cdots x_{i_1}$ and $y_{j_0+1}\cdots y_{j_1}$, which are exactly the Python slices `x[i_0:i_1]` and `y[j_0:j_1]` because Python slices include the start index and exclude the end.
 
@@ -237,9 +254,17 @@ $H(i,j)$ is the maximum score among all alignments of suffixes of $x_1\cdots x_i
 ::: {.proof}
 Use induction on $i+j$. On a boundary, any nonempty alignment consists only of negative-score gap columns, so the empty alignment attains the maximum zero.
 
-For an interior cell, a nonempty optimal alignment has one of the three final columns. Removing it leaves suffixes at the corresponding predecessor. Their alignment must be optimal there: replacing it with a better one and appending the same final column would improve the original. Thus its score is bounded by one predecessor candidate. The empty case has score zero. Conversely, each candidate is attained by extending an optimal predecessor alignment, or by choosing the empty alignment. Their maximum is therefore exactly $H(i,j)$.
+For an interior cell, an optimal suffix alignment $\mathcal A$ ending at $(i,j)$ is either empty or ends in one of the three final columns. In the second case, removing that column, with score $c$, leaves an alignment of suffixes at the matching predecessor $(i',j')$, which must be optimal there; a better one would improve $\mathcal A$. So
+$$
+\operatorname{score}(\mathcal A)=0\qquad\text{or}\qquad\operatorname{score}(\mathcal A)=H(i',j')+c,
+$$
+and either way it is at most the maximum in @def-local-recurrence. Conversely, each candidate is attained, zero by the empty alignment and the others by appending the final column to an optimal predecessor alignment, so the two are equal.
 
-Every pair of substrings has an endpoint $(i,j)$, so the largest cell considers them all. A negative-score initial stretch can be removed to increase an alignment's score; a zero-score initial stretch can be removed without changing it. Consequently some optimum starts at a zero cell, and stopping traceback at the first zero recovers one optimum even when it omits a tied neutral prefix.
+Every pair of substrings ends at some $(i,j)$, so the largest cell is the best local score. Traceback recovers it: each pointer satisfies $H(i,j)=H(i',j')+c$, so, as in global traceback, the columns emitted from the best cell $(i_1,j_1)$ down to the first zero cell $(i_0,j_0)$ have total score
+$$
+H(i_1,j_1)-H(i_0,j_0)=H(i_1,j_1),
+$$
+even when the stop omits a tied neutral prefix.
 :::
 
 A length-$n$ string has $n(n+1)/2$ nonempty substrings, so separately aligning every substring pair would consider on the order of $n^2m^2$ pairs. Restarting within a shared table avoids those separate searches. The algorithm fills $(n+1)(m+1)$ cells with constant work per cell and traces at most $n+m$ moves. For positive $n,m$ and constant-time arithmetic, its time and memory costs are $\mathcal O(nm)$.
@@ -271,7 +296,7 @@ The restart rule finds the edges of a shared region only if unrelated sequence t
 $$
 \mathbb E_R[s]=\sum_{a,b}q_aq_b\,s(a,b).
 $$
-In Lesson 2's notation the background pair probability is $r_{ab}=q_aq_b$, so the sum weights each letter pair's score by how often unrelated sequence produces that pair, then adds. For uniform DNA with match $+1$ and mismatch $-1$, a column matches with probability $1/4$, so $\mathbb E_R[s]=\tfrac14(1)+\tfrac34(-1)=-\tfrac12$, and $\ell$ unrelated columns cost about $\ell/2$ points on average. A calibrated log-odds table always has negative background expectation.
+The sum weights each letter pair's score by how often unrelated sequence produces that pair, then adds. For uniform DNA with match $+1$ and mismatch $-1$, a column matches with probability $1/4$, so $\mathbb E_R[s]=\tfrac14(1)+\tfrac34(-1)=-\tfrac12$, and $\ell$ unrelated columns cost about $\ell/2$ points on average. A calibrated log-odds table always has negative background expectation.
 
 To see what this does to the recurrence, follow one diagonal of a longer simulated pair and ignore gaps. With $s_k$ the score of column $k$, the running total and the restarted score are
 $$

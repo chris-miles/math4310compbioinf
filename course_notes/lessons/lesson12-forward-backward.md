@@ -3,7 +3,7 @@ published: true
 title: "Uncertainty in HMMs: Forward-Backward"
 subtitle: "Lesson 12 · 2027-03-01 · Week 8"
 nocite: |
-  @durbin1998
+  @durbin1998, @compeau2015
 ---
 
 ## Core question
@@ -26,7 +26,7 @@ cf.use_style()
 
 ## Genome labels and uncertainty
 
-Lesson 11 chose one complete annotation of the assembled DNA: for `CGAC`, the model's best path put the first two bases in an island-like region and the last two in background, with a boundary after base 2. How strongly do the letters support that boundary? Other paths explain the same sequence, including one that puts all four bases in the island, and the best path alone does not say how much support these alternatives share.
+Lesson 11 chose one complete annotation of the assembled DNA: for `CGAC`, the model's best path put the first two bases in an island-like region and the last two in background, with a boundary after base 2. How strongly do the letters support that boundary? Other paths explain the same sequence, including one that puts all four bases in the island, and the best path alone does not say how much support these alternatives share. The support should also vary along a sequence. An S in the middle of a long run of S symbols is almost certainly in an island, whereas an S whose neighbors are half S and half W could belong to either region, yet a single path labels both with the same flat certainty [@compeau2015].
 
 The input is still the DNA sequence and the fixed region model. We now want a probability for each label at each position, using all the observed bases, so that an uncertain boundary or a weakly supported interval is flagged before choosing candidate DNA regions for follow-up studies of gene regulation [@durbin1998]. We keep the B/I hidden Markov model from Lessons 10 and 11, with $S$ for C/G, $W$ for A/T, hidden labels $B$ and $I$, and a fixed sequence length with no end-state probability:
 
@@ -48,12 +48,14 @@ $$
 Here $Q=\{B,I\}$ is the state set, $p_k$ is the initial-state probability, $a_{k\ell}$ is the probability of moving from state $k$ to state $\ell$ (rows of $A$ are source states), and $e_k(b)$ is the probability that state $k$ emits symbol $b$. Two assumptions carry the whole lesson: the hidden states form a first-order Markov chain, and given the hidden path, each emission depends only on its own state. Together they let us combine the evidence on either side of a position.
 
 ::: {#def-posterior-state}
-## Posterior state probability
-For observations $x=x_1\ldots x_n$ with $P(x)>0$, define
+## Posterior state probabilities
+**Input:** an HMM with states $Q$ and parameters $p$, $A$, $E$, and observations $x=x_1\ldots x_n$ with $P(x)>0$.
+
+**Output:** for every position $i$ and state $k$, the posterior probability
 $$
-\gamma_k(i)=P(\pi_i=k\mid x).
+\gamma_k(i)=P(\pi_i=k\mid x),
 $$
-The output is one probability distribution over states for every position.
+one probability distribution over states per position.
 :::
 
 The DNA `CGAC` gives $x=\texttt{SSWS}$, and Viterbi returns the best *complete path* $\texttt{IIBB}$ with joint probability $0.0129024$. To assess the final label, we must instead add the probabilities of all paths ending in $I$ and compare that sum with the total for paths ending in $B$. The operation changes from keeping the largest probability to keeping the combined probability of alternative explanations.
@@ -76,7 +78,7 @@ $$
 f_k(1)=p_ke_k(x_1),\qquad
 f_k(i)=e_k(x_i)\sum_{\ell\in Q}f_\ell(i-1)a_{\ell k}.
 $$
-For $i=1$, there is no predecessor: the initial state emits the first symbol. Finally, $P(x)=\sum_k f_k(n)$, because every full path ends in exactly one state. Viterbi keeps a single best path in each entry, while forward retains the combined mass of all prefixes; changing the operation changes what the entry means [@durbin1998].
+For $i=1$, there is no predecessor: the initial state emits the first symbol. Finally, $P(x)=\sum_k f_k(n)$, because every full path ends in exactly one state. This is the Viterbi recurrence with the maximum replaced by a sum [@durbin1998; @compeau2015]. Viterbi keeps a single best prefix in each entry, while forward retains the combined mass of all prefixes; changing the operation changes what the entry means.
 
 ::: {#exm-forward-ssws}
 ## Summing paths for SSWS
@@ -121,7 +123,7 @@ For an earlier position, condition on the next hidden state $\pi_{i+1}=\ell$. It
 $$
 b_k(i)=\sum_{\ell\in Q}a_{k\ell}e_\ell(x_{i+1})b_\ell(i+1).
 $$
-The terms sum over mutually exclusive choices of the next state. The next emission belongs to the *destination* state $\ell$; using $e_k(x_i)$ would include the current observation again. The loop runs from right to left so each required suffix probability has already been computed [@durbin1998].
+The terms sum over mutually exclusive choices of the next state. The next emission belongs to the *destination* state $\ell$; using $e_k(x_i)$ would include the current observation again. The computation is the forward one run from right to left on the trellis with its edges reversed, so each required suffix probability is already available [@durbin1998; @compeau2015].
 
 ::: {#exm-backward-ssws}
 ## Using the suffix
@@ -142,25 +144,17 @@ b_B(2)=\underbrace{0.8(0.7)(0.40)}_{\text{next state B}}+
 \underbrace{0.2(0.2)(0.60)}_{\text{next state I}}=0.248.
 $$
 Each product has a transition, the W emission from the next state, and that state's probability of the final S. The factors $0.40$ and $0.60$ already sum over both choices for the final hidden state; the recurrence does not select a single suffix path.
+:::
 
 The suffix is more likely starting from $I$ at position 3, although the symbol at position 3 is $W$. That symbol is absent from the backward probability; its evidence enters through the forward factor.
-:::
 
 ## Combining the two directions
 
-Fixing the state at position $i$ splits every complete path through that state into a hidden prefix $u=\pi_1\ldots\pi_{i-1}$ that enters $k$ and a hidden suffix $u'=\pi_{i+1}\ldots\pi_n$ that leaves it. Given $\pi_i=k$, the Markov and emission assumptions make the future independent of the past, so each complete path probability is a product of a prefix factor and a suffix factor. Any prefix can be joined to any suffix, and the double sum over all pairs therefore factors:
-$$
-P(x,\pi_i=k)
-=\sum_{u}\sum_{u'}
-\underbrace{P(x_1\ldots x_i,\ u\,k)}_{\text{prefix into }k}\,
-\underbrace{P(x_{i+1}\ldots x_n,\ u'\mid\pi_i=k)}_{\text{suffix out of }k}
-=f_k(i)\,b_k(i).
-$$
-Forward gathers the fan of paths entering node $(k,i)$ from the left, backward gathers the fan leaving it to the right, and their product counts every complete path through the node exactly once. For SSWS at position 2, the left fan into $I$ holds two prefixes and the right fan holds four suffixes, so $f_I(2)b_I(2)=0.216(0.184)$ sums eight complete paths. Because forward includes $x_i$ and backward starts at $x_{i+1}$, no observation is counted twice.
+Fixing the state at position $i$ splits every complete path through that state into a hidden prefix $u=\pi_1\ldots\pi_{i-1}$ that enters $k$ and a hidden suffix $u'=\pi_{i+1}\ldots\pi_n$ that leaves it. Forward gathers the fan of paths entering node $(k,i)$ of the trellis from the left, backward gathers the fan leaving it to the right, and joining any left path to any right path produces each complete path through the node exactly once [@compeau2015]. For SSWS at position 2, the left fan into $I$ holds two prefixes and the right fan holds four suffixes, so $f_I(2)b_I(2)=0.216(0.184)$ sums eight complete paths.
 
-::: {#prp-forward-backward-posterior}
+::: {#thm-forward-backward-posterior}
 ## Forward-backward identity
-For every position $i$,
+For every position $i$ and state $k$,
 $$
 P(x,\pi_i=k)=f_k(i)b_k(i),\qquad
 P(x)=\sum_k f_k(i)b_k(i).
@@ -169,7 +163,18 @@ Consequently, $\gamma_k(i)=f_k(i)b_k(i)/P(x)$.
 :::
 
 ::: {.proof}
-Sketch. The factored double sum above gives the first identity. Summing it over the mutually exclusive states $k$ gives $P(x)$, and dividing gives the conditional probability.
+Sketch. Given $\pi_i=k$, the Markov and emission assumptions make the suffix independent of the prefix, so each complete path probability is a prefix factor times a suffix factor, and the double sum over all pairs factors:
+$$
+\begin{aligned}
+P(x,\pi_i=k)
+&=\sum_{u}\sum_{u'}
+\underbrace{P(x_1\ldots x_i,\ u\,k)}_{\text{prefix into }k}\,
+\underbrace{P(x_{i+1}\ldots x_n,\ u'\mid\pi_i=k)}_{\text{suffix out of }k}\\
+&=\Bigl[\sum_{u}P(x_1\ldots x_i,\ u\,k)\Bigr]\Bigl[\sum_{u'}P(x_{i+1}\ldots x_n,\ u'\mid\pi_i=k)\Bigr]
+=f_k(i)\,b_k(i).
+\end{aligned}
+$$
+Forward includes $x_i$ and backward starts at $x_{i+1}$, so no observation is counted twice. Summing over the mutually exclusive states $k$ gives $P(x)$, and dividing gives $\gamma_k(i)$.
 :::
 
 ::: {#exm-posterior-ssws}
@@ -188,7 +193,7 @@ Choosing the largest posterior at each position gives $\texttt{IIBI}$. Viterbi g
 
 A 0.516 posterior is weak support for that last island label, and reporting the probability makes the weakness visible. The probability is conditional on our chosen emission and transition probabilities; it does not measure uncertainty about whether those assumptions are right.
 
-@fig-forward-backward-path-groups shows the comparison responsible for the disagreement: the largest individual path belongs to the B-ending group, but the I-ending paths have slightly more probability when added together.
+@fig-forward-backward-path-groups draws the comparison responsible for the disagreement.
 
 ```{.python .execute}
 #| label: fig-forward-backward-path-groups
@@ -254,7 +259,7 @@ An annotation can therefore report a likely region while assigning only moderate
 4. Check that posterior columns sum to one and that every forward-backward cut gives the same sequence probability.
 :::
 
-The code uses ordinary probabilities so each line matches the hand tables. It is for short validation examples. Long sequences require the log-space modification below.
+The code uses ordinary probabilities so each line matches the hand tables; long sequences require the log-space modification below.
 
 ```{.python .execute}
 #| label: code-forward-backward
@@ -350,7 +355,7 @@ With $K=|Q|$ states, each table has $nK$ entries and each entry sums $K$ terms. 
 
 ### Posteriors along a simulated sequence
 
-The same computation applies to the 300-position sequence simulated from the sticky variant ($a_{BB}=0.98$, $a_{II}=0.95$, emissions unchanged) and decoded by Viterbi in the previous lesson. Its probability, about $5\times10^{-83}$, is still within floating-point range, so the plain-probability code suffices here; much longer sequences need the log-space version below. @fig-forward-backward-simulated plots $\gamma_I(i)$ against the true islands and the Viterbi path.
+The same computation applies to the 300-position sequence simulated from the sticky variant ($a_{BB}=0.98$, $a_{II}=0.95$, emissions unchanged) and decoded by Viterbi in the previous lesson. Its probability, about $5\times10^{-83}$, is still within floating-point range, so the plain-probability code suffices here. @fig-forward-backward-simulated plots $\gamma_I(i)$ against the true islands and the Viterbi path.
 
 ```{.python .execute}
 #| label: fig-forward-backward-simulated
@@ -412,7 +417,7 @@ print(f"P(x) = {likelihood:.2g}; expected island positions = {sum(gamma_I):.1f};
       f"true island positions = {path_sim.count('I')}")
 ```
 
-In islands made almost entirely of S, such as positions 99 to 105, 134 to 145, and 249 to 262, the posterior rises above 0.8 within a position or two of the boundary and stays there, and in long background stretches it stays near 0. Uncertainty concentrates elsewhere: the curve climbs over several positions at each boundary, sags toward 0.55 inside the W-rich island at 215 to 228, and hovers near one half in short S-rich stretches of background such as 90 to 96 and 146 to 154, where a small island and a background fluctuation explain the letters about equally well. The 11 background positions that Viterbi appended to the last island carry island posteriors between about 0.56 and 0.87, a doubt the single path does not show. Summing the curve gives about 104 expected island positions, against 95 in the truth.
+In islands made almost entirely of S, such as positions 99 to 105, 134 to 145, and 249 to 262, the posterior rises above 0.8 within a position or two of the boundary and stays there, and in long background stretches it stays near 0. Uncertainty concentrates elsewhere: the curve climbs over several positions at each boundary, stays between about 0.7 and 0.8 through the W-rich first half of the island at 215 to 228, and hovers near one half in short S-rich stretches of background such as 90 to 96 and 146 to 154, where a small island and a background fluctuation explain the letters about equally well. The 11 background positions that Viterbi appended to the last island carry island posteriors between about 0.56 and 0.87, a doubt the single path does not show. Summing the curve gives about 104 expected island positions, against 95 in the truth.
 
 ### Stable sums in log space
 
@@ -448,7 +453,7 @@ Compute forward and backward tables for $\texttt{SW}$. Check $P(x)$ at both cuts
 :::
 
 ::: {#exr-posterior-filter}
-For $\texttt{SSWS}$, compute $P(\pi_2=I\mid x_1x_2)$ by normalizing the forward column. Compare it with 0.656 and explain what information changes the answer.
+For $\texttt{SSWS}$, compute $P(\pi_3=I\mid x_1x_2x_3)$ by normalizing the forward column. Compare it with 0.290 and explain what information changes the answer.
 :::
 
 ::: {#exr-forward-bug}

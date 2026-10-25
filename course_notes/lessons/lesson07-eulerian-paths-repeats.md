@@ -24,7 +24,7 @@ cf.use_style()
 
 Assembly starts with overlapping reads whose positions in the genome are unknown. Lesson 6 represented their short words in a de Bruijn graph: each word supplies an edge, and matching suffixes and prefixes allow edges to follow one another. For the ideal 3-mer multiset of `TACGACG`, those edges must be ordered to use TAC once, ACG twice, CGA once, and GAC once. Following that order spells a candidate DNA sequence.
 
-Our first task is to find such an ordering without guessing at branches. Throughout, the multiset is the ideal genomic one, in which each genome position contributes exactly one $k$-mer occurrence, so a complete reconstruction uses each edge exactly once. This is an *Eulerian path* problem: simple degree conditions decide whether a solution exists, and an algorithm constructs one in linear time.
+Our first task is to find such an ordering without guessing at branches. Throughout, the multiset is the ideal genomic one, in which each genome position contributes exactly one $k$-mer occurrence, so a complete reconstruction uses each edge exactly once. This is an *Eulerian path* problem, named for Euler's 1735 answer to a puzzle from Königsberg: could a walk cross each of the city's seven bridges exactly once? He settled it by counting the bridges that meet at each landmass [@compeau2015]. The same counting, applied to directed edges, decides whether a reconstruction exists, and an algorithm modeled on its proof builds one in linear time.
 
 A complete path gives a candidate genome, but we still need to know whether other paths spell different sequences. Choosing an unsupported order can give a false account of how genes are arranged. Repeats can leave the data compatible with several genomes, and with real reads, errors and coverage gaps add or remove edges. An assembler then reports contigs, stretches that every compatible genome shares.
 
@@ -70,16 +70,20 @@ An *Eulerian path* uses every edge exactly once. An *Eulerian cycle* is an Euler
 
 Nodes may repeat; the restriction falls on edges, because they represent the $k$-mer occurrences that a reconstruction must consume.
 
-::: {#prp-assembly-eulerian}
-## Reconstruction is an Eulerian path problem
-A string $x$ with $\operatorname{Comp}_k(x)=K$ determines an Eulerian path in $D(K)$. Every Eulerian path in $D(K)$ spells a string with composition $K$.
-:::
+In these terms, the previous lesson's conclusion reads: a string $x$ with $\operatorname{Comp}_k(x)=K$ determines an Eulerian path in $D(K)$, and every Eulerian path in $D(K)$ spells a string with composition $K$.
 
 ::: {.proof}
-Sketch. Consecutive genomic $k$-mers overlap in $k-1$ symbols, so their edges meet in order. Conversely, traversing an edge appends its final symbol. Using every edge occurrence once gives exactly $K$.
+Sketch. List the genome's $k$-mers in order as $w^{(1)},\ldots,w^{(q)}$. Consecutive words overlap in $k-1$ letters,
+$$
+\operatorname{suffix}\bigl(w^{(j)}\bigr)=\operatorname{prefix}\bigl(w^{(j+1)}\bigr),
+$$
+so their edges meet head to tail and form a walk that uses each edge of $D(K)$ once. Conversely, the $j$th $k$-mer of a spelled string is the label of the $j$th edge traversed, so a walk that uses every edge once spells a string with
+$$
+\operatorname{Comp}_k(\text{spelled string})=\{\!\{\text{labels of all edges}\}\!\}=K.
+$$
 :::
 
-The proposition reduces exact string reconstruction to a graph traversal. We still need to know when such a traversal exists, how to find it, and whether a different traversal would spell a different string.
+This reduces exact string reconstruction to a graph traversal. We still need to know when such a traversal exists, how to find it, and whether a different traversal would spell a different string.
 
 ## Degree conditions
 
@@ -98,11 +102,23 @@ $$
 :::
 
 ::: {.proof}
-Sketch. Every visit to an internal node pairs an entering edge with a leaving edge. Only the start and end can have an unpaired edge, proving necessity.
+Sketch. *Necessity.* Follow an Eulerian path $v_0\to v_1\to\cdots\to v_q$. Each pass through a node enters on one edge and leaves on another, and each edge is used once, so only the two ends keep an unpaired edge:
+$$
+d^+(v)-d^-(v)=\mathbf 1[v=v_0]-\mathbf 1[v=v_q].
+$$
+If $v_0=v_q$ every node is balanced; otherwise $s=v_0$ and $t=v_q$.
 
-For sufficiency, first make the graph balanced by adding $t\to s$ in the open-path case. Follow unused outgoing edges from a node $v$. At any other node, the walk has used one more incoming than outgoing edge, so balance guarantees an unused exit. It can get stuck only back at $v$, producing a closed walk.
+*Sufficiency.* In the open-path case, add an edge $t\to s$ so that every node is balanced; cutting the finished cycle at that edge leaves a path from $s$ to $t$. Now let a walker start at a node $v$ and leave each node by any unused edge [@compeau2015]. Standing at a node $u\neq v$, the walker has entered $u$ once more than it has left, so
+$$
+\text{exits used at }u=\text{entries used at }u-1\le d^-(u)-1=d^+(u)-1,
+$$
+and an unused exit remains. The walker can get stuck only back at $v$, so it traces a closed walk $C_0$.
 
-Removing that closed walk leaves balanced unused degrees. If an unused edge already touches the closed walk, we have a place to continue. Otherwise, weak connectivity gives an undirected route from the walk to a remaining edge. The first edge leaving the visited nodes must be unused, so it supplies that contact. Balance of the unused edges then guarantees an unused outgoing edge at some visited node. Start there, make another closed walk, and insert it at that node. Each insertion uses at least one new edge, so the finite process consumes every edge. In the open-path case, cut the completed cycle at the added edge and delete it to obtain a path from $s$ to $t$.
+A closed walk uses as many entries as exits at each node, so the unused edges are balanced too. If any remain, some node $w$ of $C_0$ touches one: an undirected route from $C_0$ to an unused edge must leave the nodes of $C_0$ along an edge that $C_0$ did not use. Balance gives $w$ an unused exit. Restart the walker at $w$, send it once around $C_0$, and let it continue on unused edges until it is stuck at $w$ again. Each round yields a longer closed walk,
+$$
+|C_0|<|C_1|<|C_2|<\cdots\le|E|,
+$$
+so after finitely many rounds the closed walk uses every edge.
 :::
 
 The proof explains why local degree counts suffice once connectivity is checked: every unfinished excursion has somewhere to rejoin the growing walk.
@@ -122,9 +138,7 @@ The path must start at `TA` and end at `CG`.
 
 ### Interpreting degree differences
 
-A genome walk contributes one entry and one exit each time it passes through an internal $(k-1)$-mer, and these cancel in the degree difference. Only the first node keeps an unpaired exit and the last an unpaired entry; for a circular genome, every node balances.
-
-This accounting gives a fast rejection test. If two nodes each have one extra outgoing edge, no ordering of the given edges can produce one linear string. The failure could come from a missing $k$-mer, an extra erroneous one, or data from more than one genome, and the degrees alone do not say which.
+For a genome walk, the necessity argument says that only the first $(k-1)$-mer keeps an unpaired exit and only the last an unpaired entry; for a circular genome, every node balances. This accounting gives a fast rejection test. If two nodes each have one extra outgoing edge, no ordering of the given edges can produce one linear string. The failure could come from a missing $k$-mer, an extra erroneous one, or data from more than one genome, and the degrees alone do not say which.
 
 Degrees also do not test connectivity. Two separate cycles, one on nodes $A,B$ and one on $C,D$, balance every node, yet a walk stays trapped in the cycle where it begins. The weak-connectivity condition in @thm-directed-euler-path rules out this case.
 
@@ -220,7 +234,7 @@ The swap works for any node that a complete walk visits three times. Write such 
 $$
 P\;E_1\;E_2\;Q,
 $$
-where $P$ is the part up to the first visit of the node $v$, $E_1$ and $E_2$ are the closed excursions from $v$ back to $v$, and $Q$ is the rest. Because each excursion begins and ends at $v$, $P\,E_2\,E_1\,Q$ is also a walk using exactly the same edges. By @prp-assembly-eulerian it spells a string with the same composition, which differs from the first whenever $E_1$ and $E_2$ spell different letters. A $(k-1)$-mer occurring three times in the genome supplies such a node: in `ACGTCGACG`, CG occurs at positions 2, 5, and 8.
+where $P$ is the part up to the first visit of the node $v$, $E_1$ and $E_2$ are the closed excursions from $v$ back to $v$, and $Q$ is the rest. Because each excursion begins and ends at $v$, $P\,E_2\,E_1\,Q$ is also a walk using exactly the same edges. Like every Eulerian path, it spells a string with composition $K$, which differs from the first whenever $E_1$ and $E_2$ spell different letters. A $(k-1)$-mer occurring three times in the genome supplies such a node: in `ACGTCGACG`, CG occurs at positions 2, 5, and 8.
 
 A $(k-1)$-mer that occurs only twice gives one excursion and nothing to reorder, but two such repeats can still cause ambiguity when they interleave. If the walk visits $u$, then $w$, then $u$, then $w$, write it as $P\,A\,B\,C\,Q$, where $A$ and $C$ run from $u$ to $w$ and $B$ runs from $w$ back to $u$. Then $P\,C\,B\,A\,Q$ uses the same edges, and it spells a different string whenever $A$ and $C$ spell different letters. `TACGACG` shows why that last condition matters. Its repeated 2-mers interleave, with AC at positions 2 and 5 and CG at 3 and 6, but both segments from AC to CG are the single word ACG, so the swap returns the same string. A triple repeat or two interleaved repeats therefore makes the genome impossible to recover from its $k$-mers whenever swapping the segments changes the spelled string.
 
@@ -228,9 +242,9 @@ A $(k-1)$-mer that occurs only twice gives one excursion and nothing to reorder,
 
 The degree theorem says whether at least one traversal exists; assembly also asks whether all traversals spell the same string. A branching node alone does not settle this, because one choice may get stuck before using every edge, or two choices may spell the same letters, as in `TACGACG`.
 
-Once two strings produce the same $K$, every algorithm receiving only $K$ sees identical data, so no tie-breaking rule or cleverer traversal can recover which string generated it. Additional information must cross the repeat: longer k-mers, paired reads taken from the two ends of one DNA fragment with an approximately known length, or a long read spanning both flanks.
+Once two strings produce the same $K$, every algorithm receiving only $K$ sees identical data, so no tie-breaking rule or cleverer traversal can recover which string generated it. Additional information must cross the repeat: longer k-mers, paired reads taken from the two ends of one DNA fragment with an approximately known length, which act like one long read with an unread middle, or a long read spanning both flanks [@compeau2015].
 
-At $k=4$, the two strings in @exm-repeat-ambiguity no longer have the same composition. For `ACGTCGACG`, the 4-mers are `ACGT, CGTC, GTCG, TCGA, CGAC, GACG`. For `ACGACGTCG`, they are `ACGA, CGAC, GACG, ACGT, CGTC, GTCG`. The first contains `TCGA` and the second `ACGA`, so one extra base of context separates the candidates. A longer repeat would need a correspondingly larger $k$.
+At $k=4$, the two strings in @exm-repeat-ambiguity no longer have the same composition: only the first contains `TCGA` and only the second `ACGA`, so one extra base of context separates the candidates. In general, once no $(k-1)$-mer occurs twice in an error-free genome, no nodes are glued, the de Bruijn graph is a single path, and the reconstruction is unique; a longer repeat needs a correspondingly larger $k$ [@compeau2015].
 
 ## Errors, tips, and bubbles
 
@@ -250,7 +264,7 @@ Suppose some reads report `ACGTC` and one reports `ACTTC`. The third base differ
 | `ACGTC` | `ACG, CGT, GTC` | `AC → CG → GT → TC` |
 | `ACTTC` | `ACT, CTT, TTC` | `AC → CT → TT → TC` |
 
-All three words in the second read contain the changed base, so the two paths share only their ends, `AC` and `TC`: the unchanged two-base flanks are enough for them to rejoin. If the changed base were at a read's end, the erroneous path could instead stop before reaching a shared flank.
+All three words in the second read contain the changed base, so the two paths share only their ends, `AC` and `TC`: the unchanged two-base flanks are enough for them to rejoin.
 :::
 
 ```{.python .execute}
@@ -273,13 +287,13 @@ cf.digraph(
 plt.show()
 ```
 
-Suppose twenty independently sampled reads spanning these flanks support `ACGTC`, and one supports `ACTTC`. Under a model with rare, independent sequencing errors, this imbalance supports keeping the first route. But the same graph could come from two biological versions of the region, or from similar repeat copies sampled at different depths. Read counts alone cannot distinguish those explanations. Base quality and reads spanning additional flanking sequence can supply evidence beyond this local graph [@compeau2015].
+Suppose twenty independently sampled reads spanning these flanks support `ACGTC`, and one supports `ACTTC`. Under a model with rare, independent sequencing errors, this imbalance supports keeping the first route. But the same graph could come from two biological versions of the region, or from similar repeat copies sampled at different depths. Read counts alone cannot distinguish those explanations, and an assembler must make this choice at each of the very many bubbles that sequencing errors create; pruning one side of a bubble formed by two inexact repeat copies erases a real difference between them. Base quality and reads spanning additional flanking sequence can supply evidence beyond this local graph [@compeau2015].
 
 Bubble detection answers only the structural question of where paths disagree. Choosing a route requires assumptions about the sample and the measurement process, and when the evidence stays ambiguous, ending the contiguous sequences at the bubble avoids an unsupported join.
 
 ### From a graph to contigs
 
-After filtering and graph simplification, real data still contain branches supported by substantial evidence. To identify routes rather than count observations, aggregate repeated observations of the same $k$-mer into one edge and keep the count as an attribute of that edge. In this graph, a maximal path whose internal nodes each have exactly one incoming and one outgoing edge involves no choice, so every genome compatible with the graph contains the sequence it spells. That sequence is a *contig*.
+After filtering and graph simplification, real data still contain branches supported by substantial evidence. To identify routes rather than count observations, aggregate repeated observations of the same $k$-mer into one edge and keep the count as an attribute of that edge; a word present twice in the genome should be observed about twice as often [@compeau2015]. In this graph, a maximal path whose internal nodes each have exactly one incoming and one outgoing edge involves no choice, so every genome compatible with the graph contains the sequence it spells. That sequence is a *contig*.
 
 Return to the repeat graph of @fig-euler-repeat-graph. With one edge per distinct 3-mer, AC has one incoming and one outgoing edge, and only CG branches, with two edges in and two out. The non-branching paths therefore run from CG back to CG:
 $$

@@ -145,7 +145,7 @@ print("fraction of zero counts:", round(np.mean(counts == 0), 3))
 print("explained by PC1-PC5:", np.round(explained[:5], 3))
 ```
 
-About two-thirds of the counts are zero, and no component dominates: PC1 and PC2 explain under 5% each, with no sharp drop afterward. The reason is structural. Five expression programs raise disjoint gene blocks, so the type means differ along about five directions of comparable size. A PCA plot shows two of them, and types separated only along the other three land on top of each other, as in panel A of @fig-single-cell-embeddings below. Most of the remaining variance is sampling noise spread over all 300 genes.
+About two-thirds of the counts are zero, and no component dominates: PC1 and PC2 explain under 5% each, with no sharp drop afterward. Five expression programs raise disjoint gene blocks, so the type means differ along about five directions of comparable size. A PCA plot shows two of them, and types separated only along the other three land on top of each other, as in panel A of @fig-single-cell-embeddings below. Most of the remaining variance is sampling noise spread over all 300 genes.
 
 The 20 scores still recognize the types: on average 92% of each cell's ten nearest neighbors in $\mathbb R^{20}$ share its type (computed later). The information is in the neighbor relationships, and a linear projection to the plane discards it. We therefore seek points $y_1,\ldots,y_n\in\mathbb R^2$, an *embedding* $Y\in\mathbb R^{n\times2}$, that keep each cell's near neighbors close while letting large distances distort.
 
@@ -244,7 +244,9 @@ First compute a similarity $w_{ij}$ for every pair of display points, then norma
 
 ::: {#def-tsne-cost}
 ## t-SNE embedding
-Given joint neighbor probabilities $p_{ij}$, a *t-SNE embedding* is a configuration $Y=(y_1,\ldots,y_n)$ in $\mathbb R^2$ found by locally minimizing
+**Input:** joint neighbor probabilities $p_{ij}$ for $n$ cells.
+
+**Output:** a configuration $Y=(y_1,\ldots,y_n)$ in $\mathbb R^2$, a *t-SNE embedding*, that locally minimizes
 $$
 \mathcal C(Y)=\sum_{i\ne j,\;p_{ij}>0}p_{ij}\ln\frac{p_{ij}}{q_{ij}}.
 $$
@@ -380,7 +382,7 @@ Neighbors in the embedding share a type as often as neighbors in the 20 scores, 
 
 ## Reading an embedding
 
-Perplexity changes the picture without any change in the data. All three t-SNE panels of @fig-single-cell-embeddings recover the same five groups, but the shapes and arrangement differ. At perplexity 5 each cell keeps only a few neighbors, and a few cells end up stranded between islands; in noisier real data, small perplexities can split one population into fragments, and even structureless random data can form convincing clumps [@wattenberg2016]. No setting is the true one. The five groups are worth reporting because they appear at every perplexity we tried; their arrangement changes and is not.
+Perplexity changes the picture without any change in the data. All three t-SNE panels of @fig-single-cell-embeddings recover the same five groups, but the shapes and arrangement differ. At perplexity 5 each cell keeps only a few neighbors, and a few cells end up stranded between islands; in noisier real data, small perplexities can split one population into fragments, and even structureless random data can form convincing clumps [@wattenberg2016]. No setting is the true one. The five groups are worth reporting because they appear at every perplexity we tried; their arrangement, which changes with perplexity, is not.
 
 Island area is unreliable too. Every simulated type has the same variation around its profile, yet type 1, with 150 cells, covers a far larger area than type 5b, with 20. Because each $\sigma_i$ was tuned to give every cell the same number of effective neighbors, differences in local density were removed in the first step, and area tracks the number of cells more than their variability [@wattenberg2016]. The large rod island in @fig-single-cell-retina-atlas reflects at least partly how many rods were captured.
 
@@ -388,7 +390,7 @@ Island area is unreliable too. Every simulated type has the same variation aroun
 A t-SNE or UMAP plot can support the claim that cells in one island were each other's neighbors in the input. It does not show how different two islands are, how variable a group is, or that an empty region contains no intermediate cells.
 :::
 
-UMAP, the other widely used embedding, builds the $k$-nearest-neighbor graph of Lesson 19 explicitly, with $k$ playing the role of perplexity, and lays it out by pulling neighbors together and pushing sampled non-neighbors apart [@mcinnes2018]. Its speed relative to t-SNE depends on the implementation and settings, and the warning above applies to it unchanged.
+UMAP, the other widely used embedding, builds the $k$-nearest-neighbor graph of Lesson 19 explicitly, with $k$ playing the role of perplexity, and lays it out by pulling neighbors together and pushing sampled non-neighbors apart [@mcinnes2018]. The warning above applies to it unchanged.
 
 In a typical analysis, clusters are computed on the neighbor graph built from PCA scores, as in Lesson 19, and the embedding is drawn alongside for display, not used to define them. Naming a cluster as a cell type is a further biological claim, made from marker genes; the colors in @fig-single-cell-retina-atlas are such claims [@macosko2015].
 

@@ -70,3 +70,14 @@ h3{margin:24px 0 10px}
 .course-overview-link:hover,.course-overview-link:focus-visible{color:var(--red);text-decoration:underline}
 
 .week-continuation-label{display:block;font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)}
+
+/* Numbered blocks: definitions and theorems in a hairline box, worked examples between hairline rules, exercises plain. */
+.numbered-block{margin:26px 0}
+.numbered-block>:last-child{margin-bottom:0}
+.numbered-block>p:first-child strong{font-family:Montserrat,'Segoe UI',sans-serif;font-size:15px;letter-spacing:-.01em}
+:is(.def,.thm,.lem,.cor,.prp).numbered-block{border:1px solid #c9c9c5;border-radius:4px;padding:16px 22px;background:#fff}
+.exm.numbered-block{border:0;border-top:1px solid #c9c9c5;border-bottom:1px solid #c9c9c5;padding:14px 0 16px}
+.exr.numbered-block{border:0;padding:0;margin:18px 0}
+.numbered-block+.proof{margin-top:-8px}
+@media(max-width:760px){:is(.def,.thm,.lem,.cor,.prp).numbered-block{padding:12px 14px}}
+@media print{:is(.def,.thm,.lem,.cor,.prp).numbered-block{break-inside:avoid}}

@@ -26,7 +26,22 @@ cf.use_style()
 
 ## Why compare sequences
 
-Two strains of the same bacterial species can differ at only a handful of DNA positions, and those few differences can matter: they can explain why an infection no longer responds to an antibiotic, or show which patient's strain infected which during an outbreak. The differences arise when DNA is copied or repaired imperfectly, and they come in three kinds. A *substitution* replaces one base with another, an *insertion* adds bases, and a *deletion* removes them. Suppose, then, that we want to find the DNA differences between a bacterial sample and a previously studied strain. *DNA sequencing* estimates the order of bases in DNA, but not in one piece. The sample's DNA is broken into many fragments, an instrument measures a signal along each fragment (light as a copied strand grows, or electrical current as DNA passes through a pore), and *basecalling* software converts that signal into a string of A, C, G, and T called a *read* [@illumina-sbs; @nanopore-technology]. A short-read instrument reports millions of reads, each a few hundred letters or fewer, and no read says where in the genome it came from. What we do have is a *reference sequence*: the previously assembled genome of the studied strain.
+Two strains of the same bacterial species can differ at only a handful of DNA positions, and those few differences can matter: they can explain why an infection no longer responds to an antibiotic, or show which patient's strain infected which during an outbreak. The differences arise when DNA is copied or repaired imperfectly, and they come in three kinds. A *substitution* replaces one base with another, an *insertion* adds bases, and a *deletion* removes them. Suppose, then, that we want to find the DNA differences between a bacterial sample and a previously studied strain. *DNA sequencing* estimates the order of bases in DNA, but not in one piece. The sample's DNA is broken into many fragments, an instrument measures a signal along each fragment (light as a copied strand grows, or electrical current as DNA passes through a pore), and *basecalling* software converts that signal into a string of A, C, G, and T called a *read* [@illumina-sbs; @nanopore-technology]. A short-read instrument reports millions of reads, each a few hundred letters or fewer, and no read says where in the genome it came from (@fig-first-problem-sequencing). What we do have is a *reference sequence*: the previously assembled genome of the studied strain.
+
+```{.python .execute}
+#| label: fig-first-problem-sequencing
+#| code-fold: true
+#| code-summary: "Draw the sequencing cartoon"
+#| fig-cap: "A short-read experiment in cartoon form. The sample holds many copies of one genome region; they break into fragments, the sequencer reads a stretch of letters from each fragment on its flow cell, and the reads come out as strings with no genomic positions. Before any comparison, each read, like the red one, has to be placed somewhere along the reference."
+#| fig-alt: "Four steps joined by grey arrows: four parallel black lines titled DNA sample, the same lines broken into short pieces titled Fragments, a rounded box holding a grey flow cell with short lines titled Sequencer, and four nine-letter strings titled Reads with the first in red. Below, a 22-letter reference string with the red read floating above it between a left and a right red arrow, beside the text Where does each read belong?"
+#| fig-width: 6
+#| fig-height: 2.7
+reference = "TTGACGTTAGCCATGCAAGTCA"
+reads = ["GTCATGCAA", "TTGACGTTA", "TAGTCATGC", "ACGTTAGTC"]
+fig, ax = plt.subplots()
+cf.sequencing_run(ax, reference, reads)
+plt.show()
+```
 
 The plan is to place each read at the stretch of reference it resembles most and then read down each column. @fig-first-problem-pileup shows the result for a few made-up reads. Where every read covering a position disagrees with the reference in the same way, the sample probably carries a real difference. A disagreement that appears in one read and is contradicted by its neighbors is more likely a measurement error. Both conclusions rest on a step the figure takes for granted: deciding where each read belongs and which of its letters correspond to which reference letters. That correspondence is an *alignment*. Computing a good one is the mathematical problem behind this picture, and the next four lessons develop it.
 
@@ -202,20 +217,25 @@ An *edit* is a substitution of one symbol for another, an insertion of a symbol 
 
 :::
 
-::: {#prp-edit-vs-hamming}
-## Edit distance is at most Hamming distance
-For sequences of equal length, $d_E(x, y) \le d_H(x, y)$, and the inequality can be strict.
-:::
+The table shows the general relationship. For sequences of equal length,
+$$
+d_E(x, y) \le d_H(x, y),
+$$
+and the inequality can be strict.
 
 ::: {.proof}
-Sketch. Every substitution is an edit, so the $d_H(x, y)$ substitutions form a valid edit sequence and the minimum is no larger. For strictness take $x = ACGTT$, $z = CGTTA$: $d_H = 4$ and two edits suffice. Two are necessary: zero edits would mean $x = z$; a single substitution changes one position, but $d_H = 4$; a single insertion or deletion changes the length.
+Sketch. Every substitution is an edit, so the $d_H(x,y)$ substitutions form one valid edit sequence and the minimum is no larger. For strictness, take $x$ and $z$:
+$$
+d_H(x,z)=4,\qquad d_E(x,z)\le 2\quad(\text{delete }x_1,\ \text{append A}).
+$$
+One edit cannot suffice: a substitution changes one position and would leave at least three mismatches, while an insertion or deletion changes the length. Zero edits would require $x=z$. Hence $d_E(x,z)=2<4$.
 :::
 
-The proof uses a two-part pattern for establishing a minimum: exhibit a solution (upper bound), then rule out anything smaller (lower bound). One lower bound comes free. Every insertion or deletion changes the length by one and a substitution does not, so
+The sketch uses a two-part pattern for establishing a minimum: exhibit a solution (upper bound), then rule out anything smaller (lower bound). One lower bound comes free. Every insertion or deletion changes the length by one and a substitution does not, so
 $$
 d_E(x,y)\geq\bigl||x|-|y|\bigr|.
 $$
-Changing $\texttt{ACGTT}$ to $\texttt{ACT}$ therefore needs at least two edits, and deleting G and one T achieves two, so the distance is exactly two. For equal-length strings this bound is zero, which is why the proof above needed its own argument to exclude a single edit.
+Changing $\texttt{ACGTT}$ to $\texttt{ACT}$ therefore needs at least two edits, and deleting G and one T achieves two, so the distance is exactly two. For equal-length strings this bound is zero, which is why the sketch above needed its own argument to exclude a single edit.
 
 Unit costs treat every change alike: a likely substitution and an unlikely one, a sequencing error and a true variant. Lesson 2 asks how much a particular pair of letters should count.
 
@@ -230,7 +250,7 @@ An *alignment* of $x$ and $y$ writes the two strings one above the other with ga
 
 Write $\operatorname{cost}(\mathcal A)$ for the number of mismatched letter pairs plus the number of gap columns in an alignment $\mathcal A$.
 
-::: {#prp-edit-alignment}
+::: {#thm-edit-alignment}
 ## Edit distance is a minimum over alignments
 For any sequences $x$ and $y$,
 $$
@@ -240,7 +260,17 @@ where the minimum runs over every alignment $\mathcal A$ of $x$ and $y$.
 :::
 
 ::: {.proof}
-Sketch. Reading an alignment from left to right gives an edit sequence of the same cost: keep a match, substitute a mismatch, delete a top-row letter opposite a gap, and insert a bottom-row letter opposite a gap. Hence $d_E(x,y)$ is at most the minimum cost. Conversely, take a shortest edit sequence. In it, inserted letters are chosen in their final form, deleted letters are never substituted first, and each surviving letter changes at most once; otherwise an operation could be removed. Surviving letters keep their order, so pairing each with its final letter and placing deleted and inserted letters opposite gaps gives an alignment of the same cost.
+Sketch. We prove two inequalities. Reading an alignment from left to right, each column becomes at most one edit:
+$$
+\begin{array}{cccc}
+a/a & a/b & a/- & -/b\\
+\text{keep} & \text{substitute }a\to b & \text{delete }a & \text{insert }b
+\end{array}
+$$
+Every alignment therefore yields an edit sequence of the same cost, so $d_E(x,y)\le\min_{\mathcal A}\operatorname{cost}(\mathcal A)$. Conversely, a shortest edit sequence touches no letter twice; otherwise an operation could be removed. Surviving letters keep their order, so pairing each with its final form and placing deleted and inserted letters opposite gaps gives an alignment with one costly column per edit:
+$$
+\min_{\mathcal A}\operatorname{cost}(\mathcal A)\le d_E(x,y).
+$$
 :::
 
 On our example, the edit sequence "delete $x_1$; append A" becomes the left alignment below: the deleted A sits opposite a gap, the surviving CGTT pairs with itself, and the appended A sits opposite a gap in the top row. The single substitution turning $x$ into $y$ becomes one mismatched column on the right.
@@ -385,7 +415,7 @@ The spectrum discards the order of its words, so distinct strings can have ident
 ## Exercises
 
 ::: {#exr-first-problem-distances}
-Let $u = GATTACA$ and $v = ATTACAG$. Compute $d_H(u, v)$ and $d_E(u, v)$ by hand, and prove your value of $d_E$ is minimal using the upper-bound, lower-bound pattern from @prp-edit-vs-hamming.
+Let $u = GATTACA$ and $v = ATTACAG$. Compute $d_H(u, v)$ and $d_E(u, v)$ by hand, and prove your value of $d_E$ is minimal using the upper-bound, lower-bound pattern from the comparison of $d_E$ with $d_H$.
 :::
 
 ::: {#exr-first-problem-construct}

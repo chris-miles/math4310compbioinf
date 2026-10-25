@@ -5,9 +5,13 @@ Scope: data plots (lines, points, bars, heatmaps, scree plots). Schematics (DP t
 Target aesthetic: **clean scientific** — minimal chrome, single sans-serif, colorblind-safe palette, every mark earns its place. All figures use matplotlib with the shared style file `figstyle.mplstyle`.
 
 ## Setup
+Lesson code runs from `course_notes/lessons/`, so use the same setup chunk as `STYLE_SCHEMATICS.md`; `cf.use_style()` applies `figstyle.mplstyle`.
 ```python
+import sys
+sys.path.insert(0, "../style")
 import matplotlib.pyplot as plt
-plt.style.use("course_notes/style/figstyle.mplstyle")
+import coursefigs as cf
+cf.use_style()
 ```
 
 ## Sizes — Do Not Set in Python

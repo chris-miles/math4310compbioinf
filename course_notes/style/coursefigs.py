@@ -1058,3 +1058,399 @@ def path_bundle(
                   prop={"family": MONO, "size": 9}, handlelength=1.5)
     ax.set_xlim(-1.6, len(cols) + 0.4)
     ax.set_ylim(-len(rows) - 0.4, 1.6)
+
+
+# --- Experimental setting: an induced fluorescent reporter -----------------
+
+def reporter_setting(ax: plt.Axes) -> None:
+    """Sketch an induced reporter gene in one cell beside time-lapse images.
+
+    Left: an inducer reaches the promoter, the reporter gene (gfp) is copied
+    to mRNA and translated into fluorescent protein (red dots, concentration
+    x) at rate beta, and protein is removed at rate alpha x. Production and
+    removal arrows use SECOND and THIRD, the colors of `rate_balance`.
+    Right: one lineage imaged 0, 30, and 60 minutes after induction with a
+    30-minute division; the followed cell has an ink outline and its sister
+    a grey one. Dot density stands for concentration, so it rises from frame
+    to frame although a division halves the molecules in each cell.
+    """
+    _bare(ax)
+
+    def arrow(start: tuple[float, float], end: tuple[float, float],
+              color: str, lw: float = 1.5) -> None:
+        """Draw one straight arrow with a filled head."""
+        ax.annotate("", xy=end, xytext=start,
+                    arrowprops=dict(arrowstyle="-|>", color=color, lw=lw,
+                                    mutation_scale=11, shrinkA=0, shrinkB=0))
+
+    def cell(x0: float, y0: float, width: float, height: float, n_dots: int,
+             edge: str = RULE, lw: float = 1.2) -> None:
+        """Draw a rod-shaped bacterium holding n_dots reporter molecules."""
+        ax.add_patch(mpatches.FancyBboxPatch(
+            (x0, y0), width, height,
+            boxstyle=f"round,pad=0,rounding_size={height / 2}",
+            facecolor=PAPER, edgecolor=edge, linewidth=lw))
+        pad = 0.3
+        step = (width - 2 * pad) / max(n_dots, 1)
+        for i in range(n_dots):
+            ax.add_patch(mpatches.Circle(
+                (x0 + pad + (i + 0.5) * step, y0 + height / 2 + 0.14 * (-1) ** i),
+                0.09, facecolor=EMPHASIS, edgecolor="none"))
+
+    def inducer(x: float, y: float) -> None:
+        """Draw one inducer molecule as a small ink diamond."""
+        ax.add_patch(mpatches.RegularPolygon((x, y), 4, radius=0.13,
+                                             facecolor=INK, edgecolor="none"))
+
+    # Left: what happens inside one cell after induction.
+    ax.text(4.5, 5.75, "Inside one cell", ha="center", fontsize=10)
+    cell(0.4, 0.9, 8.2, 3.9, 0)
+    for x, y in ((0.35, 5.2), (0.9, 5.4), (1.45, 5.15)):
+        inducer(x, y)
+    ax.text(1.8, 5.25, "inducer", ha="left", va="center", fontsize=9)
+    arrow((1.2, 4.95), (2.55, 2.8), RULE, lw=0.8)
+    ax.plot([1.7, 6.2], [2.1, 2.1], color=INK, lw=1.5, zorder=1,
+            solid_capstyle="butt")
+    ax.add_patch(mpatches.Rectangle((2.2, 1.85), 1.0, 0.5, facecolor=LIGHT,
+                                    edgecolor=RULE, linewidth=0.8, zorder=2))
+    ax.text(2.7, 1.65, "promoter", ha="center", va="top", fontsize=9)
+    ax.add_patch(mpatches.Rectangle((3.3, 1.85), 2.2, 0.5, facecolor=PAPER,
+                                    edgecolor=INK, linewidth=1.0, zorder=2))
+    ax.text(4.4, 2.1, "gfp", ha="center", va="center", fontsize=9,
+            style="italic", zorder=3)
+    inducer(2.7, 2.55)
+    wave = np.linspace(0, 6 * np.pi, 60)
+    ax.plot(np.linspace(3.6, 5.2, 60), 3.35 + 0.08 * np.sin(wave),
+            color=INK, lw=1.2)
+    ax.text(4.4, 3.6, "mRNA", ha="center", va="bottom", fontsize=9)
+    arrow((4.4, 2.45), (4.4, 3.15), SECOND)
+    for dx, dy in ((-0.35, 0.3), (0.05, 0.45), (0.4, 0.2), (-0.25, -0.15),
+                   (0.15, -0.05), (0.5, -0.3), (-0.05, -0.45)):
+        ax.add_patch(mpatches.Circle((6.7 + dx, 3.35 + dy), 0.11,
+                                     facecolor=EMPHASIS, edgecolor="none"))
+    ax.text(6.7, 3.98, "GFP, $x$", ha="center", va="bottom", fontsize=9)
+    arrow((5.35, 3.35), (6.1, 3.35), SECOND)
+    ax.text(5.72, 3.1, r"$\beta$", ha="center", va="top", fontsize=10)
+    arrow((6.8, 2.75), (6.8, 1.95), THIRD)
+    ax.text(7.0, 2.35, r"$\alpha x$", ha="left", va="center", fontsize=10)
+    ax.text(6.8, 1.8, "removed", ha="center", va="top", fontsize=9)
+    ax.text(4.5, 0.15, r"$\dot x = \beta - \alpha x$", ha="center",
+            va="center", fontsize=10)
+
+    # Right: the same lineage photographed as reporter accumulates.
+    ax.text(14.1, 5.75, "Images of one lineage", ha="center", fontsize=10)
+    unit, height, gap, axis_y = 1.4, 0.85, 0.12, 1.6
+    frames = [(11.0, "0", [(unit, 0, INK)]),
+              (14.0, "30", [(unit, 3, INK), (unit, 3, RULE)]),
+              (17.2, "60", [(2 * unit, 9, INK)])]
+    for center, label, cells in frames:
+        x = center - (sum(w for w, _, _ in cells) + gap * (len(cells) - 1)) / 2
+        for width, n_dots, edge in cells:
+            cell(x, 3.1, width, height, n_dots, edge=edge,
+                 lw=1.2 if edge == INK else 0.9)
+            x += width + gap
+        ax.plot([center, center], [axis_y, axis_y - 0.15], color=RULE, lw=0.8)
+        ax.text(center, axis_y - 0.3, label, ha="center", va="top", fontsize=9)
+    arrow((10.0, axis_y), (19.2, axis_y), RULE, lw=0.8)
+    ax.text(14.1, 0.15, "minutes after induction", ha="center", va="center",
+            fontsize=9)
+    ax.set_xlim(0.0, 19.3)
+    ax.set_ylim(-0.2, 6.1)
+
+
+# --- Opening cartoons: where the data come from ------------------------------
+
+def sequencing_run(
+    ax: plt.Axes,
+    reference: str,
+    reads: Sequence[str],
+    *,
+    query: int = 0,
+    offset: int = 3,
+) -> None:
+    """Cartoon of a short-read experiment, from sample DNA to unplaced reads.
+
+    Left to right: copies of one genome region, the same copies broken into
+    fragments, a sequencer holding a flow cell, and up to four read strings
+    with no positions. Below, read `query` (red, also red in the list) hovers
+    over the reference at `offset` with arrows both ways: its position is
+    the unknown.
+    """
+    if not 1 <= len(reads) <= 4 or not 0 <= query < len(reads):
+        raise ValueError("Show one to four reads and pick one of them as the query.")
+    if offset < 0 or offset + len(reads[query]) > len(reference):
+        raise ValueError("The hovering read must lie over the reference.")
+    _bare(ax)
+    title_y, rows = 4.45, [3.6, 3.15, 2.7, 2.25]
+    for x, title in [(1.1, "DNA sample"), (4.3, "Fragments"),
+                     (7.55, "Sequencer"), (10.75, "Reads")]:
+        ax.text(x, title_y, title, ha="center", va="center", fontsize=10)
+    for x0 in (2.35, 5.55, 8.95):
+        ax.annotate("", xy=(x0 + 0.6, 2.92), xytext=(x0, 2.92),
+                    arrowprops=dict(arrowstyle="-|>", color=RULE, lw=1.2,
+                                    mutation_scale=12))
+    # copies of one region, then the same copies broken at different places
+    cuts = [(0.75, 1.45), (1.05,), (0.45, 1.25), (0.9, 1.7)]
+    jitter = [(0, 0.05, -0.04), (0.04, -0.05), (-0.03, 0.04, 0), (0.05, -0.03, 0.04)]
+    for y, row_cuts, row_jitter in zip(rows, cuts, jitter):
+        ax.plot([0.1, 2.1], [y, y], color=INK, lw=2.2, solid_capstyle="round")
+        edges = [0.1, *row_cuts, 2.1]
+        for a, b, dy in zip(edges[:-1], edges[1:], row_jitter):
+            ax.plot([3.26 + a, 3.14 + b], [y + dy] * 2, color=INK, lw=2.2,
+                    solid_capstyle="round")
+    # the instrument: a box holding a flow cell with fragments attached
+    ax.add_patch(mpatches.FancyBboxPatch(
+        (6.4, 2.0), 2.3, 1.85, boxstyle="round,pad=0,rounding_size=0.18",
+        facecolor=PAPER, edgecolor=INK, linewidth=1.2))
+    ax.add_patch(mpatches.FancyBboxPatch(
+        (6.65, 2.3), 1.8, 0.85, boxstyle="round,pad=0,rounding_size=0.08",
+        facecolor=LIGHT, edgecolor=RULE, linewidth=0.8))
+    for k, y in enumerate((2.5, 2.72, 2.94)):
+        for x in (6.85 + 0.15 * k, 7.55 - 0.1 * k):
+            ax.plot([x, x + 0.45], [y, y], color=INK, lw=1.6,
+                    solid_capstyle="round")
+    ax.text(7.55, 3.45, "flow cell", ha="center", va="center", fontsize=9)
+    for k, (y, read) in enumerate(zip(rows, reads)):
+        ax.text(10.75, y, read, ha="center", va="center", fontsize=10,
+                family=MONO, color=EMPHASIS if k == query else INK)
+    # the question: where on the reference does the read belong?
+    pitch, ref_y, read_y = 0.27, 0.4, 1.0
+    x0 = 12.0 - pitch * (len(reference) - 1)
+    ax.text(x0 - 0.3, ref_y, "reference", ha="right", va="center", fontsize=10)
+    for i, base in enumerate(reference):
+        ax.text(x0 + pitch * i, ref_y, base, ha="center", va="center",
+                fontsize=10, family=MONO, fontweight="bold")
+    read = reads[query]
+    for i, base in enumerate(read):
+        ax.text(x0 + pitch * (offset + i), read_y, base, ha="center",
+                va="center", fontsize=10, family=MONO, color=EMPHASIS)
+    for end, step in [(x0 + pitch * offset - 0.25, -0.55),
+                      (x0 + pitch * (offset + len(read) - 1) + 0.25, 0.55)]:
+        ax.annotate("", xy=(end + step, read_y), xytext=(end, read_y),
+                    arrowprops=dict(arrowstyle="-|>", color=EMPHASIS, lw=1.2,
+                                    mutation_scale=10))
+    ax.text(0.0, 0.7, "Where does each\nread belong?", ha="left",
+            va="center", fontsize=10)
+    ax.set_xlim(-0.1, 12.2)
+    ax.set_ylim(0.05, 4.75)
+
+
+def shared_domain(
+    ax: plt.Axes,
+    lengths: tuple[int, int],
+    starts: tuple[int, int],
+    width: int,
+    *,
+    labels: tuple[str, str] = ("protein 1", "protein 2"),
+    domain: str = "homeodomain",
+) -> None:
+    """Two protein bars sharing one red domain, paired end to end and locally.
+
+    Left: a grey band joins the full lengths, as a global alignment must, so
+    each domain lies opposite unrelated residues. Right: the band joins only
+    the two domains. Lengths, starts, and width are in residues (0-based
+    starts); bars are drawn to one scale.
+    """
+    for n, s in zip(lengths, starts):
+        if s < 0 or s + width > n:
+            raise ValueError("Each domain must lie inside its protein.")
+    _bare(ax)
+    ax.set_aspect("auto")
+    scale, h, ys = 1.0 / max(lengths), 0.24, (1.0, 0.0)
+    for x_shift, title, local in [(0.0, "Global alignment", False),
+                                  (1.25, "Local alignment", True)]:
+        ax.text(x_shift + 0.5, 1.55, title, ha="center", va="center",
+                fontsize=10)
+        for y, n, s in zip(ys, lengths, starts):
+            ax.add_patch(mpatches.FancyBboxPatch(
+                (x_shift, y - h / 2), n * scale, h,
+                boxstyle="round,pad=0,rounding_size=0.04",
+                facecolor=PAPER, edgecolor=RULE, linewidth=1.0, zorder=3))
+            ax.add_patch(mpatches.Rectangle(
+                (x_shift + s * scale, y - h / 2), width * scale, h,
+                facecolor=EMPHASIS, edgecolor="none", zorder=4))
+        if local:
+            a0, b0 = starts[0] * scale, starts[1] * scale
+            a1, b1 = a0 + width * scale, b0 + width * scale
+        else:
+            a0 = b0 = 0.0
+            a1, b1 = lengths[0] * scale, lengths[1] * scale
+        top, bottom = ys[0] - h / 2, ys[1] + h / 2
+        ax.add_patch(mpatches.Polygon(
+            [(x_shift + a0, top), (x_shift + a1, top),
+             (x_shift + b1, bottom), (x_shift + b0, bottom)],
+            closed=True, facecolor=LIGHT, edgecolor="none", zorder=1))
+    for y, label in zip(ys, labels):
+        ax.text(-0.04, y, label, ha="right", va="center", fontsize=10)
+    ax.text((starts[0] + width / 2) * scale, 1.27, domain, ha="center",
+            va="center", fontsize=9)
+    ax.set_xlim(-0.3, 2.27)
+    ax.set_ylim(-0.25, 1.75)
+
+
+def torn_copies(
+    ax: plt.Axes,
+    cuts: Sequence[Sequence[float]],
+    *,
+    bridge: tuple[int, int],
+    length: float = 10.0,
+) -> None:
+    """Copies of one genome, each broken at different places.
+
+    Copy r is a bar of `length` broken at the positions in `cuts[r]`. Piece
+    `bridge = (r, k)`, the k-th piece of copy r, is red; a dotted line marks
+    the first break of copy 1 (row 0), which that piece must span. The piece
+    joins the two sides of that break, as overlapping reads do in assembly.
+    """
+    pieces = {}
+    for row, row_cuts in enumerate(cuts):
+        edges = [0.0, *row_cuts, length]
+        for k, (a, b) in enumerate(zip(edges[:-1], edges[1:])):
+            pieces[row, k] = (a, b)
+    if bridge not in pieces or bridge[0] == 0:
+        raise ValueError("bridge must name a piece of a copy other than copy 1.")
+    a, b = pieces[bridge]
+    if not a < cuts[0][0] < b:
+        raise ValueError("The bridging piece must span the first break of copy 1.")
+    _bare(ax)
+    ax.set_aspect("auto")
+    gap, pitch = 0.15, 0.9
+    for (row, k), (a, b) in pieces.items():
+        on = (row, k) == bridge
+        ax.plot([a + gap, b - gap], [-row * pitch] * 2, lw=3,
+                color=EMPHASIS if on else INK, solid_capstyle="round", zorder=3)
+    for row in range(len(cuts)):
+        ax.text(-0.3, -row * pitch, f"copy {row + 1}", ha="right",
+                va="center", fontsize=10)
+    ax.plot([cuts[0][0]] * 2, [0.3, -bridge[0] * pitch - 0.3],
+            color=RULE, lw=0.8, ls=":", zorder=1)
+    ax.set_xlim(-2.0, length + 0.2)
+    ax.set_ylim(-(len(cuts) - 1) * pitch - 0.4, 0.4)
+
+
+# --- Orientation figures: from a gene to the data that read it ---------------
+
+# The standard genetic code (NCBI translation table 1). Codons are ordered with
+# T, C, A, G at each position, so TTT is index 0, TTC is 1, ..., GGG is 63;
+# "*" marks a stop codon.
+STANDARD_CODE = "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG"
+
+
+def translate(dna: str) -> str:
+    """Translate a coding DNA string codon by codon with the standard code."""
+    if len(dna) % 3 or set(dna) - set("ACGT"):
+        raise ValueError("Translate an A/C/G/T string whose length is a multiple of 3.")
+    index = {base: k for k, base in enumerate("TCAG")}
+    return "".join(STANDARD_CODE[16 * index[c[0]] + 4 * index[c[1]] + index[c[2]]]
+                   for c in (dna[i:i + 3] for i in range(0, len(dna), 3)))
+
+
+def gene_to_protein(
+    ax: plt.Axes,
+    exons: Sequence[str],
+    introns: Sequence[str],
+    *,
+    codon: int = 0,
+    data: Sequence[str] = (),
+) -> None:
+    """A two-strand gene, its spliced mRNA, and its protein, one row each.
+
+    The coding strand is `exons` and `introns` interleaved (exon, intron,
+    exon, ...), written 5' to 3', with the complementary strand below it.
+    Grey bands carry each exon down to the mRNA, where U replaces T and the
+    introns are gone; brackets group the mRNA into codons, and each codon's
+    amino acid (standard code) sits below its bracket. Codon number `codon`
+    (0-based) is red-filled in all three rows, so the reader can follow it.
+    `data`, if given, holds one short label per row (DNA, mRNA, protein),
+    printed at the right, such as the measurement that reads that molecule.
+    """
+    if not exons or len(introns) != len(exons) - 1:
+        raise ValueError("Give one intron between each pair of exons.")
+    coding = "".join(exons)
+    protein = translate(coding)
+    if not 0 <= codon < len(protein):
+        raise ValueError("codon must index one codon of the spliced mRNA.")
+    if data and len(data) != 3:
+        raise ValueError("Give one data label per row, or none.")
+    _bare(ax)
+    pair = dict(zip("ACGT", "TGCA"))
+    y_top, y_bottom, y_rna, y_aa = 0.0, -1.15, -4.8, -7.5
+    half = 0.42
+
+    # Lay out the gene; columns[i] is the gene column of mRNA letter i.
+    gene, columns, spans = "", [], []
+    for k, exon in enumerate(exons):
+        spans.append((len(gene), len(gene) + len(exon), "exon"))
+        columns += range(len(gene), len(gene) + len(exon))
+        gene += exon
+        if k < len(introns):
+            spans.append((len(gene), len(gene) + len(introns[k]), "intron"))
+            gene += introns[k]
+    rna_x0 = (len(gene) - len(coding)) / 2
+    red_rna = set(range(3 * codon, 3 * codon + 3))
+    red_gene = {columns[i] for i in red_rna}
+
+    def letter(x: float, y: float, text: str, red: bool) -> None:
+        """One monospace letter, paper on a red fill when highlighted."""
+        if red:
+            ax.add_patch(mpatches.Rectangle((x - half, y - 0.5), 2 * half, 1.0,
+                                            facecolor=EMPHASIS, edgecolor="none",
+                                            zorder=2))
+        ax.text(x, y, text, ha="center", va="center", fontsize=10, family=MONO,
+                color=PAPER if red else INK, zorder=3)
+
+    # DNA: coding strand, its partner strand, and exon/intron brackets above.
+    for i, base in enumerate(gene):
+        letter(i, y_top, base, i in red_gene)
+        letter(i, y_bottom, pair[base], False)
+    for y, left_end, right_end in ((y_top, "5′", "3′"), (y_bottom, "3′", "5′")):
+        ax.text(-0.9, y, left_end, ha="right", va="center", fontsize=9)
+        ax.text(len(gene) - 0.1, y, right_end, ha="left", va="center", fontsize=9)
+    exon_number = 0
+    for a, b, kind in spans:
+        ax.plot([a - 0.35, a - 0.35, b - 0.65, b - 0.65],
+                [0.75, 0.95, 0.95, 0.75], color=RULE, lw=0.8)
+        if kind == "exon":
+            exon_number += 1
+        name = f"exon {exon_number}" if kind == "exon" else "intron"
+        ax.text((a + b - 1) / 2, 1.15, name, ha="center", va="bottom", fontsize=9)
+
+    # Splicing: one grey band per exon, from the gene to its place in the mRNA.
+    rna_start = 0
+    for a, b, kind in spans:
+        if kind != "exon":
+            continue
+        c, d = rna_x0 + rna_start, rna_x0 + rna_start + (b - a)
+        ax.add_patch(mpatches.Polygon(
+            [(a - 0.45, y_bottom - 0.6), (b - 0.55, y_bottom - 0.6),
+             (d - 0.55, y_rna + 0.6), (c - 0.45, y_rna + 0.6)],
+            closed=True, facecolor=LIGHT, edgecolor="none", zorder=1))
+        rna_start += b - a
+
+    # mRNA letters, codon brackets, and amino acids.
+    for i, base in enumerate(coding):
+        letter(rna_x0 + i, y_rna, "U" if base == "T" else base, i in red_rna)
+    for k, residue in enumerate(protein):
+        a, b = rna_x0 + 3 * k - 0.35, rna_x0 + 3 * k + 2.35
+        ax.plot([a, a, b, b], [y_rna - 0.65, y_rna - 0.85, y_rna - 0.85,
+                               y_rna - 0.65], color=RULE, lw=0.8)
+        x = rna_x0 + 3 * k + 1
+        if residue == "*":
+            ax.text(x, y_aa, "stop", ha="center", va="center", fontsize=9)
+        else:
+            letter(x, y_aa, residue, k == codon)
+
+    # Row names at the left, with the step between rows in italics.
+    left = -2.6
+    for y, name in (((y_top + y_bottom) / 2, "DNA"), (y_rna, "mRNA"),
+                    (y_aa, "protein")):
+        ax.text(left, y, name, ha="right", va="center", fontsize=10)
+    for y, step in (((y_bottom + y_rna) / 2, "transcription\nand splicing"),
+                    ((y_rna + y_aa) / 2, "translation")):
+        ax.text(left, y, step, ha="right", va="center", fontsize=9,
+                style="italic")
+    right = len(gene) + 1.6
+    for y, label in zip(((y_top + y_bottom) / 2, y_rna, y_aa), data):
+        ax.text(right, y, label, ha="left", va="center", fontsize=9)
+    ax.set_xlim(left - 7.2, right + (9.5 if data else 0))
+    ax.set_ylim(y_aa - 0.8, 2.0)

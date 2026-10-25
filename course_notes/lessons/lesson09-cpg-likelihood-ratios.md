@@ -3,7 +3,7 @@ published: true
 title: "CpG Islands and Likelihood Ratios"
 subtitle: "Lesson 9 · 2027-02-10 · Week 5"
 nocite: |
-  @durbin1998
+  @durbin1998, @compeau2015
 ---
 
 ## Core question
@@ -26,7 +26,7 @@ cf.use_style()
 
 ## CpG islands
 
-Many genes have nearby *promoters*, DNA regions where the cell's machinery can begin copying DNA into RNA. Some promoters lie in *CpG islands*, stretches of DNA that retain many adjacent CG pairs compared with the surrounding genome [@durbin1998]. CpG means C followed by G on the same strand, a neighboring pair rather than a base pair across the two DNA strands. In vertebrate DNA, the C of a CpG often carries a chemical modification called *methylation*, and a methylated C is prone to mutate to T. Over evolutionary time this depletes CG pairs from most of the genome, while many promoter regions escape the depletion. Islands are typically a few hundred to a few thousand bases long [@durbin1998].
+Many genes have nearby *promoters*, DNA regions where the cell's machinery can begin copying DNA into RNA. Some promoters lie in *CpG islands*, stretches of DNA that retain many adjacent CG pairs compared with the surrounding genome [@durbin1998]. CpG means C followed by G on the same strand, a neighboring pair rather than a base pair across the two DNA strands. In vertebrate DNA, the C of a CpG often carries a chemical modification called *methylation*, and a methylated C is prone to mutate to T. Over evolutionary time this depletes CG pairs from most of the genome, in human DNA to about a quarter of the frequency that base composition predicts, while many promoter regions escape the depletion [@compeau2015]. Islands are typically a few hundred to a few thousand bases long [@durbin1998]. Because many islands sit at gene starts, they serve as landmarks for where genes may lie in a mammalian genome that has no annotation yet [@compeau2015].
 
 @fig-cpg-island-track shows what an island looks like along a stretch of DNA. The 1,000 bases are simulated from the two models used later in this lesson, with one 300-base island placed around the start of a gene, and each tick marks a CG pair. Outside the shaded island, CG pairs are scattered tens of bases apart; inside it, they occur every few bases, and a count of CG pairs in a sliding 100-base window rises and falls with the island. The printed excerpts show the same contrast in the letters themselves. If we have the genome sequence but no map of these regions, where should we look?
 
@@ -85,48 +85,49 @@ A CpG island is not simply a GC-rich string. The order matters: `GCTA` and `CGTA
 
 ## Two models and one window
 
-For training, suppose a separate annotation lists genomic intervals labeled island or background. Extracting their DNA strings gives two collections of labeled sequence. We fit a first-order Markov chain to each collection, then compare the island model $M_+$ and background model $M_-$ on a new window $x=x_1\ldots x_n$.
+For training, suppose a separate annotation lists genomic intervals labeled island or background. We fit a first-order Markov chain to the DNA strings of each class, giving an island model $M_+$ and a background model $M_-$, and compare them on a new window $x=x_1\ldots x_n$.
 
 As in Lesson 8, each chain has an initial distribution $q^\pm$ and a transition matrix $A^\pm$. Initial probabilities sum to one, and each transition row sums to one. We assume every parameter is strictly positive so both window likelihoods and their logarithms are defined.
 
-::: {#def-cpg-classification-problem}
-## CpG window classification
-Given $x$, two initial distributions $q^+,q^-$, two transition matrices $A^+,A^-$, and a threshold $c$, classify the window as island when
-$$
-\log_2\frac{P(x\mid M_+)}{P(x\mid M_-)}>c.
-$$
-:::
-
-The ratio asks which model makes this exact window less surprising. At threshold zero, the classifier chooses the model with larger likelihood.
-
 ::: {#def-log-likelihood-ratio}
 ## Log-likelihood ratio
-The *log-likelihood ratio* of $M_+$ against $M_-$ is
+The *log-likelihood ratio* of $M_+$ against $M_-$ for a window $x$ is
 $$
 S(x)=\log_2\frac{P(x\mid M_+)}{P(x\mid M_-)}.
 $$
-Positive scores favor $M_+$; negative scores favor $M_-$; a score of $r$ bits means a likelihood ratio of $2^r$.
 :::
 
-::: {#prp-markov-ratio-adds}
-## Markov log ratios are additive
-For two first-order Markov chains with positive parameters, the score is the initial-base log ratio plus one fixed score for each adjacent pair:
+Positive scores favor $M_+$ and negative scores favor $M_-$; a score of $r$ bits means a likelihood ratio of $2^r$. The ratio asks which model makes this exact window less surprising.
+
+::: {#def-cpg-classification-problem}
+## CpG window classification
+**Input:** a window $x=x_1\ldots x_n$; island and background chains with initial distributions $q^+,q^-$ and transition matrices $A^+,A^-$; and a threshold $c$.
+
+**Output:** the label island if $S(x)>c$, and background otherwise.
+:::
+
+At threshold zero, the classifier chooses the model with larger likelihood. For two first-order chains with positive parameters, the score is the initial-base log ratio plus one fixed score for each adjacent pair:
 $$
 S(x)=\log_2\frac{q^+_{x_1}}{q^-_{x_1}}
 +\sum_{i=2}^{n}\log_2
 \frac{a^+_{x_{i-1}x_i}}{a^-_{x_{i-1}x_i}}.
-$$
-:::
+$$ {#eq-markov-ratio-adds}
 
 ::: {.proof}
-Each likelihood factors as $P(x\mid M_\pm)=q^\pm_{x_1}\prod_{i=2}^n a^\pm_{x_{i-1}x_i}$. Dividing gives one initial ratio and a product of transition ratios. Taking the logarithm turns that product into the displayed sum.
+Sketch. Each likelihood is a first-base probability times one transition probability per adjacent pair, so their ratio splits factor by factor:
+$$
+\frac{P(x\mid M_+)}{P(x\mid M_-)}
+=\frac{q^+_{x_1}\prod_{i=2}^n a^+_{x_{i-1}x_i}}{q^-_{x_1}\prod_{i=2}^n a^-_{x_{i-1}x_i}}
+=\frac{q^+_{x_1}}{q^-_{x_1}}\prod_{i=2}^{n}\frac{a^+_{x_{i-1}x_i}}{a^-_{x_{i-1}x_i}}.
+$$
+Taking $\log_2$ turns the product into the sum.
 :::
 
 This uses the same product-to-sum rule as Lesson 2, but adjacent pairs now overlap. We do not assume the pairs themselves are independent; the Markov assumption supplies the factorization. A CG pair contributes evidence according to how often G follows C in the two fitted classes.
 
 ## A synthetic CpG classifier
 
-Use the illustrative models below. Both models have neighboring-base dependence: the island model favors G especially after C, while the background model suppresses that transition. The background chain is the CG-depleted chain simulated in Lesson 8. The two models also differ in their overall preferences for C and G. The numbers are chosen for hand calculation, not fitted to a genome.
+Use the illustrative models below. Both models have neighboring-base dependence: the island model favors G especially after C, while the background model suppresses that transition. The background chain is the CG-depleted chain simulated in Lesson 8. The two models also differ in their overall preferences for C and G. The numbers are chosen for hand calculation, not fitted to a genome. For comparison, chains fitted to about 60,000 bases of labeled human sequence put G after C with probability 0.27 in islands and 0.08 elsewhere, about 1.8 bits of evidence per CG pair [@durbin1998, pp. 51–52].
 
 $$
 A^+=
@@ -177,7 +178,7 @@ $$
 At threshold zero, the first window is background-like and the second island-like under these models. Their 2.737-bit score difference comes entirely from order because their base counts agree.
 :::
 
-@fig-cpg-order-evidence separates the contributions of the three neighboring pairs. Both windows contain one of each base, but putting G after C supplies a large positive contribution in the second window. The model therefore distinguishes a neighboring-base pattern that a base-count comparison misses.
+@fig-cpg-order-evidence separates the contributions of the three neighboring pairs. Both windows contain one of each base, but putting G after C supplies a large positive contribution in the second window.
 
 ```{.python .execute}
 #| label: fig-cpg-order-evidence
@@ -282,7 +283,7 @@ For example, if the prior island probability is 0.1, the prior odds are $1/9$. T
 
 ## Evidence accumulates along the sequence
 
-A four-base window provides only three pair contributions. To see how evidence builds up over a longer stretch, score the simulated sequence of @fig-cpg-island-track one pair at a time. Write $S_i=S(x_1\ldots x_i)$ for the score of the prefix that ends at position $i$. Because our initial distributions are equal, @prp-markov-ratio-adds gives
+A four-base window provides only three pair contributions. To see how evidence builds up over a longer stretch, score the simulated sequence of @fig-cpg-island-track one pair at a time. Write $S_i=S(x_1\ldots x_i)$ for the score of the prefix that ends at position $i$. Because our initial distributions are equal, @eq-markov-ratio-adds gives
 $$
 S_1=0,
 \qquad
@@ -327,7 +328,7 @@ $$
 =\sum_{b}a^-_{ab}\log_2\frac{a^+_{ab}}{a^-_{ab}}
 \leq 0 .
 $$
-This is the inequality of @prp-background-log-odds applied to two rows instead of two pair tables: a log ratio averaged under the distribution in its denominator cannot be positive, and it equals zero only when the two rows agree. Exchanging the roles of the chains shows that the average is nonnegative when the next base comes from the island row. For our tables, the background averages are $-0.117$ bit after A, G, or T and $-0.719$ bit after C; the island averages are $+0.117$ and $+0.844$. Most of the evidence therefore arrives right after a C, where the two chains disagree most about what comes next. Weighting these averages by how often each base occurs over a long stretch gives slopes of about $-0.25$ bit per base in background and $+0.34$ in the island, close to the printed slopes of the simulated walk.
+This is the inequality of @thm-background-log-odds applied to two rows instead of two pair tables: a log ratio averaged under the distribution in its denominator cannot be positive, and it equals zero only when the two rows agree. Exchanging the roles of the chains shows that the average is nonnegative when the next base comes from the island row. For our tables, the background averages are $-0.117$ bit after A, G, or T and $-0.719$ bit after C; the island averages are $+0.117$ and $+0.844$. Most of the evidence therefore arrives right after a C, where the two chains disagree most about what comes next. Weighting these averages by how often each base occurs over a long stretch gives slopes of about $-0.25$ bit per base in background and $+0.34$ in the island, close to the printed slopes of the simulated walk.
 
 ::: {.callout-note title="Key idea"}
 The log-likelihood ratio of two Markov chains is a walk with one step per adjacent pair. It drifts upward where the island chain explains the pairs better and downward where the background chain does, and a window's score is the walk's rise across that window.
@@ -387,7 +388,7 @@ ax.tick_params(axis="y", length=0)
 plt.show()
 ```
 
-Window length is therefore a compromise between noise and resolution. A window must be long enough that the expected separation outgrows the pair-to-pair variation; for these synthetic chains, a few dozen bases suffice. It must also be shorter than the islands we hope to find, and near a boundary it mixes the two regimes: a 100-base window straddling a boundary may contain 50 background and 50 island bases, and either whole-window label assigns one class to bases from the other. Real islands range from a few hundred to a few thousand bases, so no single width serves every island. Allowing the region label to change inside the sequence, instead of fixing a window, is the problem taken up by hidden Markov models.
+Window length is therefore a compromise between noise and resolution. A window must be long enough that the expected separation outgrows the pair-to-pair variation; for these synthetic chains, a few dozen bases suffice. It must also be shorter than the islands we hope to find, and near a boundary it mixes the two regimes: a 100-base window straddling a boundary may contain 50 background and 50 island bases, and either whole-window label assigns one class to bases from the other. Real islands range from a few hundred to a few thousand bases, so no single width serves every island. Overlapping windows can also give one base both labels [@compeau2015]. Assigning a label to each base, one that may change inside the sequence, is the problem taken up by hidden Markov models.
 
 ## Estimation and evaluation
 
@@ -409,8 +410,10 @@ $$
 \qquad
 \text{specificity}=\frac{72}{80}=0.90.
 $$
-Raising the threshold can remove false positives, but it can also turn true positives into false negatives. The 0.90 specificity describes background windows at this threshold. It does not describe all windows: 88 of the 100 windows were classified correctly, giving accuracy 0.88.
+Of the 100 windows, 88 were classified correctly, giving accuracy 0.88; the specificity of 0.90 describes only the background windows.
 :::
+
+Raising the threshold can remove false positives, but it can also turn true positives into false negatives.
 
 The labels used for fitting define the target, and the model sees only adjacent pairs. Longer motifs, promoter context, and experimental methylation measurements would require additional information.
 

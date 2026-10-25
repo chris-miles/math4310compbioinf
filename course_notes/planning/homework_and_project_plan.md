@@ -18,9 +18,9 @@ AI assistance is allowed as described in the course policy. Students disclose ma
 
 | Set | Lessons | Focus | Evidence |
 |---:|---|---|---|
-| 1 | 1–2 | Distances, scores, k-mers | Hand lower bound; likelihood-ratio check; repair a counting bug; interpret lost order |
-| 2 | 3 | Global alignment | Tiny score table; traceback; independently rescore the printed alignment |
-| 3 | 4–5 | Shared regions and sequence search | Local coordinates; gap-open/extension calculation; seed failure example |
+| 1 | 1–2 | Distances, scores, k-mers | Hand lower bound; likelihood-ratio check; repair a counting bug; interpret lost order; phiX174 9-mer counts against random genomes |
+| 2 | 3 | Global alignment | Tiny score table; traceback; independently rescore the printed alignment; phiX174/G4 gene D under several gap scores |
+| 3 | 4–5 | Shared regions and sequence search | Local coordinates; gap-open/extension calculation; seed failure example; seed-and-extend search for phiX174 gene F in G4 |
 | 4 | 6–7 | Assembly | Graph construction; edge-use check; two candidate genomes with identical input |
 | 5 | 8–9 | Markov models and CpG windows | Row-normalized counts; held-out likelihood; prior/threshold interpretation |
 | 6 | 10–12 | Hidden regions and uncertainty | Joint path probability; Viterbi versus forward; posterior check by enumeration |
@@ -41,7 +41,7 @@ For PS8, use library SVD rather than asking for an SVD implementation. Keep the 
 
 ## First-set deliverable
 
-The student-facing first set is assignments/ps01-scoring-kmers.md. Its point allocation totals 100. The questions use inline toy strings so setup and data loading do not consume the one-hour budget.
+The student-facing first set is assignments/ps01-scoring-kmers.md. Its point allocation totals 100. Most questions use inline toy strings; the one real-data part reads only the in-repo phiX174 FASTA, so setup stays within the one-hour budget.
 
 The small public reference in data/phix174-NC_001422.1.fasta is available for later word-counting or assembly exercises. Use the provenance and circular-boundary conventions in data/README.md. Label reads sampled from that reference as synthetic; they are not experimental measurements.
 

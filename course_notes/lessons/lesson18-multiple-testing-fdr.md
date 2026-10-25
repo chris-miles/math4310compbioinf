@@ -3,7 +3,7 @@ published: false
 title: "Multiple Testing and False Discovery Rates"
 subtitle: "Lesson 18 · 2027-03-29 · Week 12"
 nocite: |
-  @holmeshuber2019
+  @holmeshuber2019, @compeau2015
 ---
 
 ## Core question
@@ -73,17 +73,17 @@ The biological goal is a *discovery list*: genes that respond to the drug and de
 
 ## What a p-value does when nothing changed
 
-A p-value is useful because we know how it behaves when the gene's null hypothesis is true, that is, when the drug does not change the gene's measured expression. Lesson 17 computed $p_j$ as the fraction of relabelings whose relabeled difference is at least as large in absolute value as the observed one, and @prp-permutation-calibration showed that such a p-value is *calibrated*: whenever the null hypothesis for gene $j$ holds,
+A p-value is useful because we know how it behaves when the gene's null hypothesis is true, that is, when the drug does not change the gene's measured expression. The permutation p-value $p_j$ is the fraction of relabelings whose difference is at least as large in absolute value as the observed one, and @thm-permutation-calibration showed that it is *calibrated*: whenever the null hypothesis for gene $j$ holds,
 $$
-P(p_j\le a)\le a\qquad\text{for every } 0\le a\le 1 ,
+P(p_j\le a)\le a\qquad\text{for every } 0\le a\le 1 .
 $$
-Lesson 17 proved this by relabeling with the measurements held fixed. The same bound holds when the whole experiment is repeated with fresh cultures, and that is the view we take here: probabilities and averages are over repeated experiments, in which each gene's cultures are measured independently of the other genes'. When equality holds for every $a$, the null p-value is *uniform* on $[0,1]$, as likely to fall in $[0,0.05]$ as in $[0.50,0.55]$. Permutation p-values take a limited set of values, so for them the inequality can be strict.
+That proof held the measurements fixed and randomized the labels. The same bound holds when the whole experiment is repeated with fresh cultures, and that is the view we take here: probabilities and averages are over repeated experiments, in which each gene's cultures are measured independently of the other genes'. When equality holds for every $a$, the null p-value is *uniform* on $[0,1]$, as likely to fall in $[0,0.05]$ as in $[0.50,0.55]$. Permutation p-values take a limited set of values, so for them the inequality can be strict.
 
 Suppose we flag every gene with $p_j\le t$ for some threshold $t$. Let $\mathcal N$ be the set of *null genes*, those whose $H_0$ is true, and $m_0=|\mathcal N|$. We do not know which genes these are. The number of falsely flagged genes is
 $$
 V(t)=\sum_{j\in\mathcal N}\mathbf 1[p_j\le t],
 $$
-where the indicator $\mathbf 1[\cdot]$ is 1 when its condition holds and 0 otherwise. Recall from Lesson 2 that an expectation is a long-run average over repeated experiments. The average of a sum is the sum of the averages, and the average of an indicator is the probability of its event, so
+where the indicator $\mathbf 1[\cdot]$ is 1 when its condition holds and 0 otherwise. An expectation is a long-run average over repeated experiments; the average of a sum is the sum of the averages, and the average of an indicator is the probability of its event, so
 $$
 E[V(t)]=\sum_{j\in\mathcal N}P(p_j\le t)\le m_0\,t .
 $$ {#eq-fdr-expected-false}
@@ -132,20 +132,23 @@ plt.show()
 
 ## Controlling the chance of any false discovery
 
-A first repair is a threshold strict enough that, with high probability, the list contains no null gene at all. Write $V$ and $R$ for the numbers of false and total selections. The *family-wise error rate* (FWER) is $P(V\ge1)$, and dividing the threshold by the number of tests controls it.
-
-::: {#prp-bonferroni}
-## Bonferroni threshold
-If every null p-value is calibrated and we select the genes with $p_j\le\alpha/m$, then $P(V\ge1)\le\alpha$, whatever the dependence between genes.
-:::
+A first repair is a threshold strict enough that, with high probability, the list contains no null gene at all. Write $V$ and $R$ for the numbers of false and total selections. The *family-wise error rate* (FWER) is $P(V\ge1)$, and dividing the threshold by the number of tests controls it. If every null p-value is calibrated, the *Bonferroni* rule, which selects the genes with $p_j\le\alpha/m$, satisfies
+$$
+P(V\ge1)\le\alpha ,
+$$
+whatever the dependence between genes.
 
 ::: {.proof}
-A count of at least one is at least one, so $V\ge\mathbf 1[V\ge1]$. Averaging both sides over repeated experiments gives $P(V\ge1)\le E[V]$, and @eq-fdr-expected-false with $t=\alpha/m$ gives $E[V]\le m_0\alpha/m\le\alpha$. Only the average $E[V]$ entered, and averages add whether or not the genes are independent, so the bound holds however the genes depend on one another.
+Sketch. A count of at least one is at least one, so $\mathbf 1[V\ge1]\le V$. Averaging over repeated experiments and applying @eq-fdr-expected-false with $t=\alpha/m$,
+$$
+P(V\ge1)\le E[V]\le m_0\,\frac{\alpha}{m}\le\alpha .
+$$
+Only the average $E[V]$ entered, and averages add whether or not the genes are independent.
 :::
 
 For 20,000 genes at $\alpha=0.05$ the threshold is $2.5\times10^{-6}$. With six cultures per condition the smallest possible permutation p-value is $2/924\approx0.0022$, nearly a thousand times larger, so the Bonferroni list is empty however strongly a gene responds. In our screen the threshold is $10^{-5}$, and Bonferroni selects nothing although 500 genes changed, many of them by a factor of two or more.
 
-FWER suits settings where a single false claim is costly. A discovery screen feeds further experiments that retest each selected gene, so a few false leads are tolerable if they are a small share of the list. We should control a fraction instead.
+FWER suits settings where a single false claim is costly. A discovery screen feeds further experiments that retest each selected gene, so a few false leads are tolerable if they are a small share of the list, and that share is what we should control.
 
 ## False discovery proportion and rate
 
@@ -155,18 +158,22 @@ A *false discovery* is a selected gene whose null hypothesis is true. If a selec
 $$
 \mathrm{FDP}=\frac{V}{\max(R,1)},
 $$
-and the *false discovery rate* is its expectation, $\mathrm{FDR}=E[\mathrm{FDP}]$.
+and the *false discovery rate* is its expectation, $\mathrm{FDR}=E[\mathrm{FDP}]$. The selection problem is then:
+
+**Input:** p-values $p_1,\ldots,p_m$ and a target $q\in(0,1)$.
+
+**Output:** a list of selected genes, chosen by a rule whose FDR is at most $q$.
 :::
 
 The $\max(R,1)$ only handles an empty list, whose FDP is defined to be $0$. FDP is the fraction of wasted follow-ups in one particular list; it belongs to one experiment and cannot be computed from real data because $V$ is hidden. FDR is the average of FDP over repetitions of the experiment: if experiments $s=1,\ldots,N$ produce $V_s$ false and $R_s$ total selections, then for large $N$
 $$
-\mathrm{FDR}\approx\frac1N\sum_{s=1}^{N}\frac{V_s}{\max(R_s,1)} ,
+\mathrm{FDR}\approx\frac1N\sum_{s=1}^{N}\frac{V_s}{\max(R_s,1)} .
 $$
-and @fig-fdr-repeated-fdp below shows this average for a real rule. A selection rule cannot control the FDP of one list, but it can guarantee something about the FDR. Thresholding our screen at $0.05$ gave FDP $=225/634\approx0.35$, far too high for a follow-up list.
+A selection rule cannot control the FDP of one list, but it can guarantee something about the FDR. Thresholding our screen at $0.05$ gave FDP $=225/634\approx0.35$, far too high for a follow-up list.
 
 ## From the histogram to Benjamini–Hochberg
 
-Although we cannot compute FDP, @eq-fdr-expected-false lets us estimate it. Select every gene with $p_j\le t$, and let $R(t)$ be the observed number selected. On average at most $m_0t\le mt$ of them are null, which suggests the estimate
+Although we cannot compute FDP, we can estimate it. Proteomics labs estimate the same quantity by also searching their mass spectra against a *decoy* database of random protein sequences, where every match is false, and dividing decoy hits by real hits [@compeau2015, ch. 11]; here a calibrated p-value plays the decoy's role. Select every gene with $p_j\le t$, and let $R(t)$ be the observed number selected. By @eq-fdr-expected-false, on average at most $m_0t\le mt$ of them are null, which suggests the estimate
 $$
 \widehat{\mathrm{FDP}}(t)=\frac{m\,t}{R(t)} .
 $$
@@ -299,7 +306,19 @@ $$
 The argument rests on a cancellation. When BH makes $R$ selections, it selects exactly the genes with $p_j\le Rq/m$: rank $R$ passes, and if a gene beyond rank $R$ also had $p_j\le Rq/m$, rank $R+1$ would pass too. A null gene $j$ therefore contributes $\mathbf 1[p_j\le Rq/m]/R$ to the FDP. If $R$ were a fixed number $k$, that contribution would average to $(kq/m)/k=q/m$. A longer list makes each null gene more likely to be selected, in exact proportion to how much it dilutes each false selection.
 
 ::: {.proof}
-Sketch. Write $\mathrm{FDP}=\sum_{j\in\mathcal N}\mathbf 1[p_j\le Rq/m]/\max(R,1)$. Since $R$ depends on $p_j$, it is not fixed. Let $R_j\ge1$ be the number of genes BH would select if $p_j$ were replaced by $0$, which depends only on the other p-values. If gene $j$ is selected, lowering $p_j$ to $0$ leaves the same genes in the first $R$ ranks, and the p-values at ranks $R+1,\ldots,m$ are unchanged, so no higher rank starts to pass and $R_j=R$; conversely, if $p_j\le R_jq/m$, restoring $p_j$ from $0$ keeps the first $R_j$ ranks passing and cannot make a higher rank pass, so gene $j$ is selected with $R=R_j$. Gene $j$'s term therefore equals $\mathbf 1[p_j\le R_jq/m]/R_j$. Hold the other p-values fixed, so that $R_j=k$. By independence and calibration, $P(p_j\le kq/m)\le kq/m$, so the term averages to at most $q/m$ for every $k$. Summing over the $m_0$ null genes gives $\mathrm{FDR}\le m_0q/m$.
+Sketch. The FDP is a sum over null genes,
+$$
+\mathrm{FDP}=\sum_{j\in\mathcal N}\frac{\mathbf 1[p_j\le Rq/m]}{\max(R,1)},
+$$
+but $R$ depends on $p_j$. Let $R_j\ge1$ be the number of genes BH would select if $p_j$ were replaced by $0$, a number computed from the other p-values alone. If gene $j$ is selected, lowering $p_j$ to $0$ leaves the same genes in the first $R$ ranks and the p-values beyond rank $R$ unchanged, so $R_j=R$; conversely, if $p_j\le R_jq/m$, restoring $p_j$ from $0$ keeps the first $R_j$ ranks passing and cannot make a higher rank pass, so gene $j$ is selected with $R=R_j$. Hence gene $j$'s term is
+$$
+\frac{\mathbf 1[p_j\le Rq/m]}{\max(R,1)}=\frac{\mathbf 1[p_j\le R_jq/m]}{R_j}.
+$$
+Hold the other p-values fixed, so that $R_j=k$. By independence and calibration, the term averages to at most
+$$
+\frac{P(p_j\le kq/m)}{k}\le\frac{kq/m}{k}=\frac qm
+$$
+for every $k$. Summing over the $m_0$ null genes gives $\mathrm{FDR}\le m_0q/m$.
 :::
 
 The theorem bounds an average over experiments. The next chunk runs the simulated screen 200 times with $m=2000$ genes, 200 of them changed, and records the realized FDP of each list.

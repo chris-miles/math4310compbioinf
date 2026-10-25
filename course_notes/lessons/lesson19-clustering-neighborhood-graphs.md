@@ -3,7 +3,7 @@ published: false
 title: "Distances, Clustering, and Neighborhood Graphs"
 subtitle: "Lesson 19 · 2027-04-05 · Week 13"
 nocite: |
-  @holmeshuber2019
+  @holmeshuber2019, @compeau2015
 ---
 
 ## Core question
@@ -105,18 +105,21 @@ Each distance in this lesson is a Euclidean distance, or a function of one, afte
 
 ## K-means: groups around centers
 
-Gating draws a region around each cloud. A computational version picks $K$ centers, gives each cell to its nearest center, and judges the result by how close cells sit to their own center. We write $K$ for the number of clusters and reserve lowercase $k$ for neighbors.
+What should a computed group satisfy? A natural first requirement, which @compeau2015 call the good clustering principle, is that every within-cluster distance be smaller than every between-cluster distance. Even the three clouds of @fig-clustering-cytometry-cloud violate it badly: each spans almost 3 units, while two of them come within 0.4 units of each other. Real populations are spread out and touch, so instead of demanding a perfect separation we score each partition and look for a good score. A computational version of gating picks $K$ centers, gives each cell to its nearest center, and scores the result by how close cells sit to their own center. We write $K$ for the number of clusters and reserve lowercase $k$ for neighbors.
 
 ::: {#def-kmeans-objective}
-## Within-cluster sum of squares
-For labels $c_i\in\{1,\ldots,K\}$ and centers $m_1,\ldots,m_K\in\mathbb R^p$,
+## K-means problem
+For labels $c_i\in\{1,\ldots,K\}$ and centers $m_1,\ldots,m_K\in\mathbb R^p$, the *within-cluster sum of squares* is
 $$
 W(c,m)=\sum_{i=1}^n\|x_i-m_{c_i}\|^2 .
 $$ {#eq-clustering-within}
-The *K-means problem* minimizes $W$ over labels and centers. Cluster $\ell$ is $C_\ell=\{i:c_i=\ell\}$, with $n_\ell$ members.
+
+**Input:** cell profiles $x_1,\ldots,x_n\in\mathbb R^p$ and a number of clusters $K$.
+
+**Output:** labels and centers minimizing $W(c,m)$.
 :::
 
-Small $W$ means cells sit close to their own centers. $W$ cannot choose $K$ by itself, since one cluster per cell gives $W=0$. Trying all $K^n$ labelings is hopeless, but $W$ is easy to minimize over labels with the centers held fixed, or over centers with the labels held fixed.
+Cluster $\ell$ is $C_\ell=\{i:c_i=\ell\}$, with $n_\ell$ members. $W$ cannot choose $K$ by itself, since one cluster per cell gives $W=0$. Trying all $K^n$ labelings is hopeless, but $W$ is easy to minimize over labels with the centers held fixed, or over centers with the labels held fixed.
 
 *Best labels for fixed centers.* Cell $i$ appears in one term of @eq-clustering-within, which depends only on its own label, so the best label is the nearest center.
 
@@ -124,7 +127,7 @@ Small $W$ means cells sit close to their own centers. $W$ cannot choose $K$ by i
 $$
 \sum_{i\in C}\|x_i-m\|^2=\sum_{i\in C}\|x_i-\bar x_C\|^2+|C|\,\|\bar x_C-m\|^2 .
 $$ {#eq-clustering-mean-split}
-To see this, write $x_i-m=(x_i-\bar x_C)+(\bar x_C-m)$ and expand the square. The cross term is $2(\bar x_C-m)\cdot\sum_{i\in C}(x_i-\bar x_C)$, which vanishes because deviations from a mean sum to zero, as the centered columns of Lesson 15 did. Only the last term depends on $m$, and it is zero exactly at $m=\bar x_C$, so the best center is the cluster mean.
+To see this, write $x_i-m=(x_i-\bar x_C)+(\bar x_C-m)$ and expand the square. The cross term is $2(\bar x_C-m)\cdot\sum_{i\in C}(x_i-\bar x_C)$, which vanishes because deviations from a mean sum to zero. Only the last term depends on $m$, and it is zero exactly at $m=\bar x_C$, so the best center is the cluster mean.
 
 ::: {.algorithm}
 **Algorithm: Lloyd's algorithm for K-means.**
@@ -138,10 +141,18 @@ Neither step of Lloyd's algorithm increases $W$. The algorithm stops after finit
 :::
 
 ::: {.proof}
-The assignment step gives each cell the smallest term available to it. By @eq-clustering-mean-split, moving center $\ell$ to its cluster mean lowers that cluster's sum by $n_\ell\|\bar x_\ell-m_\ell\|^2\geq0$. After each update the centers are the means of the current partition, so $W$ is then determined by the partition alone. A label changes only when another center is strictly closer, so a change lowers $W$ strictly, and the following update cannot raise it. Each new partition therefore has a smaller value than every earlier one, none recurs, and there are at most $K^n$ partitions.
+The assignment step gives each cell the smallest term available to it. By @eq-clustering-mean-split, moving center $\ell$ from $m_\ell$ to its cluster mean $\bar x_\ell$ changes that cluster's sum by
+$$
+-\,n_\ell\,\|\bar x_\ell-m_\ell\|^2\le0 .
+$$
+After each update the centers are the means of the current partition, so $W$ is then a function of the partition alone, $W(c)=\sum_\ell\sum_{i\in C_\ell}\|x_i-\bar x_\ell\|^2$. A label changes only when another center is strictly closer, so each change of partition lowers $W$ strictly and the following update cannot raise it. The partitions $c^{(1)},c^{(2)},\ldots$ seen after successive updates therefore satisfy
+$$
+W(c^{(1)})>W(c^{(2)})>\cdots .
+$$
+No partition recurs in a strictly decreasing sequence, and there are at most $K^n$ partitions.
 :::
 
-The guarantee is about descent, not about the best answer: the algorithm stops at the first partition that neither step improves, which need not minimize $W$ (@exr-clustering-local-optimum). Software therefore runs it from several starts and keeps the smallest $W$. Each iteration computes $nK$ distances in $p$ dimensions, $\mathcal O(nKp)$ operations.
+The guarantee is about descent, not about the best answer: the algorithm stops at the first partition that neither step improves, which need not minimize $W$ (@exr-clustering-local-optimum). Software therefore runs it from several starts, often spread apart by the k-means++ rule, which favors starting centers far from those already chosen, and keeps the smallest $W$. Each iteration computes $nK$ distances in $p$ dimensions, $\mathcal O(nKp)$ operations.
 
 ::: {#exm-kmeans-six-cells}
 ## Two iterations on the six cells
@@ -202,7 +213,7 @@ print("W after each step:", [float(W) for W in history])
 print("labels:", labels, " centers:", centers.tolist())
 ```
 
-The values $54, 17, 12.5, 8$ match the hand calculation. In the second panel of @fig-clustering-kmeans-steps, the orange center travels most of the way to D, E, and F, which leaves C closer to the blue center.
+The values $54, 17, 12.5, 8$ match the hand calculation, and @fig-clustering-kmeans-steps draws each step.
 
 ```{.python .execute}
 #| label: fig-clustering-kmeans-steps
@@ -235,7 +246,7 @@ The last panel also shows what kind of group K-means can report. A cell $x$ goes
 $$
 2\,x\cdot(m_2-m_1)<\|m_2\|^2-\|m_1\|^2 .
 $$
-The condition is linear in $x$, so the boundary between two clusters is the line (in $p$ dimensions, the hyperplane) perpendicular to $m_2-m_1$ through the midpoint of the centers. Each cluster's region is an intersection of half-planes, a convex polygon around its center. K-means therefore works best when the true groups are compact, round, and of similar size [@holmeshuber2019, sec. 5.4.1].
+The condition is linear in $x$, so the boundary between two clusters is the line (in $p$ dimensions, the hyperplane) perpendicular to $m_2-m_1$ through the midpoint of the centers. Each cluster's region is an intersection of half-planes, a convex polygon around its center. K-means therefore works best when the true groups are compact and round [@holmeshuber2019, sec. 5.4.1].
 
 ## Hierarchical clustering revisits UPGMA
 
@@ -243,7 +254,7 @@ K-means needs $K$ in advance. UPGMA in Lesson 13 instead merged the two closest 
 
 ## Neighborhood graphs
 
-K-means and average linkage summarize each group by averages over all its cells. Cells changing gradually between states may form a curved chain rather than a compact cloud, so one group center can describe them poorly. Keeping each cell's nearest neighbors lets a group follow that chain. A neighborhood graph keeps only that.
+K-means and average linkage summarize each group by averages over all its cells. Cells changing gradually between states may form a curved chain rather than a compact cloud, so one group center can describe them poorly. A neighborhood graph keeps only each cell's nearest neighbors, which lets a group follow that chain.
 
 ::: {#def-knn-graph}
 ## k-nearest-neighbor graph
@@ -305,7 +316,7 @@ plt.show()
 
 ### Communities in a graph
 
-In a graph, a group of cells is a *community*: vertices with many edges among themselves and few to the rest. The rescaled graph's two triangles share no edge, so its communities are plain. In the raw graph every split leaves some edges crossing, and we need a number to compare candidate partitions.
+In a graph, a group of cells is a *community*: vertices with many edges among themselves and few to the rest. If the cells satisfied the good clustering principle and $k$ were smaller than every group, each cell's nearest neighbors would lie in its own group and no edge would cross between groups, as in the rescaled graph's two triangles. Real measurements rarely satisfy the principle; in the raw graph every split leaves some edges crossing, and we need a number to compare candidate partitions.
 
 ::: {#def-modularity}
 ## Modularity
@@ -386,7 +397,7 @@ is $1$ for $p=2$ but $0.01$ for $p=20{,}000$: all distances look alike, and nois
 
 Every method in this lesson returns groups whether or not the cells form groups. K-means applied to cells spread evenly over a square still reports $K$ clusters, and a neighbor graph of such cells still has a highest-modularity partition [@holmeshuber2019, sec. 5.7]. The curve in @fig-clustering-shape shows the opposite risk, one continuous process cut into apparent types.
 
-A cluster becomes evidence when it survives reasonable changes to the analysis and agrees with something the clustering did not use. Rerunning with other starts, other $k$, other distances, or subsets of cells tests stability; a marker known from biology, such as CD4 for helper T cells, or an independent measurement tests meaning. A label like "helper T cells" is a claim layered on the representation, the distance, and the criterion. It is not part of the data.
+A cluster becomes evidence when it survives reasonable changes to the analysis and agrees with something the clustering did not use. Rerunning with other starts, other $k$, other distances, or subsets of cells tests stability; a marker known from biology, such as CD4 for helper T cells, or an independent measurement tests meaning. A label like "helper T cells" is a claim layered on the representation, the distance, and the criterion, not part of the data.
 
 ## Exercises
 

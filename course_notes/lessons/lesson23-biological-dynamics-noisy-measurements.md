@@ -81,7 +81,14 @@ fig.supylabel("Reading $y_k$", fontsize=10)
 plt.show()
 ```
 
-Given an ordered series $(t_k,y_k)$, $k=0,\ldots,n$, with spacing $h$, we want to say which kind of variation it contains, how much of each, and what one trace cannot decide. We keep the rates $\beta=2$, $\alpha=1$ and image every $h=1/4$ time units, so one relaxation time $1/\alpha$ spans four images.
+::: {#def-trace-variation}
+## Attributing variation in a reporter trace
+**Input:** an ordered series of readings $(t_k,y_k)$, $k=0,\ldots,n$, from one cell at spacing $h$.
+
+**Output:** estimates of the variance of the cell's own fluctuations, the variance of the measurement error, and the rate at which fluctuations decay.
+:::
+
+We also ask what one trace cannot decide. We keep the rates $\beta=2$, $\alpha=1$ and image every $h=1/4$ time units, so one relaxation time $1/\alpha$ spans four images.
 
 ## Two places for noise to enter
 
@@ -160,21 +167,22 @@ so the current deviation is a sum of all past disturbances, each shrunk accordin
 
 ## How much the concentration fluctuates
 
-::: {#prp-stationary-variance}
-## Stationary variance of the concentration
-Under @def-state-space-model with $0<\alpha h<2$, so that $|\lambda|<1$, the variance of $x_k$ converges as $k\to\infty$ to
+Under @def-state-space-model with $0<\alpha h<2$, so that $|\lambda|<1$, the variance of $x_k$ converges as $k\to\infty$ to the *stationary variance*
 $$
 \sigma_x^2=\frac{q}{1-\lambda^2}.
-$$
+$$ {#eq-stationary-variance}
 If $x_0$ already has mean $x^*$ and variance $\sigma_x^2$, every $x_k$ does.
-:::
 
 ::: {.proof}
-Sketch. Two facts about averages do the work. First, averages add: the expectation of a sum is the sum of the expectations. Second, for independent quantities the average of a product is the product of the averages. The deviation $e_k$ is built from $e_0$ and $w_0,\ldots,w_{k-1}$, so knowing $e_k$ tells us nothing about the new disturbance $w_k$, and $E[e_kw_k]=E[e_k]E[w_k]=0$. Squaring @eq-noisy-deviation and averaging term by term,
+Sketch. Two facts about averages do the work: the expectation of a sum is the sum of the expectations, and for independent quantities the average of a product is the product of the averages. The deviation $e_k$ is built from $e_0$ and $w_0,\ldots,w_{k-1}$, so it is independent of the new disturbance $w_k$, and $E[e_kw_k]=E[e_k]E[w_k]=0$. Squaring @eq-noisy-deviation and averaging term by term,
 $$
 E[e_{k+1}^2]=\lambda^2E[e_k^2]+2\lambda\,E[e_kw_k]+E[w_k^2]=\lambda^2E[e_k^2]+q.
 $$
-The fixed point of $V\mapsto\lambda^2V+q$ is $V=q/(1-\lambda^2)$, and the distance from it shrinks by $\lambda^2$ per step. The mean deviation also shrinks, $E[e_{k+1}]=\lambda E[e_k]$, so $E[e_k^2]$ and the variance share this limit.
+The value $V=q/(1-\lambda^2)$ satisfies $V=\lambda^2V+q$. Subtracting it shows that the distance from $V$ shrinks by $\lambda^2$ per step, while the mean deviation shrinks by $\lambda$:
+$$
+E[e_{k+1}^2]-V=\lambda^2\bigl(E[e_k^2]-V\bigr),\qquad E[e_{k+1}]=\lambda\,E[e_k].
+$$
+Hence $\operatorname{Var}(x_k)=E[e_k^2]-E[e_k]^2\to V$.
 :::
 
 For our parameters $1-\lambda^2=7/16$, so $\sigma_x^2=16q/7\approx2.29\,q$: several intervals' disturbances are present at any moment. Measurement error does not accumulate; with $q=0$ the readings have variance $r$. With both sources, $y_k-x^*=e_k+v_k$, and the cross term vanishes as in the proof, so at stationarity
@@ -185,7 +193,7 @@ The formula also shows the removal rate controlling fluctuations. Disturbances i
 
 ## Telling the two sources apart
 
-@prp-stationary-variance lets us make the two sources equally large. With $r=0.04$ in a measurement-only cell and $q=(7/16)(0.04)=0.0175$ in a process-only cell, both sets of readings have variance $0.04$ around $x^*=2$ (@fig-noisy-dynamics-three-ways, panels A and B). Their histograms would match, but process-only readings stay above or below 2 for several images in a row, while measurement-only readings jump independently. To measure this, we ask how strongly a reading predicts one taken $\ell$ images later.
+@eq-stationary-variance lets us make the two sources equally large. With $r=0.04$ in a measurement-only cell and $q=(7/16)(0.04)=0.0175$ in a process-only cell, both sets of readings have variance $0.04$ around $x^*=2$ (@fig-noisy-dynamics-three-ways, panels A and B). Their histograms would match, but process-only readings stay above or below 2 for several images in a row, while measurement-only readings jump independently. To measure this, we ask how strongly a reading predicts one taken $\ell$ images later.
 
 The *covariance* of two random quantities, $\operatorname{Cov}(U,V)=E[(U-E[U])(V-E[V])]$, is positive when they tend to deviate from their means in the same direction, and it is zero when they are independent. For a series whose mean and variance do not change with $k$, the *autocorrelation at lag* $\ell$ is
 $$
@@ -196,7 +204,7 @@ $$
 \hat\rho(\ell)=\frac{\sum_{k=0}^{n-\ell}(y_k-\bar y)(y_{k+\ell}-\bar y)}{\sum_{k=0}^{n}(y_k-\bar y)^2}.
 $$
 
-::: {#prp-noise-autocorrelation}
+::: {#thm-noise-autocorrelation}
 ## Autocorrelation of a noisy reporter
 Under @def-state-space-model with $c=1$ and the concentration at stationarity, for every lag $\ell\ge1$
 $$
@@ -205,7 +213,15 @@ $$
 :::
 
 ::: {.proof}
-Sketch. Unroll @eq-noisy-deviation for $\ell$ steps: $e_{k+\ell}=\lambda^{\ell}e_k+(\text{terms in }w_k,\ldots,w_{k+\ell-1})$. The covariance of two sums is the sum of the covariances of all pairs of terms, because the product of the two deviations multiplies out term by term. In $\operatorname{Cov}(e_k+v_k,\ e_{k+\ell}+v_{k+\ell})$, two kinds of pairs are independent and contribute zero: $e_k$ with a later disturbance $w_k,\ldots,w_{k+\ell-1}$, and any pair containing a measurement error $v$. The one surviving pair, $e_k$ with $\lambda^\ell e_k$, contributes $\lambda^\ell E[e_k^2]=\lambda^\ell\sigma_x^2$. Dividing by $\operatorname{Var}(y_k)=\sigma_x^2+r$ gives the result.
+Sketch. Unroll @eq-noisy-deviation for $\ell$ steps:
+$$
+e_{k+\ell}=\lambda^{\ell}e_k+\sum_{j=k}^{k+\ell-1}\lambda^{\,k+\ell-1-j}\,w_j .
+$$
+Because $y_k-x^*=e_k+v_k$, the covariance of two readings multiplies out into covariances of pairs of terms. Independent pairs contribute zero, which removes $e_k$ paired with a later disturbance and every pair containing a measurement error. One pair survives:
+$$
+\operatorname{Cov}(y_k,\,y_{k+\ell})=\operatorname{Cov}\bigl(e_k,\ \lambda^{\ell}e_k\bigr)=\lambda^{\ell}\sigma_x^2 .
+$$
+Dividing by $\operatorname{Var}(y_k)=\sigma_x^2+r$ gives the result.
 :::
 
 With measurement error only, $\rho(\ell)=0$ at every positive lag. With process noise only, $\rho(\ell)=\lambda^\ell\approx e^{-\alpha\,\ell h}$: the correlation fades at the removal rate $\alpha$, the clock that sets the deterministic response time. With both, the curve drops sharply from lag zero to lag one, then decays geometrically, and extending the geometric part back to lag zero estimates the share of reading variance that belongs to the cell. With $\sigma_x^2=r=0.02$, for example, $\rho(1)=0.5\times0.75=0.375$ and $\rho(2)\approx0.281$.
@@ -215,7 +231,7 @@ With measurement error only, $\rho(\ell)=0$ at every positive lag. With process 
 Subtract the series average from every reading. For each lag $\ell=0,1,\ldots,L$, multiply each deviation by the deviation $\ell$ positions later, sum the products, and divide by the sum of squared deviations. Return the $L+1$ ratios.
 :::
 
-The function below applies $\hat\rho(\ell)$ to 2,000 simulated readings in each case, all with reading variance $0.04$; the combined case also produced @fig-noisy-dynamics-traces. Each row prints estimates at lags 1 to 4, then @prp-noise-autocorrelation's values.
+The function below applies $\hat\rho(\ell)$ to 2,000 simulated readings in each case, all with reading variance $0.04$; the combined case also produced @fig-noisy-dynamics-traces. Each row prints estimates at lags 1 to 4, then the values from @thm-noise-autocorrelation.
 
 ```{.python .execute}
 #| label: code-noisy-dynamics-autocorrelation
@@ -286,7 +302,7 @@ Measurement error is forgotten at the next image; a process disturbance becomes 
 
 ## What one trajectory supports
 
-Under the model's assumptions, @prp-noise-autocorrelation turns one long trajectory into two estimates. The ratio $\hat\rho(\ell+1)/\hat\rho(\ell)$ estimates $\lambda$, hence $\alpha=(1-\lambda)/h$, and the extrapolated lag-zero height estimates the cell's share of the variance. Deviations stay correlated for about $1/\alpha$, so a trace lasting $T$ time units holds only about $\alpha T$ roughly independent stretches, and a trace of a few relaxation times gives uncertain autocorrelations however many images it contains. Imaging fixed cells or fluorescent beads, whose concentration cannot change, estimates $r$ directly.
+Under the model's assumptions, @thm-noise-autocorrelation turns one long trajectory into two estimates. The ratio $\hat\rho(\ell+1)/\hat\rho(\ell)$ estimates $\lambda$, hence $\alpha=(1-\lambda)/h$, and the extrapolated lag-zero height estimates the cell's share of the variance. Deviations stay correlated for about $1/\alpha$, so a trace lasting $T$ time units holds only about $\alpha T$ roughly independent stretches, and a trace of a few relaxation times gives uncertain autocorrelations however many images it contains. Imaging fixed cells or fluorescent beads, whose concentration cannot change, estimates $r$ directly.
 
 Several claims remain out of reach of one trajectory. Photobleaching or focus drift produces correlated measurement errors that the autocorrelation cannot distinguish from process noise. One cell cannot reveal whether other cells share its production rate $\beta$. And one excursion is not evidence of a state change: a reading far from $x^*$ may be a measurement error that the next image contradicts, or a process excursion that will decay. Only a deviation that persists well beyond the relaxation time supports the claim that the cell has settled somewhere new.
 
@@ -299,7 +315,7 @@ A toy version uses our model twice per cell: cell $j$ has a production rate $\be
 $$
 A_j=S_j+I^A_j,\qquad B_j=S_j+I^B_j,
 $$
-where $S_j=\beta_j/\alpha$ is the steady level both copies share and $I^A_j,I^B_j$ are independent deviations with mean zero and the stationary variance $\operatorname{Var}(I)$ of @prp-stationary-variance. The cross terms vanish as in the proof, so
+where $S_j=\beta_j/\alpha$ is the steady level both copies share and $I^A_j,I^B_j$ are independent deviations with mean zero and the stationary variance $\operatorname{Var}(I)$ of @eq-stationary-variance. The cross terms vanish as in the proof, so
 $$
 \operatorname{Cov}(A,B)=\operatorname{Var}(S),\qquad \tfrac12E\bigl[(A-B)^2\bigr]=\tfrac12E\bigl[(I^A-I^B)^2\bigr]=\operatorname{Var}(I).
 $$
@@ -341,6 +357,8 @@ Intrinsic versus extrinsic is a different question from process versus measureme
 
 Additive disturbances are an approximation. At low molecule counts the size of fluctuations depends on the count itself, and additive noise can even push a modeled concentration below zero. Uneven splitting of molecules at division adds a jump at division times rather than a steady stream of small disturbances. A real reporter also has a gain and background, $y_k=c\,x_k+b+v_k$. With $c$ unknown, doubling $c$ while halving every concentration leaves the readings unchanged, so absolute concentrations cannot be recovered from readings alone. Autocorrelations, the removal rate, and the cell's share of the variance are unchanged by this rescaling.
 
+The three dynamics lessons built a model, found its persistent states, and asked what noisy readings can and cannot reveal about a hidden state. Lesson 24 returns to sequencing: what longer reads and references built from many genomes recover that short reads against one reference could not.
+
 ## Exercises
 
 ::: {#exr-noisy-dynamics-impulse}
@@ -362,10 +380,6 @@ A cell is imaged $m$ times so quickly that $x_k$ is fixed, giving readings $x_k+
 ::: {#exr-noisy-dynamics-two-channel}
 In the two-reporter model, add independent measurement errors with variance $r$ to each channel: $A_j=S_j+I^A_j+v^A_j$ and $B_j=S_j+I^B_j+v^B_j$. Show that $\operatorname{Cov}(A,B)$ is unchanged while $\tfrac12E[(A-B)^2]$ increases by $r$.
 :::
-
-## Bridge to the final lesson
-
-The three dynamics lessons built a model, found its persistent states, and asked what noisy readings can and cannot reveal about a hidden state. Lesson 24 asks the same question of sequencing: what longer reads, and references built from many genomes, let us recover that short reads against one reference could not.
 
 ::: {#refs}
 **References**

@@ -34,7 +34,7 @@ Schematics use roles, not a palette. A role means the same thing on every page.
 
 Rules that follow from this:
 
-- Red means "look here." It never decorates. A figure with two red things is making two points and should be two figures.
+- Red means "look here." It never decorates. A panel with two red things is making two points and should be two panels or two figures.
 - Grey structure is recessive. If a grey element carries meaning, that is a sign it wants to be red or wants a label.
 - `SECOND` and `THIRD` are validated against each other and against `EMPHASIS` for colorblind separation; do not introduce other hues in a schematic. Data plots use the categorical series in `figstyle.mplstyle`, which is a different job.
 - Text is always ink or paper (on a red fill). Text is never colored to match a series.
@@ -76,7 +76,7 @@ A lesson's figure draws the instance the prose is working through, with the same
 ## Checklist before a figure ships
 
 - Drawn through a `coursefigs` helper; no bare matplotlib in the lesson chunk.
-- Exactly one red idea.
+- Exactly one red idea per panel.
 - Same instance as the surrounding prose, same index convention.
 - Monospace for sequence letters; mathtext for symbols.
 - `label`, `fig-cap`, `fig-alt` set; `fig-width`/`fig-height` set for schematics.

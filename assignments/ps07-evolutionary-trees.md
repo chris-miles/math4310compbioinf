@@ -90,7 +90,7 @@ def fitch_site(children, root, leaf_states):
 
 a. Before running it, predict whether this version reproduces Lesson 14's results: site scores $[1,1]$ on $((a,b),(c,d))$ for the two-site alignment, and totals 2, 3, and 3 for the three splits. Then run it and report the results.
 
-b. Identify the change from Lesson 14's recurrence. Which statement in @lem-fitch-attachment or @thm-fitch-correctness fails for the sets this version stores?
+b. Identify the change from Lesson 14's recurrence. Which statement fails for the sets this version stores: the attachment cost @eq-fitch-attachment or @thm-fitch-correctness?
 
 c. Find a rooted binary tree with as few leaves as possible, and one site, for which this version returns the wrong score. Certify the true minimum by exhaustive search over the internal states, by hand or in code. Then argue that no tree with three or fewer leaves exposes the defect, and that the four-leaf shape $((a,b),(c,d))$ does not expose it either.
 

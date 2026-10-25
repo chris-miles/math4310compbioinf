@@ -24,9 +24,9 @@ cf.use_style()
 
 ## From sequences to ancestral changes
 
-Sequencing gives present-day DNA strings, while the ancestral sequences that connect them are usually unknown. Suppose two sampled organisms carry A and two carry G at a corresponding position. Did one change between A and G separate two ancestral groups, or did the same change occur on different branches? The answer depends on the evolutionary tree and the bases assigned to its ancestors.
+Sequencing gives present-day DNA strings, while the ancestral sequences that connect them are usually unknown. Suppose two sampled organisms carry A and two carry G at a corresponding position. Did one change between A and G separate two ancestral groups, or did the same change occur on different branches? The same question arises for whole traits. Compeau and Pevzner recount a 2003 study of winged and wingless stick insects: on the tree built from their DNA sequences, wings had been lost and regained several times, against the long-held view that a lost wing does not return [@compeau2015]. The answer depends on the evolutionary tree and on the states assigned to its ancestors.
 
-To compare a gene across organisms, we use a supplied alignment of corresponding sequences: each row belongs to a sampled organism and each column represents a proposed corresponding position. A column is also called a *site*, and its base is a *character state*. Lesson 13 reduced these observations to pairwise distances. Here we retain the letters at each site and ask how many changes are needed to explain them on a candidate tree. This keeps the evidence about which sites support a proposed relationship and which require repeated changes, helping us distinguish inherited similarities from changes that arose independently [@compeau2015].
+To compare a gene across organisms, we use a supplied alignment of corresponding sequences: each row belongs to a sampled organism and each column represents a proposed corresponding position. A column is also called a *site*, and its base is a *character state*. Lesson 13 reduced these observations to pairwise distances, which forgets where two sequences differ and says nothing about the ancestral sequences. Here we retain the letters at each site and ask how many changes are needed to explain them on a candidate tree. This keeps the evidence about which sites support a proposed relationship and which require repeated changes, and it proposes a base for every ancestor [@compeau2015].
 
 We observe the leaf sequences, not the sequences at ancestral branching points. For a candidate tree, we will assign bases to its internal nodes to minimize the number of changes across edges. This is the *fixed-tree* or *small parsimony* problem. Comparing the best scores across different trees is a second problem. Keeping them separate lets us understand what the algorithm guarantees [@durbin1998, pp. 174–176].
 
@@ -91,12 +91,16 @@ plt.show()
 ```
 
 ::: {#def-parsimony-score}
-## Equal-cost parsimony
-Let $T$ be the supplied tree and $E(T)$ its edge set. At one site, let $z_w\in\Sigma=\{A,C,G,T\}$ be the state assigned to node w, fixing each leaf to its observed base. The cost is
+## Small parsimony with equal costs
+**Input:** a rooted binary tree $T$ with edge set $E(T)$, and an alignment giving the observed base $x_{\ell j}$ at each leaf $\ell$ and site $j=1,\ldots,m$.
+
+**Output:** states for the internal nodes at every site that minimize the total number of changes, and that minimum $c(T)$.
+
+At one site, let $z_w\in\Sigma=\{A,C,G,T\}$ be the state assigned to node $w$, fixing each leaf to its observed base. The cost is
 $$
 C(z;T)=\sum_{\{v,w\}\in E(T)}\mathbf 1\{z_v\ne z_w\}.
 $$
-Write $x_{\ell j}$ for the observed base at leaf $\ell$ and site $j$, and let $m$ be the number of sites. The site and alignment scores are
+The site and alignment scores are
 $$
 c_j(T)=\min_{z:\,z_\ell=x_{\ell j}\text{ for every leaf }\ell} C(z;T),
 \qquad
@@ -104,11 +108,11 @@ c(T)=\sum_{j=1}^{m}c_j(T).
 $$
 :::
 
-The indicator contributes zero for equal bases and one for different bases. Every substitution has the same cost, regardless of its type or direction. Sites can be optimized separately because their assigned states have no cross-site constraints and the objective adds their edge costs.
+Every substitution costs one, regardless of its type or direction. Sites can be optimized separately because their assigned states have no cross-site constraints and the objective adds their edge costs.
 
 Fewer changes is a modeling preference, not a law of evolution, and an inferred ancestral base is an optimal explanation under this objective rather than a sequenced ancestor.
 
-The node r gives the algorithm a direction in which to process the tree. Under this symmetric cost, inserting a root on any edge leaves the minimum score unchanged: for edge endpoints a and b, minimizing $\mathbf1\{a\ne t\}+\mathbf1\{t\ne b\}$ over an inserted state t gives $\mathbf1\{a\ne b\}$. Thus this objective alone cannot identify the biological root or date a divergence.
+The node r gives the algorithm a direction in which to process the tree. Under this symmetric cost, inserting a root on any edge leaves the minimum score unchanged: for edge endpoint states $s$ and $s'$, minimizing $\mathbf1\{s\ne t\}+\mathbf1\{t\ne s'\}$ over an inserted state $t$ gives $\mathbf1\{s\ne s'\}$. Thus this objective alone cannot identify the biological root or date a divergence.
 
 ## Fitch's recurrence
 
@@ -124,21 +128,22 @@ $$
 $$
 An intersection means both children can use the same state without adding a change. Disjoint sets require a change; their union records the parent choices that attain the new minimum. Process children before their parent, a *postorder* traversal. The final answer is $c_r$.
 
-Why is a set enough when there are four possible bases and many ancestral assignments? What the parent needs is the cost of attaching to the solved subtree.
-
-::: {#lem-fitch-attachment}
-## Cost of attaching a subtree
-Suppose a subtree rooted at v has minimum cost $c_v$ and minimizing root states $S_v$. If its parent has fixed state $t$, the minimum cost of the subtree **including its edge to that parent** is
+Why is a set enough when there are four possible bases and many ancestral assignments? What the parent needs is the cost of attaching to the solved subtree. Suppose a subtree rooted at v has minimum cost $c_v$ and minimizing root states $S_v$. If its parent has fixed state $t$, the minimum cost of the subtree **including its edge to that parent** is
 $$
 c_v+\mathbf 1\{t\notin S_v\}.
-$$
-:::
+$$ {#eq-fitch-attachment}
 
 ::: {.proof}
-If $t\in S_v$, choose a minimum-cost subtree rooted at t and pay zero for the connecting edge. Otherwise, choose any root state in $S_v$ and pay one edge change, achieving $c_v+1$. A lower cost would have to be $c_v$, since costs are integers. That would require both a minimum-cost subtree and a zero-cost edge, making t a member of $S_v$, a contradiction.
+Sketch. Two constructions give upper bounds:
+$$
+t\in S_v:\ \underbrace{c_v}_{\text{subtree rooted at }t}+\underbrace{0}_{\text{edge}},
+\qquad
+t\notin S_v:\ \underbrace{c_v}_{\text{root state in }S_v}+\underbrace{1}_{\text{edge}}.
+$$
+Costs are integers, so anything below $c_v+1$ equals $c_v$. That requires a minimum-cost subtree and an unchanged edge, so its root state is $t$ and $t\in S_v$.
 :::
 
-The connecting edge matters. For two A leaves, forcing their parent to C costs two changes inside that subtree; attaching an A-rooted subtree to a C state above it costs only one. The lemma concerns the latter quantity, which is exactly what the next recurrence step uses.
+The connecting edge matters. For two A leaves, forcing their parent to C costs two changes inside that subtree; attaching an A-rooted subtree to a C state above it costs only one. @eq-fitch-attachment concerns the latter quantity, which is exactly what the next recurrence step uses.
 
 ::: {.callout-note title="Key idea"}
 A parent needs only its child's pair $(S_v,c_v)$: a parent state inside $S_v$ attaches at no extra cost, and any other state costs exactly one more. One set per node therefore replaces a search over all $4^{N-1}$ ancestral assignments.
@@ -150,9 +155,18 @@ For a binary tree and the equal-cost objective, the recurrence returns the minim
 :::
 
 ::: {.proof}
-Induct on subtrees. The leaf initialization fixes the observed state. Assume each child has its true minimum and its minimizing root states. By @lem-fitch-attachment, each child contributes its minimum plus zero or one according to whether the proposed parent state belongs to its set.
-
-The two child contributions add, since their assignments can be chosen independently after fixing t. If the sets intersect, choosing t in the intersection pays no extra change; every other t pays at least one. If they are disjoint, no t can avoid both penalties. Choosing t in their union pays exactly one, while choosing outside pays two. This establishes both the minimum and its minimizing root states, completing the induction.
+Sketch. Induct on subtrees; a leaf's set and zero cost are correct. Let v have children u and w with correct pairs, and fix a state $t$ at v. The two child subtrees can then be optimized independently, and @eq-fitch-attachment gives the best cost with $z_v=t$:
+$$
+c_v(t)=c_u+c_w+\mathbf 1\{t\notin S_u\}+\mathbf 1\{t\notin S_w\}.
+$$
+Minimizing over $t$,
+$$
+\min_t c_v(t)=\begin{cases}
+c_u+c_w, & \text{attained exactly by }t\in S_u\cap S_w\text{ if it is nonempty},\\
+c_u+c_w+1, & \text{attained exactly by }t\in S_u\cup S_w\text{ if }S_u\cap S_w=\varnothing,
+\end{cases}
+$$
+since a state outside both disjoint sets pays two. This is the recurrence for both the minimum and its minimizing root states, completing the induction.
 :::
 
 ## Two sites by hand
@@ -166,7 +180,7 @@ At site 2, $S_u=\{C\}$ with cost zero. The C/T pair under v gives $S_v=\{C,T\}$ 
 
 ### Reconstructing one ancestral assignment
 
-Choose any state in the root set. Move from parent to child: if the parent's chosen state belongs to the child set, reuse it; otherwise choose any state from that set and pay one edge change. Continue to the leaves. The proof's child contributions show that this procedure attains the score.
+Choose any state in the root set. Move from parent to child: if the parent's chosen state belongs to the child set, reuse it; otherwise choose any state from that set and pay one edge change. Continue to the leaves. By @eq-fitch-attachment, each step adds exactly the change it pays for, so this procedure attains the score.
 
 The sets describe minima for isolated subtrees. To see why this matters, change the leaf bases to $a=A$, $b=C$, $c=G$, $d=G$. Now $S_u=\{A,C\}$ with cost 1, $S_v=\{G\}$ with cost 0, and the full tree costs 2. Choosing $r=v=G$ and $u=A$ pays on the edges u-to-b and r-to-u. Choosing $r=u=v=G$ instead pays on u-to-a and u-to-b, still totaling 2, even though $G\notin S_u$. The extra change inside u's subtree saves a change above it. Fitch reconstruction supplies one optimum; finding all optimal ancestral assignments requires the state-conditioned costs described by weighted parsimony [@durbin1998].
 
@@ -335,9 +349,9 @@ plt.show()
 
 ## Biological limits of the answer
 
-A score of two means that two changes suffice under our alignment and equal-cost assumptions, not that exactly two substitutions happened. Repeated change can restore an earlier base, and unrelated lineages can acquire the same base independently. Rapidly evolving lineages can therefore accumulate shared-looking states and be grouped together incorrectly, a problem called *long-branch attraction* [@felsenstein1978].
+A score of two means that two changes suffice under our alignment and equal-cost assumptions, not that exactly two substitutions happened. The stick-insect conclusion has the same form: "regained several times" is a minimum count of changes on the inferred tree, and it is only as reliable as that tree. Repeated change can restore an earlier base, and unrelated lineages can acquire the same base independently. Rapidly evolving lineages can therefore accumulate shared-looking states and be grouped together incorrectly, a problem called *long-branch attraction* [@felsenstein1978].
 
-Real substitution types also have different frequencies: changes between A/G or between C/T need not behave like changes across those pairs. Weighted parsimony replaces the zero/one edge cost with an explicit cost table and keeps a minimum for each possible parent state, which changes the modeling assumptions as well as the calculation. Alignment mistakes, missing characters, and unrepresentative sites can also change the preferred topology, so a real analysis must say how such entries are treated and check whether the answer persists across suitable sites.
+Real substitution types also have different frequencies: changes between A/G or between C/T need not behave like changes across those pairs. Weighted parsimony replaces the zero/one edge cost with an explicit cost table and keeps a minimum for each possible parent state, which changes the modeling assumptions as well as the calculation. Alignment mistakes, missing characters, and unrepresentative sites can also change the preferred topology, so a real analysis states how such entries are treated and checks whether the answer persists across suitable sites.
 
 ## Exercises
 

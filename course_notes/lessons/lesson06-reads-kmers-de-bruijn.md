@@ -24,9 +24,24 @@ cf.use_style()
 
 ## Reads and coverage
 
-Lesson 1 placed each read under a reference genome and read down the columns. Suppose instead that we sequence a virus or bacterium for which no suitable reference exists. The instrument still returns reads, strings of a few hundred letters or fewer, but nothing records where each one came from and there is no reference to place them against. Reconstructing the genome from the reads alone, using only their overlaps, is *de novo assembly*. A reconstructed genome lets us search for complete genes and see how they are arranged, even when individual reads cover only parts of them.
+Lesson 1 placed each read under a reference genome and read down the columns. Suppose instead that we sequence a virus or bacterium for which no suitable reference exists. The instrument still returns reads, strings of a few hundred letters or fewer, but nothing records where each one came from and there is no reference to place them against. Reconstructing the genome from the reads alone is *de novo assembly*. A reconstructed genome lets us search for complete genes and see how they are arranged, even when individual reads cover only parts of them.
 
-To see what such data look like, we simulate them from a genome we already know. The bacteriophage phiX174 has a circular genome of 5,386 bases, stored in the course [data folder](../data/phix174-NC_001422.1.fasta). The chunk below draws 162 synthetic reads of length 100 from it, with independent, uniformly random starts and no sequencing errors. To run it, download the repository and work from the lesson folder.
+Compeau and Pevzner compare assembly to recovering a day's news from the confetti of many copies of one newspaper blown apart [@compeau2015]. Scraps are lost, so no single copy can be rebuilt, but the copies tore in different places, and a scrap from one copy can bridge a tear in another. A sequencing sample likewise holds many copies of the genome, one per cell or virus particle, each broken at different points (@fig-reads-torn-copies); the letters that overlapping reads share are the only clue to their order.
+
+```{.python .execute}
+#| label: fig-reads-torn-copies
+#| code-fold: true
+#| code-summary: "Draw copies of a genome broken at different places"
+#| fig-cap: "Three copies of one genome, each broken at different places. The red piece from copy 2 spans a break in copy 1 (dotted line), so it overlaps the pieces on both sides of that break; an assembler uses overlaps like this to put the pieces back in order."
+#| fig-alt: "Three rows labeled copy 1 to copy 3, each a black horizontal line split into three pieces at different positions. A dotted vertical line marks the first break in copy 1, and the red middle piece of copy 2 extends across it."
+#| fig-width: 5
+#| fig-height: 1.5
+fig, ax = plt.subplots()
+cf.torn_copies(ax, cuts=[(4.0, 7.5), (2.2, 5.6), (3.0, 8.4)], bridge=(1, 1))
+plt.show()
+```
+
+To see what such data look like, we simulate them from a genome we already know. The bacteriophage phiX174, a virus that infects bacteria, has a circular genome of 5,386 bases; it was the first DNA genome ever sequenced, by Frederick Sanger's group in 1977 [@compeau2015], and its sequence is in the course [data folder](../data/phix174-NC_001422.1.fasta). The chunk below draws 162 synthetic reads of length 100 from it, with independent, uniformly random starts and no sequencing errors. To run it, download the repository and work from the lesson folder.
 
 ```{.python .execute}
 #| label: code-reads-simulate-phix
@@ -73,7 +88,7 @@ for ax in (top, bottom):
 plt.show()
 ```
 
-Reads that overlap share letters, and those shared letters are the only clue to their order. Depth is uneven, with some bases read eight or nine times and a few not at all, so even a perfect method may recover the genome only in separate pieces.
+Depth is uneven, with some bases read eight or nine times and a few not at all, so even a perfect method may recover the genome only in separate pieces.
 
 To trace the reasoning by hand we need a much smaller genome. The reads `TACG` and `ACGA` suggest the longer string `TACGA`, because the final ACG of the first read matches the initial ACG of the second. @fig-reads-records-to-overlaps adds two more reads. On the left are the records as an assembler receives them, named r1 to r4 in arbitrary order; on the right is a placement in which every overlap agrees, spelling the candidate sequence `TACGACG`.
 
@@ -96,11 +111,11 @@ axes[1].set_title("Proposed overlapping placements")
 plt.show()
 ```
 
-A shared word supplies a possible join, but a repeated word elsewhere in the genome can supply the same apparent join, so we need a representation that keeps the alternatives rather than committing to the first overlap found. We will first isolate a simpler problem: find one string whose short words, counted with multiplicity, match a supplied collection.
+A shared word supplies a possible join, but a repeated word elsewhere in the genome can supply the same apparent join. Joining reads greedily, by the first overlap found, can then take a wrong branch that shows up only much later, as reads left over that fit nowhere [@compeau2015]. We need a representation that keeps the alternatives. We first isolate a simpler problem: find one string whose short words, counted with multiplicity, match a supplied collection.
 
-Let $G$ be the genome string. An *ideal read* is a substring of $G$ or of its reverse complement; observed reads can differ from these substrings because of sequencing errors. The data form a multiset $R=\{\!\{r_1,\ldots,r_m\}\!\}$, an unordered collection that retains how often each item occurs, because the same read sequence may be observed more than once. Each string records the order of bases within its read, while the multiset records nothing about where the reads lie in the genome.
+Let $G$ be the genome string. An *ideal read* is a substring of $G$ or of its reverse complement; observed reads can differ from these substrings because of sequencing errors. The data form a multiset $R=\{\!\{r_1,\ldots,r_m\}\!\}$, an unordered collection that retains how often each item occurs, because the same read sequence may be observed more than once.
 
-The sample contains many copies of the genome, one per cell or virus particle, and fragments are drawn from all of them, so a genomic position can be read many times or not at all. If $m$ reads have length $L$ and the genome has length $n$, the *coverage*
+Because fragments are drawn from many copies of the genome, a genomic position can be read many times or not at all. If $m$ reads have length $L$ and the genome has length $n$, the *coverage*
 $$
 C=\frac{mL}{n}
 $$
@@ -134,9 +149,9 @@ Four reads of length 4 on a genome of length 7 give $C=16/7\approx2.3$. Reading 
 
 Breaking reads into shorter words forgets some useful order: which words came from the same read and how far apart they were. In exchange it exposes short overlaps shared by reads with different endpoints, and those overlaps let us join evidence from many fragments into one graph.
 
-A shared k-mer is one way to find a possible overlap, but it is not required for two reads to connect in the graph we will build. For example, `TACG` and `CGAC` from @exm-read-coverage share the two-base flank `CG` and no 3-mer. At $k=3$, the last word of the first read, `ACG`, can nevertheless be followed by the first word of the second, `CGA`: their two-base suffix and prefix agree. The shared flank `CG` will be the meeting point of those two edges.
+Two reads need not share a k-mer to connect in the graph we will build. `TACG` and `CGAC` from @exm-read-coverage share the two-base flank `CG` and no 3-mer, yet at $k=3$ the last word of the first read, `ACG`, can be followed by the first word of the second, `CGA`, because their two-base suffix and prefix agree. The flank `CG` will be the node where those two edges meet.
 
-For the reads in @exm-read-coverage, k=3 retains the chain of overlaps:
+For the reads in @exm-read-coverage, $k=3$ retains the chain of overlaps:
 
 | Read | 3-mers |
 |---|---|
@@ -170,8 +185,10 @@ The genome supplies $7-3+1=5$ occurrences of 3-mers, while the reads supply
 $$
 \sum_{j=1}^{m}\max\bigl(0,\;|r_j|-k+1\bigr)=4\cdot(4-3+1)=8
 $$
-observations, since a read shorter than $k$ contributes no words. This total checks whether a counting program has omitted windows or invented words across read boundaries.
+observations, since a read shorter than $k$ contributes no words.
 :::
+
+The total of 8 is a useful check on a counting program: a different total means it has omitted windows or invented words across read boundaries.
 
 ::: {.algorithm}
 **Algorithm: count words in reads.**
@@ -214,7 +231,7 @@ by $(k-1)$-symbol overlaps spells `TACGACG`. There are $5!$ orders of five label
 
 The most direct graph, the *overlap graph* on the left of @fig-reads-de-bruijn-graph, puts each word occurrence at a node, with an arrow from $u$ to $v$ when the last $k-1$ symbols of $u$ equal the first $k-1$ symbols of $v$. The two occurrences of `ACG` need separate nodes because a reconstruction must use both. A reconstruction is then a path visiting every node exactly once, a *Hamiltonian path*, shown in red. No local rule says which node comes next: from `TAC` both ACG nodes are possible, and only a complete path shows which choices work. No efficient algorithm is known for finding Hamiltonian paths in general graphs [@compeau2015].
 
-The de Bruijn construction on the right moves each word onto an edge, running from the word's prefix to its suffix, the $(k-1)$-mers that neighboring words must share. Repeated overlaps collapse into one node while each word occurrence keeps its own edge, so a reconstruction may revisit nodes but must use every edge exactly once. That change makes the problem tractable: the next lesson decides whether such a walk exists by counting edges at each node and builds one in linear time.
+The de Bruijn construction on the right moves each word onto an edge, running from the word's prefix to its suffix, the $(k-1)$-mers that neighboring words must share. To picture it, write the genome as a path of five edges, $\texttt{TA}\to\texttt{AC}\to\texttt{CG}\to\texttt{GA}\to\texttt{AC}\to\texttt{CG}$, each labeled by the 3-mer it spells, and glue together nodes with the same label, so the two AC nodes become one and the two CG nodes become one [@compeau2015]. Repeated overlaps collapse while each word occurrence keeps its own edge, and the genome's path survives the gluing as a walk that may revisit nodes but uses every edge exactly once. Visiting every node once has become using every edge once. Whether an edge-covering walk exists can be decided by counting edges at each node, and one can then be built in linear time, as the next lesson shows; no comparable method is known for node-covering paths.
 
 ```{.python .execute}
 #| label: fig-reads-de-bruijn-graph
@@ -294,9 +311,9 @@ Each 3-mer splits into two overlapping 2-mers, giving the edges in the right pan
 | `GAC` | `GA` | `AC` |
 | `ACG` | `AC` | `CG` |
 
-The two `ACG` rows are not duplicates to discard. They represent two positions in the genome and become parallel edges. If we collapsed them, the graph would contain four edges and could spell only a length-6 string, while a five-edge walk spells the required length $5+3-1=7$.
+The two `ACG` rows represent two positions in the genome, so they become parallel edges rather than duplicates to discard. If we collapsed them, the graph would contain four edges and could spell only a length-6 string, while a five-edge walk spells the required length $5+3-1=7$.
 
-Locally, an edge says which $(k-1)$-mer can follow another after one new symbol. Globally, a walk chooses an ordering of $k$-mer occurrences consistent with all those local overlaps, though an arbitrary walk may skip some edges or repeat others. The walks that use every edge occurrence exactly once are precisely the orderings compatible with the composition, and building the graph requires only the supplied words, never the unknown genome.
+Locally, an edge says which $(k-1)$-mer can follow another after one new symbol. Globally, a walk that uses every edge occurrence exactly once is an ordering of the words compatible with the composition. The gluing picture started from the genome, but the construction does not need it: gluing identical labels in five separate edges, one per word, gives the same graph, and that is what the algorithm above does.
 
 ::: {.callout-note title="Key idea"}
 Placing each $k$-mer occurrence on an edge from its prefix to its suffix turns “in what order do the words occur?” into “which walk uses every edge exactly once?” The graph is built from the unordered words alone.
@@ -309,13 +326,17 @@ $$\texttt{TA}\to\texttt{AC}\to\texttt{CG}\to\texttt{GA}\to\texttt{AC}\to\texttt{
 starts with `TA` and appends `CGACG`, giving `TACGACG`. Its five edges use every member of the ideal multiset.
 :::
 
-::: {#prp-walk-spelling}
-## Walks spell overlapping k-mers
-A walk of $q$ edges in $D(K)$ spells a string of length $q+k-1$. Its $i$th $k$-mer is the $i$th edge traversed, including multiplicity.
-:::
+The example generalizes: a walk of $q$ edges in $D(K)$ spells a string of length $q+k-1$, and the $i$th $k$-mer of that string is the label of the $i$th edge traversed, repeats included.
 
 ::: {.proof}
-Sketch. Start with the first node, which contributes $k-1$ symbols. An edge labeled $w$ has source $w_1\cdots w_{k-1}$ and target $w_2\cdots w_k$. Appending the target's last symbol therefore makes the latest $k$ symbols exactly $w$. Each of the $q$ edges appends one symbol, giving length $k-1+q$. For example, `TA → AC` appends C to TA and records the 3-mer TAC. Neighboring node labels overlap in $k-2$ symbols, while neighboring edge words overlap in $k-1$.
+Sketch. An edge labeled $w=w_1\cdots w_k$ joins the two $(k-1)$-mers inside $w$:
+$$
+\underbrace{w_1\cdots w_{k-1}}_{\text{source}}\;\longrightarrow\;\underbrace{w_2\cdots w_k}_{\text{target}}.
+$$
+Spelling starts with the $k-1$ letters of the first node, and each edge appends the last letter of its target. Just after edge $w$, the newest $k$ letters are its source followed by $w_k$, which is $w$ itself; for example, `TA → AC` appends C to TA and records TAC. Counting letters,
+$$
+\underbrace{(k-1)}_{\text{first node}}+\underbrace{1+\cdots+1}_{q\text{ edges}}=q+k-1.
+$$
 :::
 
 Construction takes $\mathcal O(|K|)$ time for fixed $k$ and stores $|K|$ edges. What remains is to find a walk that uses every edge occurrence once, which is the subject of the next lesson.
@@ -329,13 +350,13 @@ Return to the reads of `TACGACG`, but suppose the read `ACGA` was not sampled. T
 | 3 | `TAC, ACG, CGA, GAC` | none |
 | 4 | `TACG, CGAC, GACG` | `ACGA` |
 
-At $k=4$, the missing edge `ACG → CGA` breaks the route through the graph. At $k=3$, the reads still supply every distinct word on the genomic route. This example distinguishes base coverage from k-mer coverage: observing every position does not guarantee an observed window of every chosen length [@compeau2015].
+At $k=4$, the missing edge `ACG → CGA` breaks the route through the graph. At $k=3$, the reads still supply every distinct word on the genomic route. Observing every base does not guarantee observing every window of a chosen length, which is why assemblers break reads into words shorter than the reads: shorter words are more likely to be fully represented in the reads [@compeau2015].
 
 Why not simply take $k$ large? Longer words are less likely to repeat by accident. In a model DNA sequence with independent, equally likely bases, a particular $k$-mer appears at a given position with probability $4^{-k}$. Adding this probability over the $n-k+1$ starting positions gives its expected number of occurrences in a random genome of length $n$:
 $$
 (n-k+1)\,4^{-k}.
 $$
-For $n=5386$, the length of phiX174, this is about 1.3 at $k=6$ and about 0.02 at $k=9$. Short words recur throughout a genome by chance, so their $(k-1)$-mer nodes merge unrelated positions, while words longer than about $\log_4 n$ rarely recur unless the genome contains a real repeat. Genomes are not random, and biological repeats violate this calculation badly, but it gives the direction of the tradeoff: increasing $k$ separates more repeated contexts while requiring longer stretches of error-free coverage, as the missing `ACGA` showed. One can compare graphs built at several values of $k$ rather than assume one choice suits the whole genome.
+For $n=5386$, the length of phiX174, this is about 1.3 at $k=6$ and about 0.02 at $k=9$. Short words recur throughout a genome by chance, so their $(k-1)$-mer nodes merge unrelated positions, while words longer than about $\log_4 n$ rarely recur unless the genome contains a real repeat. Real genomes are far from random: about half of the human genome consists of repeats, including roughly a million copies of the 300-base Alu element, similar enough that an assembler cannot tell many of them apart [@compeau2015]. The calculation still gives the direction of the tradeoff: increasing $k$ separates more repeated contexts while requiring longer stretches of error-free coverage, as the missing `ACGA` showed.
 
 :::: {.callout-note collapse="true" title="Going deeper: repeated words in phiX174"}
 To compare the random-genome calculation with a real sequence, count the distinct $k$-mers that occur more than once in the phiX174 sequence `phix` loaded at the start of the lesson.

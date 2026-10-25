@@ -17,13 +17,12 @@ This is appropriate for a mathematics department because the recurring objects a
 
 ## Audience
 
-For some students, this may be their only course in computational bioinformatics methods. When choosing examples and allocating time, favor ideas and technical practice that can carry to other biological problems as technologies change: representing data, formulating a model or objective, deriving a computation, and checking what its result supports. A specific biological problem gives those ideas something concrete to explain.
+Most students are bioinformatics majors, and for most this is their only theory and algorithms course. When choosing examples and allocating time, favor ideas and technical practice that can carry to other biological problems as technologies change: representing data, formulating a model or objective, deriving a computation, and checking what its result supports. A specific biological problem gives those ideas something concrete to explain.
 
 Where useful, connect that practice to working with AI-assisted analysis: students still need to understand the inputs, examine assumptions, validate outputs, and judge biological evidence when software generates code or proposes a method. These are guiding considerations, not required themes for every lesson or promises that a particular algorithm will remain current.
 
-Expected students:
+Expected students are mostly Bioinformatics BS students with basic cell biology and programming. Smaller groups may include:
 
-- Bioinformatics BS students with basic cell biology and programming.
 - Mathematics or applied mathematics students interested in biological data.
 - CS students who want a mathematically grounded introduction to computational biology.
 - Biology students with enough programming maturity to write small scripts.
@@ -32,7 +31,7 @@ The course should not assume students already know command-line bioinformatics w
 
 ## Prerequisites and scaffolding
 
-The student-facing prerequisites are MATH 2270, CS 1410, and BIOL 2020 or BIOL 2021. Plan for basic computational linear algebra and programming, basic cell biology, and little or no bioinformatics. Formal probability, statistics, algorithms, and genetics are not assumed.
+The student-facing prerequisites are MATH 2270, CS 1410, and BIOL 2020 or BIOL 2021. The background lessons may assume, including the mathematics assumed and not assumed, is defined in the Audience and tone section of `../style/STYLE_PROSE.md`.
 
 Introduce the biological vocabulary and probability or statistical ideas needed for each method locally. Students already know matrix multiplication and loops; use those skills rather than reteaching them. A short readiness check can identify who needs help with functions, string indexing, dictionaries, and table indexing before the first dynamic-programming assignment. It is a support tool, not an additional graded assessment.
 

@@ -10,6 +10,12 @@ The biological genome is circular, but the FASTA writes it from one chosen start
 
 NCBI makes molecular sequence data available for scientific use; see its [data policies](https://www.ncbi.nlm.nih.gov/home/about/policies/). Credit the accession and source when reusing this file. This folder contains no human-subject data.
 
+## Phage G4 reference sequence
+
+[g4-NC_001420.2.fasta](g4-NC_001420.2.fasta) is the complete 5,577-base genome of Escherichia phage G4, accession **NC_001420.2**, downloaded from [NCBI RefSeq](https://www.ncbi.nlm.nih.gov/nuccore/NC_001420.2) on 2026-10-24. G4 and phiX174 are related single-stranded DNA phages of E. coli, so their genes give real homologous pairs for global and local alignment. The record notes that it is identical to GenBank V00657 and is still a provisional RefSeq. Gene coordinates quoted in the problem sets come from this record's annotation; for example, gene D is at 1976–2434 and gene F at 2600–3883.
+
+The FASTA preserves the downloaded sequence, header, and line wrapping; the extra blank line at the end was removed. Source: [NCBI EFetch](https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_001420.2&rettype=fasta&retmode=text). File SHA-256: `f43b70c2fa4fe809db4feb74f5faa27062eeb76c168319a65433c148f8c99bbb`. The download was checked for one record, accession, length, and an A/C/G/T-only alphabet. Like phiX174, the genome is circular and its FASTA starts at one chosen position; the two files do not start at corresponding places.
+
 ## Working with course data
 
 Examples read local files and do not download during rendering. Tiny artificial strings stay inline in the notes. Synthetic reads generated from this reference must be labeled synthetic, with the sampling and error assumptions stated.

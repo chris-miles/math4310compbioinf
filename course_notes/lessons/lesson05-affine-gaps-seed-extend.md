@@ -27,9 +27,9 @@ cf.use_style()
 
 ## Gap opening and extension
 
-Suppose sequencing and gene prediction (identifying DNA regions likely to encode proteins) produce a candidate protein whose function is unknown. Its amino-acid string can be searched against a database of recorded proteins to find shared regions and candidate functions. We need a scoring rule for each proposed correspondence, and a search strategy to find useful candidates among many records.
+Platelet-derived growth factor (PDGF) is a human protein that signals cells to divide. In 1983 Russell Doolittle and colleagues obtained partial amino-acid sequences of PDGF and searched the protein records of the day. The closest match was the product of *v-sis*, the gene that lets a monkey virus cause tumors, which suggested that the virus causes cancer by supplying a growth signal that never switches off [@doolittle1983; @waterfield1983; @compeau2015]. Such a search needs a scoring rule for each proposed correspondence and a strategy for finding useful candidates among many records.
 
-First consider the scoring rule. A stretch of missing bases or amino acids may reflect one insertion or deletion event [@durbin1998]. The linear gap score from earlier lessons charges by the number of missing letters alone: one length-$\ell$ gap and $\ell$ separate one-letter gaps both score $\ell g$. It cannot express a preference for one longer event over several separate events. An *affine* gap score gives starting a gap a different cost from continuing it.
+First consider the scoring rule. A single slip during DNA replication or repair can remove or duplicate several consecutive bases, so one run of missing letters often records one event rather than several [@compeau2015]. The linear gap score from earlier lessons charges by the number of missing letters alone: one length-$\ell$ gap and $\ell$ separate one-letter gaps both score $\ell g$. It cannot express a preference for one longer event over several separate events. An *affine* gap score gives starting a gap a different cost from continuing it.
 
 Once that score is defined, the database creates a second problem. We do not know which record contains a useful match, and filling a complete local-alignment table against every record repeats expensive work. A *seed* is a short matching word that selects a location for closer comparison. The gap model determines how we rank candidate alignments; the seed rule determines which candidates reach that comparison.
 
@@ -60,7 +60,7 @@ cf.alignment(axes[1], "AAAA", "-A-A")
 plt.show()
 ```
 
-The cost of the next column now depends on the preceding column. Appending `C/-` after a paired-letter column costs $d_o$, while appending it after another letter/gap column costs only $d_e$. Two prefix alignments can therefore have different continuation costs even when they end at the same $(i,j)$. Keeping only their overall maximum can discard a lower-scoring prefix whose next extension is cheaper. We retain a best score for each possible ending type [@durbin1998].
+The cost of the next column now depends on the preceding column. Appending `C/-` after a paired-letter column costs $d_o$, while appending it after another letter/gap column costs only $d_e$. Two prefix alignments can therefore have different continuation costs even when they end at the same $(i,j)$. Keeping only their overall maximum can discard a lower-scoring prefix whose next extension is cheaper. One remedy lets a single move cross a whole gap of any length $\ell$ at cost $G(\ell)$, but then cell $(i,j)$ compares $i+j$ possible gaps and the table costs $\mathcal O(nm(n+m))$ [@compeau2015]. Instead, we retain a best score for each possible ending type [@durbin1998].
 
 ## Three alignment states
 
@@ -148,16 +148,21 @@ The best affine score is $-6$; ACG/--C also attains it. That tie leaves the plac
 With affine gaps, the cost of the next column depends on how the alignment so far ends. Each cell therefore keeps one best score per ending state, because a prefix that scores lower now can still lead to the best complete alignment.
 :::
 
-::: {#prp-affine-correctness}
+::: {#thm-affine-correctness}
 ## Correctness of the three-state recurrence
 For every state and cell, the recurrence in @eq-affine-recurrence gives the best score among alignments of the two prefixes that end in that state.
 :::
 
 ::: {.proof}
-Induct on $i+j$. An alignment ending in $M$ removes a paired-letter column and may come from any state. An alignment ending in $I_x$ either opens that gap after an $M$ column or extends an existing $I_x$ gap; the $I_y$ case is symmetric. Replacing the remaining prefix by a better prefix ending in the same state preserves the next opening or extension cost and would improve the whole alignment. Thus an optimal alignment uses an optimal same-state prefix. These cases are exhaustive under the stated transition convention, and appending the indicated column realizes each candidate.
+Induct on $i+j$; the border values cover the only alignments available there. Remove the final column of an optimal alignment that ends in a given state at $(i,j)$. What that column adds depends only on how the remaining prefix ends:
+$$
+x_i/y_j\text{ adds }s(x_i,y_j)\text{ after any state};\qquad
+x_i/-\text{ adds }\begin{cases}-d_o&\text{after }M,\\-d_e&\text{after }I_x,\\\text{not allowed}&\text{after }I_y.\end{cases}
+$$
+Once the prefix's ending state is fixed, so is the added amount, and the prefix must be optimal among prefixes with that ending; a better one would improve the whole alignment. Maximizing over the allowed ending states gives each line of @eq-affine-recurrence, with $I_y$ symmetric to $I_x$. Appending the indicated column to each optimal prefix shows that every candidate is attained.
 :::
 
-Each of the three tables has $(n+1)(m+1)$ entries. An interior entry compares at most three predecessors, so the time and memory costs remain $\mathcal O(nm)$. Keeping gap states avoids trying every possible gap length anew at each cell [@durbin1998; @compeau2015].
+Each of the three tables has $(n+1)(m+1)$ entries. An interior entry compares at most three predecessors, so the time and memory costs remain $\mathcal O(nm)$, rather than the $\mathcal O(nm(n+m))$ of trying every gap length at each cell.
 
 ::: {.algorithm}
 **Algorithm: score a global alignment with affine gaps.**
@@ -257,7 +262,7 @@ The function returns pairs of zero-based start positions `(query_start, target_s
 
 To see one extension, take the query `TGATACGTAC` and the target `CCATACGTTCAG` with $k=4$, scores $+1$ and $-1$, and a rule that stops when the running score falls 2 below its best. The word ACGT hits at `(4, 4)`. Extending right pairs A/T (running score $-1$) and C/C (running 0) before the query ends, so the right side adds nothing. Extending left pairs T/T and A/A (running 1, then 2), then G/C and T/C (running 1, then 0); the score is now 2 below its best, so extension stops and keeps the two matched letters. The result is ATACGT over ATACGT with score $4+2+0=6$. The hits of TACG at `(3, 3)` and ATAC at `(2, 2)` lie on the same offset and extend to the same alignment, so a search reports it once.
 
-Exact DNA words keep the search rule easy to inspect. The original BLAST algorithm also admits high-scoring protein words that need not match exactly, then extends its word hits in the same way [@altschul1990; @durbin1998].
+The original BLAST algorithm also admits high-scoring protein words that need not match exactly, then extends its word hits in the same way [@altschul1990; @durbin1998].
 
 ## Seed sensitivity
 
@@ -325,26 +330,25 @@ axes[1].legend(loc="lower right", markerscale=2)
 plt.show()
 ```
 
-@fig-affine-seed-dotplot runs `exact_seed_hits` on such a pair, with one planted region of 80% identity. At $k=4$ the 376 chance hits agree with the predicted 378, since off the true diagonal the two sequences are still unrelated, and each would send the search to an extension that finds nothing. At $k=8$ one chance hit remains, but the true diagonal has lost its seeds wherever substitutions fall closer together than eight letters. A region with slightly lower identity could lose all of them, and an alignment containing no accepted seed is never proposed; unlike full dynamic programming, the search can miss the best alignment. Spaced seeds, which require matches only at selected positions within a longer window, are one way to keep the low chance-hit rate of a long seed while tolerating some substitutions.
+@fig-affine-seed-dotplot runs `exact_seed_hits` on such a pair, with one planted region of 80% identity. At $k=4$ the 376 chance hits agree with the predicted 378, since off the true diagonal the two sequences are still unrelated, and each would send the search to an extension that finds nothing. At $k=8$ one chance hit remains, but the true diagonal has lost its seeds wherever substitutions fall closer together than eight letters. A region with slightly lower identity could lose all of them, and an alignment containing no accepted seed is never proposed; unlike full dynamic programming, the search can miss the best alignment. Doolittle's search compared one protein against every record then known; against a modern database, the seed stage rather than the alignment table decides which matches can be found at all. Spaced seeds, which require matches only at selected positions within a longer window, are one way to keep the low chance-hit rate of a long seed while tolerating some substitutions.
 
 :::: {.callout-note collapse="true" title="Going deeper: a bounded-mismatch guarantee"}
 
-The expected-hit calculation addresses workload. For sensitivity, a different question is whether mismatches can destroy every accepted word.
-
-::: {#prp-seed-guarantee}
-## An exact seed survives bounded mismatches
-An ungapped alignment of length $L$ with $t<L$ mismatches contains a matching run of length at least
+The expected-hit calculation addresses workload. For sensitivity, a different question is whether mismatches can destroy every accepted word. When there are few of them, they cannot: an ungapped alignment of length $L$ with $t<L$ mismatches contains a matching run of length at least
 $$
-\left\lceil\frac{L-t}{t+1}\right\rceil.
+\left\lceil\frac{L-t}{t+1}\right\rceil,
 $$
-It therefore contains an exact $k$-mer seed for every $k$ no larger than that bound.
-:::
+and therefore an exact $k$-mer seed for every $k$ no larger than that bound.
 
 ::: {.proof}
-The $t$ mismatches divide the $L-t$ matching positions into at most $t+1$ runs, including possibly empty runs at the ends. If every run were shorter than their average $(L-t)/(t+1)$, their total would be less than $L-t$. At least one run reaches that average; its integer length reaches the ceiling.
+Sketch. The $t$ mismatches cut the alignment into $t+1$ runs of matches, some possibly empty, whose lengths $r_1,\ldots,r_{t+1}$ account for every matching position:
+$$
+r_1+r_2+\cdots+r_{t+1}=L-t .
+$$
+If every run were shorter than the average $(L-t)/(t+1)$, the sum would fall short of $L-t$. So some run has $r_i\geq(L-t)/(t+1)$, and because $r_i$ is an integer it reaches the ceiling.
 :::
 
-For $L=20$ and $t=3$, some run has at least five matches, guaranteeing a 5-mer seed. An 8-mer seed has no such guarantee. Gaps need different accounting because they interrupt the correspondence between positions.
+For $L=20$ and $t=3$, some run has at least five matches, guaranteeing a 5-mer seed. An 8-mer seed has no such guarantee. Read mappers use the same pigeonhole idea: cut a read into $t+1$ pieces, and any placement with at most $t$ mismatches matches at least one piece exactly, so exact lookups of the pieces find every such placement [@compeau2015]. Gaps need different accounting because they interrupt the correspondence between positions.
 
 ::::
 

@@ -29,11 +29,11 @@ cf.use_style()
 
 ## Longer reads and richer references
 
-Two earlier problems had a common cause. In assembly, reads shorter than a repeat could not say which unique sequence follows which copy. In read mapping, each read was compared with one reference genome, so a base absent from that genome counted as a mismatch even when many people carry it. The goal is to recover missing or duplicated DNA, including changes in which genes a sample carries, that short reads against one reference can overlook. Such changes can alter which proteins a cell makes.
+Two earlier problems had a common cause. In assembly, reads shorter than a repeat could not say which unique sequence follows which copy. In read mapping, each read was compared with one reference genome, so a base absent from that genome counted as a mismatch even when many people carry it. The goal is to recover missing or duplicated DNA, including changes in which genes a sample carries, that short reads against one reference can overlook. Such changes can remove or fuse genes: most Rh D-negative blood types in people of European ancestry, for example, result from deletion of the *RHD* gene [@gu2014rhd].
 
 The short reads behind most of our examples are typically under 300 bases. Long-read instruments measure single DNA molecules over far longer stretches: one platform passes a polymerase around the same circular molecule several times and combines the passes into a consensus read of more than 10,000 bases with better than 99% accuracy; nanopore instruments report reads of 10,000 to 100,000 bases, and "ultra-long" reads beyond that [@logsdon2020longread]. A long read is still an inferred base string without genomic coordinates, but it carries much more context.
 
-Context matters because human DNA is highly repetitive. About half of the human genome derives from transposons, DNA elements that can move or copy themselves to new genome locations, and the roughly 300-base Alu element alone has about a million copies with small differences among them [@compeau2015]. About 5% of the genome lies in segmental duplications, long stretches present in two or more nearly identical copies [@logsdon2020longread]. A 150-base read lying inside an Alu copy may match many of the million copies equally well, and then it cannot say which one produced it.
+Context matters because human DNA is highly repetitive. About half of the human genome is repeated sequence, much of it from transposons, DNA elements that can move or copy themselves to new genome locations; Alu, a transposon of about 300 bases, alone accounts for roughly a million near-identical copies [@compeau2015]. About 5% of the genome lies in segmental duplications, long stretches present in two or more nearly identical copies [@logsdon2020longread]. A 150-base read lying inside an Alu copy may match many of the million copies equally well, and then it cannot say which one produced it.
 
 Recall `ACGTCGACG` and `ACGACGTCG` from Lesson 7. They have the same 3-mer multiset, so error-free 3-base reads cannot distinguish them: in @fig-frontiers-read-layout, the same seven reads fit under both. One 4-base read changes this. `TCGA` occurs in the first candidate only, and `ACGA` in the second only.
 
@@ -60,11 +60,11 @@ for number, (ax, candidate, bridging) in enumerate(
 plt.show()
 ```
 
-We first ask how long a read must be to settle such an ambiguity and how many reads we need. Then we turn to references that store several genomes as paths through one graph.
+We first ask how long a read must be to settle such an ambiguity and how many reads we need, then turn to references that store several genomes as paths through one graph.
 
 ## Bridging a repeat
 
-In `ACGTCGACG`, the string `CG` occurs three times. A walk through the Lesson 7 de Bruijn graph enters `CG` three times and must choose which excursion comes next. The genome fixes that choice through the letters before and after each copy: the middle copy is entered from `T` and left toward `A`. A read containing the copy and both neighbors records that pairing.
+In `ACGTCGACG`, the string `CG` occurs three times. A walk through the Lesson 7 de Bruijn graph enters `CG` three times and must choose which excursion comes next. If error-free reads were at least two letters longer than every repeat, the de Bruijn graph built from them would be a single path with no choices [@compeau2015]. Settling one choice takes less, because the genome fixes it through the letters before and after each copy: the middle copy is entered from `T` and left toward `A`. A read containing the copy and both neighbors records that pairing.
 
 ::: {#def-bridging-read}
 ## Bridging read
@@ -73,22 +73,26 @@ Let a string $R$ of length $\ell$ occur in a genome at positions $p,\ldots,p+\el
 
 Here `TCGA` bridges the middle copy of `CG`, with $\ell=2$ and $L=4$. The next result shows that no shorter read could have helped, however many we collect.
 
-::: {#prp-short-reads-cannot-order}
+::: {#thm-short-reads-cannot-order}
 ## Reads too short to bridge cannot order repeat copies
-Let $R$ have length $\ell$, let $X$ and $Y$ be strings, and let $A$ and $B$ be nonempty strings. Define
+Let $R$ have length $\ell$, let $X$ and $Y$ be strings, and let $U$ and $W$ be nonempty strings. Define
 $$
-G_1 = X\,R\,A\,R\,B\,R\,Y, \qquad G_2 = X\,R\,B\,R\,A\,R\,Y .
+G_1 = X\,R\,U\,R\,W\,R\,Y, \qquad G_2 = X\,R\,W\,R\,U\,R\,Y .
 $$
 For every $m\leq \ell+1$, $G_1$ and $G_2$ have the same multiset of length-$m$ substrings.
 :::
 
 ::: {.proof}
-Sketch. Assign each length-$m$ window to the block where it starts. A window starting in $X$ is at most one letter longer than $R$, so it lies inside $XR$. Likewise a window starting in the first copy of $R$ or in $A$ lies inside $RAR$, one starting in the second copy or in $B$ lies inside $RBR$, and one starting in the last copy or in $Y$ lies inside $RY$. The windows of $G_1$ are therefore the windows of the pieces $XR$, $RAR$, $RBR$, $RY$, counted by start. $G_2$ consists of the same pieces with $RAR$ and $RBR$ exchanged, so it has the same windows.
+Sketch. Assign each length-$m$ window to the block where it starts. Because $m\leq\ell+1$, a window ends no later than the next copy of $R$: one starting in $X$ lies inside $XR$, one starting in the first copy of $R$ or in $U$ lies inside $RUR$, and so on. Counted by start, the windows of each genome are therefore the windows of four pieces,
+$$
+G_1:\ \ XR,\ \ RUR,\ \ RWR,\ \ RY \qquad\qquad G_2:\ \ XR,\ \ RWR,\ \ RUR,\ \ RY .
+$$
+The pieces are the same with the middle two exchanged, so the two genomes have the same windows.
 :::
 
 A short window containing a copy sees only one of its flanks, and the genomes differ only in how flanks pair. Any method given only such reads sees identical input from $G_1$ and $G_2$, so no better assembler can recover the order.
 
-For the Lesson 7 strings, take $X=\texttt{A}$, $R=\texttt{CG}$, $A=\texttt{T}$, $B=\texttt{A}$, and $Y$ empty, so that $G_1=\texttt{A·CG·T·CG·A·CG}$. With $\ell=2$, substrings of lengths 1 through 3 must agree. The code prints, for each length, the substrings in excess in each candidate.
+For the Lesson 7 strings, take $X=\texttt{A}$, $R=\texttt{CG}$, $U=\texttt{T}$, $W=\texttt{A}$, and $Y$ empty, so that $G_1=\texttt{A·CG·T·CG·A·CG}$. With $\ell=2$, substrings of lengths 1 through 3 must agree. The code prints, for each length, the substrings in excess in each candidate.
 
 ```{.python .execute}
 #| label: code-frontiers-substrings
@@ -143,9 +147,9 @@ The calculation assumes error-free reads of one length. Errors cause a separate 
 
 ## Pangenome graphs
 
-Long reads now give nearly complete assemblies of individual human genomes, so a reference no longer has to be one sequence. To see why that matters, take two toy genomes that differ at one site, `ACGTT` and `ACATT`, and use the first as a linear reference. With Lesson 4's fitting alignment (every read letter used, reference ends free) and match $+1$, mismatch $-1$, gap $-2$, the read `CGTT` scores 4 and the read `CATT` scores $3-1=2$. Suppose a mapper keeps only placements scoring at least 3, to reject chance matches. It keeps reads carrying `G` and discards reads carrying `A`, so even if half of a sample's copies carry `A`, the retained reads show only `G`. This systematic loss of reads that differ from the chosen reference is *reference bias*.
+The standard human reference was assembled from a few donors' DNA, and any one person differs from it at millions of single bases and by insertions, deletions, and rearrangements [@compeau2015]. Long reads now give nearly complete assemblies of individual human genomes, so a reference no longer has to be one sequence. To see why that matters, take two toy genomes that differ at one site, `ACGTT` and `ACATT`, and use the first as a linear reference. With Lesson 4's fitting alignment (every read letter used, reference ends free) and match $+1$, mismatch $-1$, gap $-2$, the read `CGTT` scores 4 and the read `CATT` scores $3-1=2$. Suppose a mapper keeps only placements scoring at least 3, to reject chance matches. It keeps reads carrying `G` and discards reads carrying `A`, so even if half of a sample's copies carry `A`, the retained reads show only `G`. This systematic loss of reads that differ from the chosen reference is *reference bias*.
 
-The Human Pangenome Reference Consortium used long reads to assemble the two inherited chromosome sets of each of 47 individuals separately. These 94 genome sequences, called haplotypes here, were combined into a graph. Compared with workflows based on the linear reference GRCh38, mapping short reads to the graph reduced small-variant discovery errors by 34% and increased the structural variants detected per haplotype by 104% [@liao2023pangenome]. @fig-frontiers-rhd-graph shows one region, where the neighboring genes *RHD* and *RHCE* have highly similar sequences. *RHD* encodes the D protein of the Rh blood group, and in people of European ancestry the D-negative blood type is mostly due to deletion of *RHD* [@gu2014rhd]. The similar pair is a repeat, so short reads from it are hard to place.
+The Human Pangenome Reference Consortium used long reads to assemble the two inherited chromosome sets of each of 47 individuals separately. These 94 genome sequences, called haplotypes here, were combined into a graph. Compared with workflows based on the linear reference GRCh38, mapping short reads to the graph reduced small-variant discovery errors by 34% and increased the structural variants detected per haplotype by 104% [@liao2023pangenome]. @fig-frontiers-rhd-graph shows one region, where the neighboring genes *RHD* and *RHCE* have highly similar sequences. *RHD* encodes the D protein of the Rh blood group, so people who carry no copy of it are D-negative. The similar pair is a repeat, so short reads from it are hard to place.
 
 ::: {#fig-frontiers-rhd-graph .course-figure}
 
@@ -173,9 +177,16 @@ Our toy genomes give nodes `AC`, `G`, `A`, `TT`, with `AC` leading to both `G` a
 
 ## Aligning a read to a graph
 
-Given a read $x=x_1\cdots x_L$ and a variation graph, we want a path and a fitting alignment of $x$ to that path's string with the highest score. With two paths we can align to each: `CATT` scores 2 against `ACGTT` and 4 against `ACATT`. But $b$ two-way bubbles in a row give $2^b$ paths, so thirty variant sites give more than $10^9$ paths in a graph of about a hundred nodes. We need a table that shares work across paths.
+::: {#def-graph-alignment}
+## Fitting alignment to a variation graph
+**Input:** a read $x=x_1\cdots x_L$, a variation graph, a pair score $s$, and a gap score $g<0$.
 
-In the tables of Lessons 3 and 4, column $j$ took its candidates from column $j-1$. Along a graph path, the letter before $\lambda(v)$ belongs to a predecessor of $v$, and there may be several.
+**Output:** a path in the graph and a fitting alignment of $x$ to that path's string with the highest score.
+:::
+
+With two paths we can align to each: `CATT` scores 2 against `ACGTT` and 4 against `ACATT`. But $b$ two-way bubbles in a row give $2^b$ paths, so thirty variant sites give more than $10^9$ paths in a graph of about a hundred nodes. We need a table that shares work across paths.
+
+In the tables of Lessons 3 and 4, column $j$ took its candidates from column $j-1$, and filling columns from left to right ensured that every candidate was computed before it was needed. Along a graph path, the letter before $\lambda(v)$ belongs to a predecessor of $v$, and there may be several. Visiting nodes in a topological order keeps the guarantee, as it does for any dynamic program over an acyclic graph [@compeau2015].
 
 For $0\leq i\leq L$ and each node $v$, let $Q(i,v)$ be the best score of a global alignment of $x_1\cdots x_i$ with the letters of a final segment (possibly empty) of some path ending at $v$. Leaving out the start of the path costs nothing, as in fitting alignment. Add a start column $\circ$ as the only predecessor of each node without incoming edges, and write $\operatorname{Pred}(v)$ for the predecessors of $v$. For $i\geq1$,
 $$
@@ -189,13 +200,19 @@ with $Q(0,v)=0$ for every node, $Q(0,\circ)=0$, $Q(i,\circ)=ig$, and answer $\ma
 
 The first case takes the best alignment of the shorter read prefix ending at any predecessor of $v$, then pairs the next read letter with $v$'s letter. The zero row and the maximum over the last row let the path start and end anywhere. When every node has one predecessor, the graph is a single string and this is Lesson 4's fitting recurrence.
 
-::: {#prp-graph-alignment}
-## Alignment to an acyclic graph
-If the graph has no directed cycle and each row is filled in topological order, then $\max_v Q(L,v)$ is the best fitting-alignment score of $x$ against the string of any path in the graph. Filling the $(L+1)(|V|+1)$ entries takes $\mathcal O\bigl(L(|V|+|E|)\bigr)$ time.
-:::
+If the graph has no directed cycle and each row is filled in topological order, then $\max_v Q(L,v)$ is the best fitting-alignment score of $x$ against the string of any path in the graph, and filling the $(L+1)(|V|+1)$ entries takes $\mathcal O\bigl(L(|V|+|E|)\bigr)$ time.
 
 ::: {.proof}
-Sketch. Remove the last column of an optimal alignment counted by $Q(i,v)$. If it pairs $x_i$ with $\lambda(v)$, the rest aligns $x_1\cdots x_{i-1}$ with a path ending at a predecessor $u$ (or $u=\circ$); if it puts $\lambda(v)$ opposite a gap, the rest aligns $x_1\cdots x_i$ with a path ending at a predecessor; if it puts $x_i$ opposite a gap, the rest aligns $x_1\cdots x_{i-1}$ with a path still ending at $v$. The rest must be optimal for its prefix and endpoint, or replacing it would improve the whole. The second case uses $Q(i,u)$ from the same row, which is ready because the topological order puts $u$ before $v$. Each node inspects its predecessors twice per row, so a row costs $\mathcal O(|V|+|E|)$.
+Sketch. Remove the last column of an optimal alignment counted by $Q(i,v)$. What remains depends on that column:
+
+- $x_i$ over $\lambda(v)$: $x_1\cdots x_{i-1}$ aligned with a path ending at some $u\in\operatorname{Pred}(v)$;
+- a gap over $\lambda(v)$: $x_1\cdots x_i$ aligned with a path ending at some $u\in\operatorname{Pred}(v)$;
+- $x_i$ over a gap: $x_1\cdots x_{i-1}$ aligned with a path still ending at $v$.
+
+The rest must be optimal for its prefix and endpoint, or replacing it would improve the whole. The second case reads $Q(i,u)$ from the same row, which is ready because the topological order puts $u$ before $v$. Each node inspects its predecessors twice per row, so
+$$
+\text{work per row}=\sum_v\bigl(1+2\,|\operatorname{Pred}(v)|\bigr)=\mathcal O\bigl(|V|+|E|\bigr).
+$$
 :::
 
 Each bubble adds a few nodes and edges, so the work grows linearly in the number of bubbles while the number of paths doubles. The saving comes from merges: later entries need only the best alignment arriving at a merge, not which branch produced it.
@@ -277,7 +294,7 @@ Two limits matter for real graphs. The recurrence needs a topological order, but
 
 ## Checking a reported alignment
 
-Graph aligners and AI assistants report results we did not compute. Suppose a tool reports that `CATT` aligns to the path $v_1\to v_2\to v_4\to v_5\to v_6$ with columns `CATT` over `CATT` and score 4. Each consecutive pair of nodes must be an edge in @tbl-frontiers-letter-graph, each alignment row without gaps must be the read or a contiguous piece of the path's string `ACATT`, and the column scores must sum to 4. Here a score of 4 already equals the most a four-letter read can earn, so no better alignment exists; in general, the filled table is what certifies that none does. Even then, an optimum is a statement about the scoring rule; a claim about the sample needs independent reads and an error model. Goh and colleagues draw the same line for AI in bioinformatics: software can speed up an analysis but cannot judge whether its result is biologically valid [@goh2026expertise].
+Graph aligners and AI assistants report results we did not compute. Suppose a tool reports that `CATT` aligns to the path $v_1\to v_2\to v_4\to v_5\to v_6$ with columns `CATT` over `CATT` and score 4. Each consecutive pair of nodes must be an edge in @tbl-frontiers-letter-graph, each alignment row without gaps must be the read or a contiguous piece of the path's string `ACATT`, and the column scores must sum to 4. Here a score of 4 already equals the most a four-letter read can earn, so no better alignment exists; in general, the filled table is what certifies that none does. Goh and colleagues draw the same line for AI in bioinformatics: software can speed up an analysis but cannot judge whether its result is biologically valid [@goh2026expertise].
 
 ## Exercises
 

@@ -68,7 +68,7 @@ Counts also span a wide range. On the original scale, changing a value from 1000
 $$
 X_{ij}=\log_2(1+R_{ij}).
 $$
-For large $R_{ij}$, doubling it adds approximately one to $X_{ij}$, so multiplicative differences become approximately additive. A twofold change in an abundant gene and a twofold change in a less abundant gene then make comparable contributions. The offset of one count per million makes zeros finite; near zero, it also strongly affects the difference being measured.
+For large $R_{ij}$, doubling it adds approximately one to $X_{ij}$ and halving it subtracts one, so multiplicative differences become approximately additive and a rise and a fall by the same factor become symmetric about zero change. A twofold change in an abundant gene and a twofold change in a less abundant gene then make comparable contributions. The offset of one count per million makes zeros finite; near zero, it also strongly affects the difference being measured.
 
 ::: {.algorithm}
 **Algorithm: prepare a count matrix for this illustrative PCA.**
@@ -160,7 +160,7 @@ $$
 \frac{\|Zv\|^2}{n-1}=v^\top Sv
 =\sum_{j=1}^p S_{jj}\,v_j^2+\sum_{j\ne k}S_{jk}\,v_jv_k .
 $$
-The first sum weights each gene's variance by its squared loading. If gene $j$ is recorded in units $c$ times larger, its column of $Z$ is multiplied by $c$, so $S_{jj}$ grows by $c^2$ and each covariance $S_{jk}$ by $c$. The objective then gains most by loading on that gene, although the samples' relative positions are unchanged.
+The first sum weights each gene's variance by its squared loading. If gene $j$ is recorded in units $c$ times larger, its column of $Z$ is multiplied by $c$, so $S_{jj}$ grows by $c^2$ and each covariance $S_{jk}$ by $c$. The objective then gains most by loading on that gene, although no sample's standing on any gene has changed.
 
 For each gene with nonzero sample standard deviation,
 $$
@@ -365,7 +365,7 @@ Thus even exact measurements cannot determine the two profiles separately.
 
 Subtracting batch means in this design subtracts $\mu+\tau_i(a+c)$, leaving only the restored grand mean. It removes the entire condition-associated contrast, including any true biological contribution. Leaving the contrast untouched can retain a technical contribution. Neither choice resolves the missing comparison.
 
-Recording batch labels is essential, but it cannot repair this lack of independent comparisons. Processing both conditions within each batch, with biological replication, provides information that the fully confounded design lacks. Adjustment in less balanced data requires a model and enough design information to separate effects; it cannot manufacture that information [@holmeshuber2019].
+Recording batch labels is essential, but labels cannot repair a missing comparison. Processing both conditions within each batch, with biological replication, supplies the comparison; adjustment in less balanced data then requires a model and enough design information to separate the effects [@holmeshuber2019].
 
 ::: {.callout-note title="Key idea"}
 PCA reports the largest variation in whatever matrix it receives. Preprocessing decides which differences count, and the experimental design decides whether technical and biological differences can be told apart; adjustment cannot supply a comparison the design never made.

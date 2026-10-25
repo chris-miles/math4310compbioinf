@@ -73,11 +73,13 @@ The grid represents every allowed correspondence, but the biological comparison 
 $$
 \operatorname{score}(\mathcal A)=\sum_{\ell=1}^{L}c(u_\ell,v_\ell).
 $$
-We seek an alignment attaining $\max_{\mathcal A}\operatorname{score}(\mathcal A)$, where the maximum runs over every alignment $\mathcal A$ of $x$ and $y$, using the same three moves with these scores attached.
+We seek an alignment attaining $\max_{\mathcal A}\operatorname{score}(\mathcal A)$, where the maximum runs over every alignment $\mathcal A$ of $x$ and $y$.
 
 ::: {#def-global-alignment}
 ## Global alignment problem
-Given strings $x,y$, substitution score $s$, and linear gap score $g$, find a maximum-score alignment that uses every letter of both strings.
+**Input:** strings $x$ and $y$, a substitution score $s$, and a linear gap score $g<0$.
+
+**Output:** an alignment of $x$ and $y$, using every letter of both strings, with maximum score.
 :::
 
 ::: {#def-global-subproblem}
@@ -149,15 +151,21 @@ Every continuation from a cell adds the same score to all paths that reach it, s
 
 ::: {#thm-global-correctness}
 ## Correctness of the global-alignment recurrence
-For every $0\le i\le n$ and $0\le j\le m$, $F(i,j)$ equals the maximum score among all global alignments of $x_1\cdots x_i$ and $y_1\cdots y_j$.
+The optimal prefix scores $F(i,j)$ of @def-global-subproblem take the boundary values above and, for $i,j\geq1$, satisfy @eq-global-recurrence. Filling the table in row order with these rules therefore computes every $F(i,j)$, including the answer $F(n,m)$.
 :::
 
 ::: {.proof}
-We use induction on $i+j$. The claim holds on the boundaries because there is only one alignment of a nonempty prefix with an empty string: every letter is paired with a gap.
+On a boundary, a nonempty prefix has only one alignment with an empty string, every letter opposite a gap, so $F(i,0)=ig$ and $F(0,j)=jg$.
 
-For $i,j>0$, take an optimal alignment $\mathcal A$. Its final column is $x_i/y_j$, $x_i/-$, or $-/y_j$. Removing that column leaves a valid alignment for the corresponding predecessor cell. It must be optimal for those prefixes. Otherwise, replacing it with a better prefix alignment would improve $\mathcal A$, a contradiction. Thus $\mathcal A$ has the score of one candidate in the recurrence, so the optimum is no larger than the table maximum.
-
-Conversely, append the appropriate final column to an optimal alignment from each predecessor. Each candidate is attained by a valid alignment. Their maximum is therefore attainable and cannot be larger than the optimum. Together with the preceding inequality, this proves equality.
+For $i,j\geq1$, let $R(i,j)$ be the maximum on the right side of @eq-global-recurrence. Take an optimal alignment $\mathcal A$ of the two prefixes. Its final column is one of the three kinds in @def-alignment-path, with score $c$, and removing it leaves an alignment $\mathcal A'$ of the prefixes at the matching predecessor $(i',j')$. That shorter alignment must be optimal, or replacing it with a better one would improve $\mathcal A$. Hence
+$$
+F(i,j)=\operatorname{score}(\mathcal A')+c=F(i',j')+c\leq R(i,j).
+$$
+Conversely, each candidate in $R(i,j)$ is the score of an actual alignment of the two prefixes, an optimal predecessor alignment with the indicated column appended, so
+$$
+R(i,j)\leq F(i,j).
+$$
+Thus $F(i,j)=R(i,j)$. Row order computes every predecessor before the cell that reads it, so by induction each table entry equals $F(i,j)$.
 :::
 
 The proof uses two facts: the final-column cases are exhaustive, and an optimal solution cannot contain a suboptimal prefix. The second fact is called *optimal substructure*.
@@ -166,7 +174,7 @@ The proof uses two facts: the final-column cases are exhaustive, and an optimal 
 
 Use $x=\texttt{ACGT}$, $y=\texttt{AGT}$, match $+1$, mismatch $-1$, and gap $-2$. On a uniform background, match $+1$ and mismatch $-1$ are log-odds scores for related sequences about 75% identical; the gap score $-2$ is a separate modeling choice. The recurrence works for any additive scores.
 
-The earlier path placed C opposite a gap. The table must decide whether that choice beats pairing C with G and repairing the correspondence later. Each prefix gets its own optimum; a choice that wins for AC/AG may lose in the complete comparison.
+The earlier path placed C opposite a gap, which costs more at that step than pairing C with G. A greedy rule that always appends the best-scoring next column takes the cheaper step and pays later: it pairs C/G and then G/T for $-1$ each and must end with T opposite a gap, so ACGT/AGT- scores $1-1-1-2=-3$. A tourist on a street grid who always picks the more interesting next block can miss the best route in the same way [@compeau2015]. The table instead keeps an optimum for each prefix pair; a choice that wins for AC/AG may lose in the complete comparison.
 
 ::: {#exm-global-cell}
 ## Computing one cell
@@ -245,15 +253,13 @@ $$
 \texttt{A-GT}
 \end{array}
 $$
-with score $1-2+1+1=1=F(4,3)$.
-
-::: {#prp-traceback-score}
-## Traceback preserves the table score
-Any path that follows maximizing backpointers from $(n,m)$ to $(0,0)$ produces an alignment with score $F(n,m)$.
-:::
+with score $1-2+1+1=1=F(4,3)$. In general, any path that follows maximizing backpointers from $(n,m)$ to $(0,0)$ produces an alignment with score $F(n,m)$.
 
 ::: {.proof}
-Each pointer satisfies $F(i,j)=F(i',j')+c$, where $(i',j')$ is its predecessor and $c$ is the emitted column score. Summing along the path cancels the intermediate table values, leaving $F(n,m)=F(0,0)+\sum c=\sum c$.
+Sketch. Write $v_L=(n,m),v_{L-1},\ldots,v_0=(0,0)$ for the cells on the path and $c_\ell$ for the score of the column emitted on the move from $v_\ell$ to $v_{\ell-1}$. Each backpointer satisfies $F(v_\ell)=F(v_{\ell-1})+c_\ell$, so the intermediate table values cancel:
+$$
+F(n,m)=c_L+F(v_{L-1})=c_L+c_{L-1}+F(v_{L-2})=\cdots=\sum_{\ell=1}^{L}c_\ell+F(0,0)=\sum_{\ell=1}^{L}c_\ell.
+$$
 :::
 
 ### Traceback by hand
@@ -266,13 +272,15 @@ Every move decreases $i$, $j$, or both, so the process reaches $(0,0)$ after at 
 
 For AA against A, either AA/A- or AA/-A scores $1-2=-1$. Both placements are optimal: the scores do not identify which A corresponds to the shorter record. A *tie policy* chooses a maximizing predecessor when candidates agree, for example preferring diagonal, then vertical, then horizontal moves. It prints one optimal alignment without establishing uniqueness.
 
-::: {#prp-global-fill-cost}
-## Cost of filling the table
-Here $\mathcal O(nm)$ means that work or storage grows at most proportionally to the product of the sequence lengths, apart from a fixed constant. For $n,m\geq1$ and constant-time score lookup and arithmetic, the score table takes $\mathcal O(nm)$ time and $\mathcal O(nm)$ memory.
-:::
+### Cost of the table
+
+Here $\mathcal O(nm)$ means that work or storage grows at most proportionally to the product of the sequence lengths, apart from a fixed constant. For $n,m\geq1$ and constant-time score lookup and arithmetic, filling the score table takes $\mathcal O(nm)$ time and $\mathcal O(nm)$ memory.
 
 ::: {.proof}
-There are $(n+1)(m+1)$ cells. Each interior cell evaluates three candidates, and each boundary cell is set once.
+Sketch. There are $(n+1)(m+1)$ cells; each interior cell compares three candidates and each boundary cell is set once. Since $n+1\leq2n$ and $m+1\leq2m$,
+$$
+\text{work}\leq3\,(n+1)(m+1)\leq12\,nm .
+$$
 :::
 
 Each entry reads only the previous row and the current row. If only the score is needed, keeping these two rows reduces storage to $\mathcal O(m)$; reconstructing an alignment also requires retaining or recomputing the choices.
@@ -290,7 +298,7 @@ E(i-1,j)+1,\\
 E(i,j-1)+1.
 \end{cases}
 $$
-Here $[x_i\ne y_j]$ is 1 when the letters differ and 0 when they match. The boundaries are $E(i,0)=i$ and $E(0,j)=j$. Because edit distance is the minimum cost over alignments, $E(n,m)=d_E(x,y)$ by @prp-edit-alignment.
+Here $[x_i\ne y_j]$ is 1 when the letters differ and 0 when they match. The boundaries are $E(i,0)=i$ and $E(0,j)=j$. Because edit distance is the minimum cost over alignments, $E(n,m)=d_E(x,y)$ by @thm-edit-alignment.
 
 ::: {#exm-score-cost}
 ## Two conventions, one path
@@ -424,12 +432,7 @@ $$
 \end{array}
 $$
 
-::: {#def-tie-policy}
-## Tie policy
-A *tie policy* is a deterministic rule for choosing among maximizing predecessors. It selects an optimum but does not make that optimum unique.
-:::
-
-Enumerating all optimal alignments can take exponential time because there can be exponentially many tied paths.
+A tie policy, a deterministic rule for choosing among maximizing predecessors, prints one of these optima but does not make it unique. Enumerating all optimal alignments can take exponential time because there can be exponentially many tied paths.
 
 ### Sensitivity to score parameters
 
@@ -450,7 +453,14 @@ $$
 C(i,j)=\sum_{(i',j')\in\operatorname{Pred}^*(i,j)}C(i',j'),\qquad
 C(i,0)=C(0,j)=1.
 $$
-The boundary rule includes $C(0,0)=1$, counting the empty alignment. Each optimal path has one final predecessor, so the sum counts tied paths without double counting.
+The boundary rule includes $C(0,0)=1$, counting the empty alignment. By induction on $i+j$, $C(i,j)$ is exactly the number of optimal paths to $(i,j)$.
+
+::: {.proof}
+Sketch. An optimal path to $(i,j)$ arrives from one maximizing predecessor, and its part up to that predecessor is optimal there. Conversely, extending any optimal path to a maximizing predecessor by the final move gives an optimal path to $(i,j)$. Grouping paths by their final predecessor gives disjoint groups, so
+$$
+\#\{\text{optimal paths to }(i,j)\}=\sum_{(i',j')\in\operatorname{Pred}^*(i,j)}\#\{\text{optimal paths to }(i',j')\}=\sum_{(i',j')\in\operatorname{Pred}^*(i,j)}C(i',j').
+$$
+:::
 
 For AA against A with match $+1$ and gap $-2$, the score is $-1$ and the count is 2: AA/A- and AA/-A. The count tells us how many optimal paths exist, while the pointer graph shows where they diverge.
 
@@ -475,25 +485,14 @@ cf.dp_table(
 plt.show()
 ```
 
-These two alignments disagree about which A in the longer string corresponds to the A in the shorter one, and the supplied scores cannot distinguish them.
-
-::: {#prp-count-optima}
-## Counting optimal paths
-If $C(i,j)$ sums the counts of exactly those predecessors that attain $F(i,j)$, then $C(i,j)$ equals the number of optimal alignment paths to $(i,j)$.
-:::
-
-::: {.proof}
-Induct on $i+j$. Every optimal path reaches $(i,j)$ through one maximizing predecessor, and appending that final move to every optimal predecessor path produces every optimal path to $(i,j)$. Distinct final moves make the groups disjoint.
-:::
-
-Reporting a single traceback can hide this ambiguity. A large count means many correspondences attain the same optimum; additional biological evidence or a different scoring model would be needed to distinguish them.
+These two alignments disagree about which A in the longer string corresponds to the A in the shorter one, and the supplied scores cannot distinguish them. Reporting a single traceback can hide this ambiguity. A large count means many correspondences attain the same optimum; additional biological evidence or a different scoring model would be needed to distinguish them.
 
 ::: {#exr-traceback-bug}
 Change the traceback condition from "or" to "and". Predict the output for AA against A, then explain why its printed alignment cannot have the reported score.
 :::
 
 ::: {#exr-correctness-template}
-Suppose diagonal moves are forbidden. Write the recurrence and adapt the proof of @thm-global-correctness. Which sentence changes?
+Suppose diagonal moves are forbidden. Write the recurrence and adapt the proof of @thm-global-correctness. Which step changes?
 :::
 
 ::::

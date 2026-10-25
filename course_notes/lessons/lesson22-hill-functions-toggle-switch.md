@@ -61,7 +61,16 @@ axes[-1].set_xlabel("GFP fluorescence (a.u., log scale)")
 plt.show()
 ```
 
-The middle histogram is the memory: the input is gone, yet the culture has not returned to the top histogram. The bottom one shows cells under a single condition occupying one of two states. As a mathematical problem, the input is the regulatory wiring, written as a model $\dot{\mathbf{x}}=f(\mathbf{x})$ for the protein concentrations. The output is its steady states, which of them attract nearby states, and the parameter conditions under which two do. An attracting steady state is a candidate persistent cell state, and the boundary between their attraction regions is the threshold a transient input must push a cell across.
+The middle histogram is the memory: the input is gone, yet the culture has not returned to the top histogram. The bottom one shows cells under a single condition occupying one of two states. The question for a model is which regulatory wiring produces this behavior.
+
+::: {#def-circuit-steady-states}
+## Steady states of a regulatory circuit
+**Input:** a model $\dot{\mathbf{x}}=f(\mathbf{x})$ for the protein concentrations, written from the regulatory wiring.
+
+**Output:** its steady states, which of them attract nearby states, and the parameter values for which two of them do.
+:::
+
+An attracting steady state is a candidate persistent cell state, and the boundary between their attraction regions is the threshold a transient input must push a cell across.
 
 ## Hill functions: how a repressor sets production
 
@@ -104,7 +113,7 @@ Compare a fourfold change in repressor, from $r=K/2$ to $r=2K$ (@fig-switch-hill
 
 ## One gene that activates itself
 
-Feedback already creates several steady states with one gene; the simplest case is a protein that activates its own promoter. With Hill coefficient $n=2$ and linear removal as in Lesson 21,
+Feedback can create several steady states even with one gene; the simplest case is a protein that activates its own promoter. With Hill coefficient $n=2$ and linear removal as in Lesson 21,
 $$
 \dot x=\beta\,\frac{(x/K)^2}{1+(x/K)^2}-\alpha x .
 $$
@@ -128,15 +137,16 @@ $$
 At $x=1$, between the second and third crossings, $f(1)=3/2-1=0.5>0$, so concentration rises toward $2.618$. At $x=0.2$, $f(0.2)=0.12/1.04-0.2\approx-0.085<0$, so concentration falls toward $0$.
 :::
 
-A precise test of which steady states attract uses the slope of $f$, extending Lesson 21's deviation argument to a nonlinear rate.
-
-::: {#prp-slope-stability}
-## Stability from the slope
-Let $f$ be differentiable with $f(x^*)=0$. If $f'(x^*)<0$, small deviations from $x^*$ decay and $x^*$ is *stable*. If $f'(x^*)>0$, small deviations grow and $x^*$ is *unstable*.
-:::
+A precise test of which steady states attract uses the slope of $f$, extending Lesson 21's deviation argument to a nonlinear rate. Let $f$ be differentiable with $f(x^*)=0$. If $f'(x^*)<0$, small deviations from $x^*$ decay and $x^*$ is *stable*; if $f'(x^*)>0$, small deviations grow and $x^*$ is *unstable*.
 
 ::: {.proof}
-Sketch. Write $e=x-x^*$ for the deviation. Because $f(x^*)=0$, the tangent-line approximation gives $\dot e=f(x^*+e)\approx f'(x^*)\,e$. This is Lesson 21's linear equation with $-\alpha$ replaced by $f'(x^*)$, so $e(t)\approx e(0)\,e^{f'(x^*)t}$. The deviation decays when the exponent is negative and grows when it is positive; the approximation needs only $e$ small.
+Sketch. Write $e=x-x^*$ for the deviation. Because $f(x^*)=0$, the tangent-line approximation gives
+$$
+\dot e=f(x^*+e)\approx f(x^*)+f'(x^*)\,e=f'(x^*)\,e,
+\qquad\text{so}\qquad
+e(t)\approx e(0)\,e^{f'(x^*)\,t}.
+$$
+This is Lesson 21's decay equation with $-\alpha$ replaced by $f'(x^*)$. The deviation decays when the exponent is negative and grows when it is positive, as long as $e$ stays small enough for the tangent line to be accurate.
 :::
 
 Here $f'(x)=6x/(1+x^2)^2-1$. At $0$ the slope is $-1$; at $0.382$ it is $+0.745$; at $2.618$ it is $-0.745$. The off state and the on state are stable, and the middle crossing is unstable. The unstable state is the threshold: below it removal wins, above it production wins (@fig-switch-self-activation, panel A).
@@ -236,7 +246,7 @@ $$
 and its mirror image $(0.382,2.618)$. In the first, protein 1 is high and holds protein 2 low; in the second, the roles are reversed.
 :::
 
-To decide which of the three steady states attract, we extend @prp-slope-stability to two variables. Near a steady state $(u^*,v^*)$, write the deviation as $\mathbf e=(u-u^*,\,v-v^*)$. Replacing each rate by its tangent-plane approximation gives the linear system $\dot{\mathbf e}\approx J\mathbf e$, where $J$ is the *Jacobian*, the matrix of partial derivatives of the two rates:
+To decide which of the three steady states attract, we extend the slope test to two variables. Near a steady state $(u^*,v^*)$, write the deviation as $\mathbf e=(u-u^*,\,v-v^*)$. Replacing each rate by its tangent-plane approximation gives the linear system $\dot{\mathbf e}\approx J\mathbf e$, where $J$ is the *Jacobian*, the matrix of partial derivatives of the two rates:
 $$
 J=\begin{pmatrix}\partial\dot u/\partial u & \partial\dot u/\partial v\\ \partial\dot v/\partial u & \partial\dot v/\partial v\end{pmatrix}
 =\begin{pmatrix}-1 & H'(v^*)\\ H'(u^*) & -1\end{pmatrix}.
@@ -314,7 +324,7 @@ With $u$ as LacI and $v$ as the λ repressor, an IPTG pulse lets $v$ rise until 
 
 Drawing two inhibitory arrows does not guarantee a switch: with $n=1$ and the same $a=3$, the nullclines cross only once (@fig-switch-toggle-phase-plane, panel B). In the cases we can settle by hand, the switch appears exactly when the symmetric state becomes a saddle, which requires the slope of the repression function there to exceed one in magnitude.
 
-::: {#prp-toggle-bistability}
+::: {#thm-toggle-bistability}
 ## Cooperativity is needed for the symmetric toggle
 Consider @eq-toggle with $a>0$.
 
@@ -323,7 +333,11 @@ Consider @eq-toggle with $a>0$.
 :::
 
 :::: {.callout-note collapse="true" title="Going deeper: proof of the bistability condition"}
-A symmetric state satisfies $s(1+s^n)=a$, so $a/(1+s^n)=s$ and $|H'(s)|=a\,n\,s^{n-1}/(1+s^n)^2=n\,s^n/(1+s^n)<n$; its eigenvalues are $-1\pm|H'(s)|$.
+A symmetric state satisfies $s(1+s^n)=a$, so $a/(1+s^n)=s$ and
+$$
+|H'(s)|=\frac{a\,n\,s^{n-1}}{(1+s^n)^2}=\frac{n\,s^n}{1+s^n}<n ;
+$$
+its eigenvalues are $-1\pm|H'(s)|$.
 
 For $n=1$, the steady-state equations are $u(1+v)=a$ and $v(1+u)=a$. Subtracting gives $u-v=0$, so every steady state is symmetric, and $s+s^2=a$ has one positive root. There $|H'(s)|<1$, so both eigenvalues are negative.
 
@@ -331,10 +345,14 @@ For $n=2$, the subtraction in @exm-toggle-steady-states works for any $a$: asymm
 $$
 H'(u)H'(v)=\frac{4a^2uv}{(1+u^2)^2(1+v^2)^2}=\frac{4a^2uv\cdot u^2v^2}{a^4}=\frac{4}{a^2},
 $$
-using $uv=1$. The eigenvalues $-1\pm2/a$ are negative when $a>2$. At the symmetric state, $|H'(s)|=2s^2/(1+s^2)$ exceeds one exactly when $s>1$, which, because $s+s^3$ increases with $s$, means $a=s+s^3>2$. For $a\le2$, the symmetric state is the only steady state, and it is stable for $a<2$.
-:::
+using $uv=1$. The eigenvalues $-1\pm2/a$ are negative when $a>2$. At the symmetric state, because $s+s^3$ increases with $s$,
+$$
+|H'(s)|=\frac{2s^2}{1+s^2}>1\iff s>1\iff a=s+s^3>2 .
+$$
+For $a\le2$, the symmetric state is the only steady state, and it is stable for $a<2$.
+::::
 
-The bound $|H'(s)|<n$ is the heart of the matter: the Hill coefficient caps how steep repression can be at the balance point, and with $n=1$ a larger $a$ moves the single steady state without ever splitting it. With $n=2$, the condition $a=\beta/(\alpha K)>2$ says that each gene at full production must accumulate well above the threshold at which it represses its partner.
+The bound $|H'(s)|<n$ shows why cooperativity is needed: the Hill coefficient caps how steep repression can be at the balance point, and with $n=1$ a larger $a$ moves the single steady state without ever splitting it. With $n=2$, the condition $a=\beta/(\alpha K)>2$ says that each gene at full production must accumulate well above the threshold at which it represses its partner.
 
 ## What the switch model explains, and what it leaves out
 

@@ -3,7 +3,7 @@ published: true
 title: "Gene Expression and PCA"
 subtitle: "Lesson 15 · 2027-03-17 · Week 10"
 nocite: |
-  @holmeshuber2019
+  @holmeshuber2019, @compeau2015
 ---
 
 ## Core question
@@ -27,7 +27,9 @@ cf.use_style()
 
 Lessons 13 and 14 used inherited DNA differences to infer ancestry. Within one organism that comparison finds almost nothing: the cells of one person carry essentially the same genome, yet a T cell that has never met an infection behaves very differently from one that is killing infected cells. Much of the difference lies in which genes each cell uses. Cells copy portions of DNA into RNA molecules called *transcripts*; the abundance of a gene's transcripts, its *expression*, differs across cell types and after treatments. Studies of immune memory have sorted T cells into naive, memory, and effector populations and measured the expression of thousands of genes in each sample [@holmeshuber2019, sec. 7.2].
 
-@fig-expression-heatmap shows what such data look like, with synthetic values for twelve named genes, invented to mimic the known pattern rather than measured: one row per sample, one column per gene, and color for the log-scale level. We want to know which samples resemble each other and which genes make them alike. Here the eye can answer. CCR7 and SELL, which help naive T cells enter lymph nodes, are bright in the naive rows and dim in the effector rows; GZMB and PRF1, which encode the granzyme and perforin that effector cells use to kill, show the reverse; memory samples mostly sit in between. Because whole groups of genes rise and fall together, one contrast describes most of the picture. A real experiment measures about 20,000 genes, far too many columns to scan, so we want a few coordinates per sample that retain most of the measured variation, together with gene weights saying which genes produce it.
+@fig-expression-heatmap shows what such data look like, with synthetic values for twelve named genes: one row per sample, one column per gene, and color for the log-scale level. We want to know which samples resemble each other and which genes make them alike. Here the eye can answer. CCR7 and SELL, which help naive T cells enter lymph nodes, are bright in the naive rows and dim in the effector rows; GZMB and PRF1, which encode the granzyme and perforin that effector cells use to kill, show the reverse; memory samples mostly sit in between. Because whole groups of genes rise and fall together, one contrast describes most of the picture.
+
+The same coordination appeared in one of the first genome-wide expression experiments, in which yeast cultures were sampled at seven times as they ran out of glucose and switched to consuming the ethanol they had made; only a few hundred of the roughly 6,400 genes changed appreciably, and those moved together in a few shared patterns [@derisi1997; @compeau2015]. Genes that move together are often controlled by the same regulators, so a shared pattern can point to a coordinated cellular program and suggest roles for uncharacterized genes. A real experiment measures about 20,000 genes, far too many columns to scan, so we want a few coordinates per sample that retain most of the measured variation, together with gene weights saying which genes produce it.
 
 ```{.python .execute}
 #| label: fig-expression-heatmap
@@ -78,9 +80,9 @@ cf.read_assignment(ax, gene_segments, read_records, assigned_genes)
 plt.show()
 ```
 
-We use **samples as rows and genes as columns**, as in @fig-expression-heatmap; many RNA-seq files use the opposite orientation, so check the row and column names before transposing. Raw counts depend on *sequencing depth*, the number of reads recorded per sample, and genes differ enormously in scale, so counts are first normalized and log-transformed. Here we hold those steps fixed to understand the mathematical summary. The input is an explicitly supplied, transformed numerical matrix $X\in\mathbb R^{n\times p}$, with $n\ge2$ samples and $p$ genes, like the log-scale values in the heat map.
+We use **samples as rows and genes as columns**, as in @fig-expression-heatmap; many RNA-seq files use the opposite orientation, so check the row and column names before transposing. Raw counts depend on *sequencing depth*, the number of reads recorded per sample, and genes differ enormously in scale, so counts are first normalized and log-transformed. Here we hold those steps fixed to understand the mathematical summary. The input is a transformed numerical matrix $X\in\mathbb R^{n\times p}$, with $n\ge2$ samples and $p$ genes, like the log-scale values in the heat map.
 
-Because groups of genes move together, a weighted combination of genes can describe a sample contrast better than any single gene. *Principal component analysis* (PCA) constructs sample coordinates from such weighted combinations. We first need to specify what those weights should preserve, so the mathematical summary answers the question about coordinated variation.
+Because groups of genes move together, a weighted combination of genes can describe a sample contrast better than any single gene. *Principal component analysis* (PCA) builds sample coordinates from such combinations, choosing the weights to preserve as much of the samples' spread as possible.
 
 ## Centering and a direction in gene space
 
@@ -100,15 +102,17 @@ The gene weights $v$ are *loadings*; the sample coordinates $t$ are *scores*. Fo
 
 ::: {#def-pca-first-direction}
 ## First principal component
-The first PCA loading direction solves
+**Input:** a centered matrix $Z\in\mathbb R^{n\times p}$, one row per sample and one column per gene.
+
+**Output:** a loading direction
 $$
 v_1\in\operatorname*{argmax}_{\|v\|_2=1}
-\frac{\|Zv\|_2^2}{n-1}.
+\frac{\|Zv\|_2^2}{n-1}
 $$
-The corresponding scores are $t_1=Zv_1$. The objective is their sample variance: because the scores have mean zero, it is their sum of squared values divided by $n-1$.
+and its scores $t_1=Zv_1$.
 :::
 
-The unit-length constraint is essential: multiplying $v$ by ten would otherwise multiply the objective by one hundred without choosing a better direction.
+The objective is the sample variance of the scores: because they have mean zero, it is their sum of squared values divided by $n-1$. The unit-length constraint is essential: multiplying $v$ by ten would otherwise multiply the objective by one hundred without choosing a better direction.
 
 ### Why large spread also gives a good reconstruction
 
@@ -345,7 +349,19 @@ This is the squared-error form of the Eckart-Young result. In our example, $r=1$
 ::: {.callout-note collapse="true" title="Going deeper: why no other rank-r matrix fits better"}
 
 ::: {.proof}
-Sketch. The rows of any rank-at-most-$r$ approximation $A$ lie in some subspace $W$ of dimension at most $r$. Projecting each row of $Z$ orthogonally onto $W$ is at least as close as its proposed row in $A$. Choose an orthonormal basis $w_1,\ldots,w_r$ for $W$, padding $W$ if necessary. Its retained squared spread is $\sum_k\|Zw_k\|^2$. Extend $d_j=0$ for $j>q$. In a full orthonormal eigenbasis $v_1,\ldots,v_p$ of $Z^\top Z$, the retained spread equals $\sum_j d_j^2\beta_j$, where $\beta_j=\sum_{k=1}^r(v_j^\top w_k)^2$. Each $\beta_j$ is the squared length of the projection of a unit eigenvector onto $W$, so $0\le\beta_j\le1$; summing over the full eigenbasis gives $\sum_j\beta_j=r$. The largest possible sum puts weight one on the $r$ largest squared singular values. The leading right singular vectors attain that bound. The projection identity then gives the displayed minimum and residual.
+Sketch. The rows of any rank-at-most-$r$ approximation $A$ lie in a subspace $W$ of dimension at most $r$; pad it to dimension $r$ and choose an orthonormal basis $w_1,\ldots,w_r$. Projecting each row of $Z$ onto $W$ is at least as close as the row proposed by $A$, so by Pythagoras it suffices to maximize the retained spread. In a full orthonormal eigenbasis $v_1,\ldots,v_p$ of $Z^\top Z$, with $d_j=0$ for $j>q$,
+$$
+\sum_{k=1}^r\|Zw_k\|^2=\sum_{j=1}^p d_j^2\beta_j,
+\qquad
+\beta_j=\sum_{k=1}^r(v_j^\top w_k)^2 .
+$$
+Each $\beta_j$ is the squared length of the projection of the unit vector $v_j$ onto $W$, and the $\beta_j$ add up to the dimension of $W$:
+$$
+0\le\beta_j\le1,
+\qquad
+\sum_{j=1}^p\beta_j=r .
+$$
+With such weights the sum is largest when weight one falls on the $r$ largest squared singular values, giving $\sum_{j\le r}d_j^2$, and $W$ spanned by $v_1,\ldots,v_r$ attains it. The error is then $\|Z\|_F^2-\sum_{j\le r}d_j^2=\sum_{j>r}d_j^2$.
 :::
 
 Adding the means back yields $X_r=Z_r+\mathbf1\bar x^\top$. The rank guarantee concerns the centered variation $Z$, not necessarily this matrix with its baseline restored.
@@ -369,11 +385,11 @@ print("PC1 loadings:", np.round(t_cell_loadings, 2))
 print("PC1 scores:", np.round(centered @ t_cell_loadings, 1))
 ```
 
-One component retains about 97% of the squared spread. Its loadings, listed in the heat map's gene order, are negative for the five naive-cell genes, positive for the five effector genes, and near zero for ACTB and GAPDH. The scores place the naive samples near $-10$, the memory samples near $-2$, and the effector samples near $+12$: a single coordinate orders the samples and the loadings name the genes responsible.
+One component retains about 97% of the squared spread. Its loadings, listed in the heat map's gene order, are negative for the five naive-cell genes, positive for the five effector genes, and near zero for ACTB and GAPDH. The scores place the naive samples near $-10$, the memory samples near $-2$, and the effector samples near $+12$: a single coordinate orders the samples and the loadings name the genes that produce it.
 
-The optimality guarantees concern the matrix supplied to PCA. Without centering, the squared spread includes the common mean profile. Rescaling genes changes which differences count most. Lesson 16 examines these choices, sequencing depth, and sample metadata.
+The optimality guarantees concern the matrix supplied to PCA: without centering, the squared spread includes the common mean profile, and rescaling genes changes which differences count most. Lesson 16 examines these choices along with sequencing depth and sample metadata.
 
-PCA retains directions with large squared spread; a technical batch or an outlier can supply that spread. A high loading identifies a gene contributing to a direction on the chosen scale, without establishing a causal role. The biological inference comes from relating these gene patterns and sample coordinates to the experiment.
+PCA retains directions with large squared spread; a technical batch or an outlier can supply that spread. Genes with large loadings of the same sign move together across these samples, which makes them candidates for a shared regulatory program, although the loadings alone show neither that they share one nor that they cause the contrast. The biological inference comes from relating these gene patterns and sample coordinates to the experiment.
 
 ## Exercises
 

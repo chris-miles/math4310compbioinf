@@ -27,7 +27,7 @@ cf.use_style()
 
 ## The decoding problem
 
-An assembled DNA sequence supplies letters and positions, but no island labels. Suppose the observed stretch is `CGAC`. Under the model from Lesson 10, one possible annotation puts its first two bases in an island and the last two in background; another puts all four in an island. Which complete annotation is better supported? Deciding each label from its base alone would ignore the model's preference for regions that continue across neighboring positions, so we must compare whole paths, including the changes of region that each one requires. The winning path gives one label per base, and consecutive equal labels combine into intervals on a genome map.
+An assembled DNA sequence supplies letters and positions, but no island labels. Suppose the observed stretch is `CGAC`. Under the model from Lesson 10, one possible annotation puts its first two bases in an island and the last two in background; another puts all four in an island. Either region can produce any base, so no annotation is certain, but we can ask which one is most probable under the model [@compeau2015]. Deciding each label from its base alone would ignore the model's preference for regions that continue across neighboring positions, so we must compare whole paths, including the changes of region that each one requires.
 
 We retain the model from Lesson 10: observations are $S$ for C or G and $W$ for A or T, so `CGAC` becomes $x=\texttt{SSWS}$, and hidden labels are background $B$ and island-like $I$, so $Q=\{B,I\}$ and $K=2$. *Viterbi decoding* chooses the most probable complete path, balancing emissions against state transitions, and computes it with the same kind of table-filling dynamic program that found optimal alignments. Its output is an annotation under this model, not a confidence value for each base.
 
@@ -45,8 +45,10 @@ $$
 Given only $x$, decoding chooses the path with the largest such product.
 
 ::: {#def-viterbi-decoding}
-## Viterbi decoding
-For an HMM and observed sequence $x=x_1\ldots x_n$ with $P(x)>0$, the *Viterbi path* is
+## Decoding problem
+**Input:** an HMM with states $Q$ and parameters $p$, $A$, $E$, and an observed sequence $x=x_1\ldots x_n$ with $P(x)>0$.
+
+**Output:** a most probable hidden path, the *Viterbi path*
 $$
 \pi^*=\underset{\pi\in Q^n}{\operatorname{argmax}}\ P(x,\pi).
 $$
@@ -56,7 +58,7 @@ Because $P(x)$ is fixed once $x$ is observed, this also maximizes $P(\pi\mid x)=
 
 ## Best prefixes
 
-Decoding is an alignment problem in a new setting. Draw a grid, called a *trellis*, with one row per state and one column per position. A hidden path picks one node in each column, so it is a left-to-right route through the grid, just as a global alignment was a route through the alignment table $F(i,j)$. Taking logarithms turns the path probability into a sum of node and edge scores:
+Decoding is an alignment problem in a new setting. Draw a grid, called a *trellis*, with one row per state and one column per position. A hidden path picks one node in each column, so it is a left-to-right route through the grid, just as a global alignment was a route through the alignment table $F(i,j)$. The wiring differs: an alignment cell had three predecessors, one for each kind of final column, whereas every trellis node is joined to every node in the previous column, because any region can follow any other [@compeau2015]. Taking logarithms turns the path probability into a sum of node and edge scores:
 $$
 \ln P(x,\pi)=
 \underbrace{\ln p_{\pi_1}+\ln e_{\pi_1}(x_1)}_{\text{first node}}
@@ -145,7 +147,7 @@ $$
 so $\pi^*=\texttt{IIBB}$. Direct multiplication gives $P(\texttt{SSWS},\texttt{IIBB})=0.0129024$.
 :::
 
-The last S is assigned to background even though $e_I(S)>e_B(S)$. Comparing the complete histories favors IIBB over IIII. The next example shows why retaining both ending states is essential.
+The last S is assigned to background even though $e_I(S)>e_B(S)$. Comparing the complete histories favors IIBB over IIII.
 
 ```{.python .execute}
 #| label: fig-viterbi-trellis
@@ -299,7 +301,7 @@ path, math.exp(log_probability)
 ```
 
 
-The trellis above shows ordinary probabilities for the hand calculation. In code, a zero probability becomes $-\infty$: adding it makes that candidate impossible, and a finite candidate always beats it. If every final score is $-\infty$, the model gives the observed sequence probability zero; returning an arbitrary path would conceal this failure.
+@fig-viterbi-trellis shows ordinary probabilities for the hand calculation. In code, a zero probability becomes $-\infty$: adding it makes that candidate impossible, and a finite candidate always beats it. If every final score is $-\infty$, the model gives the observed sequence probability zero; returning an arbitrary path would conceal this failure.
 
 ## Correctness and cost
 
@@ -313,12 +315,18 @@ Following the stored maximizing predecessors returns a path attaining this value
 :::
 
 ::: {.proof}
-Sketch. The claim holds at $i=1$ by initialization. Assume it holds at $i-1$. Every path ending at $k$ at position $i$ has some previous state $\ell$, and its probability is its prefix probability times $a_{\ell k}e_k(x_i)$. For a fixed $\ell$, replacing the prefix by the best prefix ending at $\ell$ cannot decrease the probability. Maximizing over $\ell$ therefore considers the best possible final transition. This proves the claim by induction. Backpointers record the choices that attained those maxima.
+Sketch. The claim holds at $i=1$ by initialization; assume it holds at $i-1$. Group the partial paths ending at $k$ by their previous state $\ell$. Each is a prefix ending at $\ell$ followed by the factor $a_{\ell k}e_k(x_i)$, which does not depend on the earlier states:
+$$
+\begin{aligned}
+&\max_{\pi_1\ldots\pi_{i-1}}P(x_1\ldots x_i,\pi_1\ldots\pi_{i-1},\pi_i=k)\\
+&\qquad=e_k(x_i)\max_{\ell\in Q}\Bigl[a_{\ell k}\max_{\pi_1\ldots\pi_{i-2}}P(x_1\ldots x_{i-1},\pi_1\ldots\pi_{i-2},\pi_{i-1}=\ell)\Bigr]\\
+&\qquad=e_k(x_i)\max_{\ell\in Q}\bigl[a_{\ell k}\,v_\ell(i-1)\bigr].
+\end{aligned}
+$$
+The inner maximum can move past the nonnegative factor because a better prefix ending at $\ell$ makes every continuation from $\ell$ better. The last line uses the assumption at $i-1$ and is the recurrence, so the claim holds at $i$, and by induction at $n$. Backpointers record the maximizing $\ell$ at each step.
 :::
 
-There are $nK$ table entries. Each entry considers $K$ previous states, so the time cost is $\mathcal{O}(nK^2)$. Scores for only two columns require $\mathcal{O}(K)$ space. Reconstructing the path needs $\mathcal{O}(nK)$ stored backpointers.
-
-In the language of the log-score display, the trellis is a directed acyclic graph and Viterbi finds its highest-scoring path; the proof above is the alignment table's optimal-substructure argument with states in place of alignment moves.
+There are $nK$ table entries. Each entry considers $K$ previous states, one per incoming trellis edge, so the time cost is $\mathcal{O}(nK^2)$, proportional to the $K^2(n-1)$ edges of the trellis. Scores for only two columns require $\mathcal{O}(K)$ space. Reconstructing the path needs $\mathcal{O}(nK)$ stored backpointers.
 
 ### Validation by enumeration
 
@@ -328,7 +336,6 @@ P(x,\texttt{IIBB})=0.0129024,\quad
 P(x,\texttt{IIII})=0.0110592,\quad
 P(x,\texttt{IIBI})=0.0086016.
 $$
-We can check these probabilities without using the recurrence.
 
 ::: {.algorithm}
 **Algorithm: check decoding by exhaustive paths.**

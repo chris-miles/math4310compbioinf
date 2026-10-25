@@ -3,7 +3,7 @@ published: true
 title: "Probability and Markov Chains for DNA"
 subtitle: "Lesson 8 · 2027-02-08 · Week 5"
 nocite: |
-  @durbin1998
+  @durbin1998, @compeau2015
 ---
 
 ## Core question
@@ -26,13 +26,13 @@ cf.use_style()
 
 ## Sequences as random variables
 
-Lessons 6 and 7 recovered a genome's sequence from its reads. The next question is what that sequence contains, and the first step is to say which patterns of letters chance alone would produce. Sequencing and assembly turn a genome into a long string of letters. Here are the first 60 bases of the bacteriophage phiX174 genome as stored in the [course FASTA file](../data/phix174-NC_001422.1.fasta):
+Lessons 6 and 7 recovered a genome's sequence from its reads. The next question is what that sequence contains, and the first step is to say which patterns of letters chance alone would produce. Here are the first 60 bases of the bacteriophage phiX174 genome as stored in the [course FASTA file](../data/phix174-NC_001422.1.fasta):
 
 ```text
 GAGTTTTATCGCTTCCATGACGCAGAAGTTAACACTTTCGGATATTTCTGATGAGTCGAA
 ```
 
-Adjacent letters are neighboring bases along one strand, so the file records the order of the bases as well as their counts, and that order can matter biologically. In many vertebrate genomic regions, C followed by G occurs less often than base composition alone would suggest. Chemical modification of C and its subsequent conversion to T contribute to that depletion, while some GC-rich regions, called *CpG islands*, retain more CG neighbors. CpG means C followed by G on one strand. These regions often lie near gene starts, so locating them can help identify DNA involved in controlling gene activity [@durbin1998, pp. 48–49].
+Adjacent letters are neighboring bases along one strand, so the file records the order of the bases as well as their counts, and that order can matter biologically. About 42% of the human genome is G or C, so if neighboring bases were independent, C followed by G would make up about $0.21\times0.21\approx4.4\%$ of adjacent pairs; it actually makes up about 1% [@compeau2015]. Chemical modification of C and its subsequent conversion to T contribute to that depletion, while some GC-rich regions, called *CpG islands*, retain more CG neighbors. CpG means C followed by G on one strand. These regions often lie near gene starts, so locating them can help identify DNA involved in controlling gene activity [@durbin1998, pp. 48–49].
 
 Does a region contain many CG neighbors simply because it contains many C and G bases, or does their order supply additional evidence? Consider the toy strings `ACGCG` and `AGCCG`. Each contains one A, two C bases, and two G bases, but the first has two CG pairs and the second has one. A model that uses only individual base frequencies assigns them the same probability. A model that uses the preceding base can distinguish them.
 
@@ -176,13 +176,10 @@ The chain assigns six times the iid probability because both CG transitions and 
 
 Sequence probabilities become too small for ordinary floating-point arithmetic. Even $0.25^{1000}\approx 10^{-602}$ is below the smallest positive number represented by a standard Python `float`.
 
-::: {#def-log-likelihood}
-## Log-likelihood
-The *log-likelihood* is $\ell(\theta;x)=\log P_\theta(x)$. For a Markov chain,
+The *log-likelihood* $\ell(\theta;x)=\log P_\theta(x)$ avoids the problem. For a Markov chain it is a sum,
 $$
 \log P(x)=\log q_{x_1}+\sum_{i=2}^{n}\log a_{x_{i-1}x_i}.
 $$
-:::
 
 The logarithm converts products into sums and preserves order. Base 2 reports evidence in bits; the natural logarithm is common in software. For the example, $\log_2(0.00288/0.00048)=\log_2 6\approx2.585$ bits.
 
@@ -227,37 +224,41 @@ markov_log_likelihood("ACGCG", initial, transition)
 
 ## Estimating a chain
 
-A *training sequence* is used to choose the parameters; a *held-out sequence* is set aside until those choices are finished, so it can test prediction on data the model did not fit. For a training sequence from the population being modeled, let $n_{ab}$ be the number of times base $a$ is followed by $b$. The natural estimate of $a_{ab}$ is the counting ratio from the start of the lesson: the fraction of departures from $a$ that go to $b$.
+A *training sequence* is used to choose the parameters; a *held-out sequence* is set aside until those choices are finished, so it can test prediction on data the model did not fit. For a training sequence from the population being modeled, let $n_{ab}$ be the number of times base $a$ is followed by $b$. Collecting equal transition factors in the likelihood shows that the training data enter only through these counts:
+$$
+P(x)=q_{x_1}\prod_{a,b\in\Sigma}a_{ab}^{n_{ab}},\qquad
+\log P(x)=\log q_{x_1}+\sum_{a\in\Sigma}\,\sum_{b\in\Sigma}n_{ab}\log a_{ab}.
+$$
+Each row of $A$ appears in its own inner sum, so the rows can be fitted one at a time.
 
-::: {#prp-markov-mle}
-## Maximum-likelihood transition estimates
-For every row with at least one observed transition, the maximum-likelihood estimate is
+::: {#def-chain-estimation}
+## Estimating a transition matrix
+**Input:** training DNA sequences from the population being modeled, kept as separate records.
+
+**Output:** the transition matrix $A$, each row a probability distribution, that maximizes the likelihood of the training transitions.
+:::
+
+The natural answer is the counting ratio from the start of the lesson, the fraction of departures from $a$ that go to $b$. For every row with at least one observed transition, it is the maximum-likelihood estimate:
 $$
 \widehat a_{ab}=\frac{n_{ab}}{\sum_{c\in\Sigma}n_{ac}}.
 $$
-:::
 
-:::: {.callout-note collapse="true" title="Going deeper: why normalized counts maximize likelihood"}
 ::: {.proof}
-Sketch. Consider one transition row, with $N=\sum_b n_{ab}>0$ and observed proportions $r_b=n_{ab}/N$. Let $S=\{b:n_{ab}>0\}$ be the bases actually observed after $a$. For a proposed probability row $u$ positive on $S$, the change in log-likelihood relative to $r$ is
+Sketch. Fix a row $a$ with $N=\sum_b n_{ab}>0$, observed proportions $r_b=n_{ab}/N$, and observed bases $S=\{b:n_{ab}>0\}$. Replacing $r$ by any probability row $u$ that is positive on $S$ changes that row's term in the log-likelihood by
 $$
-N\sum_{b\in S}r_b\ln(u_b/r_b)
-\le N\left(\sum_{b\in S}u_b-1\right)\le 0.
+\sum_{b\in S}n_{ab}\ln u_b-\sum_{b\in S}n_{ab}\ln r_b
+=N\sum_{b\in S}r_b\ln\frac{u_b}{r_b}
+\le N\sum_{b\in S}r_b\Bigl(\frac{u_b}{r_b}-1\Bigr)
+=N\Bigl(\sum_{b\in S}u_b-1\Bigr)\le0.
 $$
-The first inequality uses $\ln t\le t-1$ from Lesson 2; the second uses that $u$ has total probability one, possibly with some mass outside $S$. A zero proposed probability for an observed category gives likelihood zero. Thus the observed proportions maximize the row likelihood. A row with no observations is undetermined.
+The inequality uses $\ln t\le t-1$ from Lesson 2, and the last step holds because $u$ sums to one over all four bases, so its sum over $S$ is at most one. A row that assigns probability zero to an observed transition gives likelihood zero, so no row beats $r$. A row with no observations is undetermined.
 :::
-::::
 
 For `ACGCGT`, the transitions are `AC`, `CG`, `GC`, `CG`, `GT`. Both transitions out of $C$ go to $G$, so the raw estimate has $\widehat a_{CG}=1$ and zeros elsewhere in that row. A new `CA` would have probability zero. Adding one pseudocount to every cell gives $\widehat a_{CG}=(2+1)/(2+4)=0.5$ and reserves probability for unobserved transitions.
 
 ### Transition counts and sequence boundaries
 
-For a fixed initial distribution and positive transition probabilities, collect equal transition factors in the sequence likelihood:
-$$
-P(x)=q_{x_1}\prod_{a,b\in\Sigma}a_{ab}^{n_{ab}},\qquad
-\log P(x)=\log q_{x_1}+\sum_{a,b}n_{ab}\log a_{ab}.
-$$
-Two strings with the same first base and transition counts receive the same likelihood. A first-order chain retains more order information than an iid model, but still discards distinctions beyond these counts.
+By the grouped form of the likelihood, two strings with the same first base and transition counts receive the same likelihood. A first-order chain retains more order information than an iid model, but still discards distinctions beyond these counts.
 
 When fitting separate sequence records, keep their boundaries: records `ACG` and `TAC` supply AC twice, CG once, and TA once. Concatenating them invents a GT pair between unrelated endpoints. Each record also needs its own initial-base factor.
 
@@ -351,7 +352,7 @@ plt.show()
 print("R(CG): iid", round(iid_ratios["CG"], 2), "chain", round(chain_ratios["CG"], 2))
 ```
 
-In the iid sequence every ratio stays near one. In the chain, CG drops to about one half, the only pair far below one, and CC rises because it received the probability taken from G. The other ratios move by roughly ten percent, because the change makes G slightly rarer and C slightly more common overall. Since $R$ divides out composition, a GC-rich region with independent positions would still give $R(CG)$ near one; a dip means that G follows C less often than the frequencies of C and G predict. This CG-depleted chain will reappear as the background model when we classify genomic regions in the next lesson.
+In the iid sequence every ratio stays near one. In the chain, CG drops to about one half, the only pair far below one, and CC rises because it received the probability taken from G. The other ratios move by roughly ten percent, because the change makes G slightly rarer and C slightly more common overall. Since $R$ divides out composition, a GC-rich region with independent positions would still give $R(CG)$ near one; a dip means that G follows C less often than the frequencies of C and G predict. The human figures quoted at the start of the lesson give $R(CG)\approx1/4.4\approx0.23$, a deeper dip than our synthetic chain's one half. This CG-depleted chain will reappear as the background model when we classify genomic regions in the next lesson.
 
 ### Training fit and prediction
 
@@ -404,9 +405,9 @@ The columns report natural-log likelihood per base for iid and chain models:
 |---|---:|---:|
 | training `ACGCGT` | −1.339 | −1.018 |
 | held-out `AGCCGA` | −1.339 | −1.432 |
+:::
 
 Larger means more probability assigned to the observed string. The chain fits the CG-rich training string better but predicts the held-out string less well than iid, because its C row, learned from only two departures from C, gives the held-out CC pair too little probability. That is the cost of estimating sixteen probabilities from five transitions. With genomic data, we need representative training regions and separate evaluation regions to learn whether neighboring-base structure improves prediction.
-:::
 
 The first-order assumption retains transition counts but loses longer patterns, such as three-base coding units or a motif with separated important bases. The homogeneous assumption also uses one matrix everywhere. CpG islands and surrounding background require different neighboring-base models, which motivates the next lesson.
 

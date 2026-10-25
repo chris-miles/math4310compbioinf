@@ -148,9 +148,12 @@ To measure how far out a difference lies, use the two-sided statistic $S(a)=|\wi
 
 ::: {#def-permutation-p-value}
 ## Permutation p-value
-Let $a_{\mathrm{obs}}$ be the observed labeling and $S_{\mathrm{obs}}=S(a_{\mathrm{obs}})$. The exact permutation p-value is
+**Input:** one gene's measurements $x_1,\ldots,x_n$ and the observed labeling $a_{\mathrm{obs}}\in\mathcal A$.
+
+**Output:** the exact permutation p-value
 $$
-p=\frac{\#\{a\in\mathcal A:\ S(a)\ge S_{\mathrm{obs}}\}}{|\mathcal A|}.
+p=\frac{\#\{a\in\mathcal A:\ S(a)\ge S_{\mathrm{obs}}\}}{|\mathcal A|},
+\qquad S_{\mathrm{obs}}=S(a_{\mathrm{obs}}).
 $$
 :::
 
@@ -247,7 +250,7 @@ A permutation p-value ranks the observed difference among the differences produc
 
 A p-value is useful only if small values are rare when nothing is happening; a test that reported $p\le0.05$ in a third of experiments with an inactive drug would flag inactive drugs constantly. For the permutation p-value, this property follows from a counting argument.
 
-::: {#prp-permutation-calibration}
+::: {#thm-permutation-calibration}
 ## Permutation p-values are calibrated
 Suppose $H_0$ holds and the observed labeling was drawn uniformly at random from $\mathcal A$. Then for every $\alpha\in[0,1]$,
 $$
@@ -256,7 +259,15 @@ $$
 :::
 
 ::: {.proof}
-Under $H_0$ the measurements $x_1,\ldots,x_n$ do not depend on which labeling was drawn, so the list of values $S(a)$, $a\in\mathcal A$, is the same whichever labeling occurred. Define $p(a)$ as the fraction of relabelings $a'$ with $S(a')\ge S(a)$; the reported p-value is $p(a_{\mathrm{obs}})$. Let $\mathcal R=\{a\in\mathcal A: p(a)\le\alpha\}$. If $\mathcal R$ is empty there is nothing to prove. Otherwise choose $b\in\mathcal R$ with the smallest statistic. Every element of $\mathcal R$ has a statistic at least $S(b)$, so $\mathcal R$ is contained in $\{a': S(a')\ge S(b)\}$, a set with $p(b)|\mathcal A|\le\alpha|\mathcal A|$ elements. Since $a_{\mathrm{obs}}$ is uniform on $\mathcal A$,
+Under $H_0$ the measurements do not depend on which labeling was drawn, so the statistics $S(a)$, $a\in\mathcal A$, form one fixed list. The p-value that labeling $a$ would report is
+$$
+p(a)=\frac{\#\{a'\in\mathcal A:\ S(a')\ge S(a)\}}{|\mathcal A|},
+$$
+and the reported p-value is $p(a_{\mathrm{obs}})$. Collect the labelings that would report $p\le\alpha$ in $\mathcal R=\{a\in\mathcal A: p(a)\le\alpha\}$; if $\mathcal R$ is empty there is nothing to prove. Otherwise let $b\in\mathcal R$ have the smallest statistic. Every member of $\mathcal R$ has a statistic at least $S(b)$, so
+$$
+|\mathcal R|\le\#\{a':\ S(a')\ge S(b)\}=p(b)\,|\mathcal A|\le\alpha\,|\mathcal A| .
+$$
+Since $a_{\mathrm{obs}}$ is uniform on $\mathcal A$,
 $$
 P(p\le\alpha)=\frac{|\mathcal R|}{|\mathcal A|}\le\alpha.
 $$

@@ -29,7 +29,19 @@ cf.use_style()
 
 The expression matrices of the previous lessons record each sample at one collection time. Many biological questions are about timing instead: when a bacterium meets a new sugar and switches on a gene, does the protein reach a useful level before conditions change again? Answering that requires measuring the same cell repeatedly.
 
-A *fluorescent reporter* makes this possible. Biologists place the coding sequence of a fluorescent protein, such as green fluorescent protein (GFP), under the control of the promoter they want to study, so the cell makes the reporter whenever it would make the gene's own product. A microscope photographs growing cells every few minutes, and image software outlines each cell and records its mean fluorescence intensity per unit cell area. That reading tracks concentration rather than molecule number, so a division does not halve it; this is why the model below describes a concentration. One record is a cell identifier, an observation time $t_k$, and a measured intensity $y_k$ in arbitrary units. The records below are simulated to resemble such an experiment in *E. coli*. A chemical inducer switches on reporter production at time zero; images are taken every ten minutes, following one daughter after each division.
+A *fluorescent reporter* makes this possible. Biologists place the coding sequence of a fluorescent protein, such as green fluorescent protein (GFP), under the control of the promoter they want to study, so the cell makes the reporter whenever it would make the gene's own product. A microscope photographs growing cells every few minutes, and image software outlines each cell and records its mean fluorescence intensity over the cell's area. That reading tracks concentration rather than molecule number, so a division does not halve it; this is why the model below describes a concentration. One record is a cell identifier, an observation time $t_k$, and a measured intensity $y_k$ in arbitrary units. The records below are simulated to resemble such an experiment in *E. coli*. A chemical inducer switches on reporter production at time zero; images are taken every ten minutes, following one daughter after each division (@fig-regulation-reporter-setting).
+
+```{.python .execute}
+#| label: fig-regulation-reporter-setting
+#| echo: false
+#| fig-width: 5.2
+#| fig-height: 2
+#| fig-cap: "The reporter experiment. Left: inside one cell, the inducer switches on the promoter, the gfp gene is copied into mRNA and translated into fluorescent protein (red) at rate β, and protein is removed at rate αx by degradation and by dilution as the cell grows. Right: three images of one lineage, following the black-outlined daughter after each 30-minute division; a division halves each cell's protein but not its concentration. The model tracks one number per cell, the concentration x, set by the balance of production and removal."
+#| fig-alt: "Left: a rounded rod-shaped cell containing a DNA strand with a grey promoter box and a gfp gene box; a black diamond inducer from outside the cell sits on the promoter. A blue arrow leads from the gene to a wavy mRNA, a second blue arrow labeled beta leads to a cluster of red dots labeled GFP, x, and an orange arrow labeled alpha x points down to the word removed. The equation x-dot equals beta minus alpha x is below the cell. Right: cartoon cells above a time axis at 0, 30, and 60 minutes; the first has no red dots, the second is two daughters with three dots each, one outlined in black and one in grey, and the third is a cell twice as long with nine dots."
+fig, ax = plt.subplots()
+cf.reporter_setting(ax)
+plt.show()
+```
 
 ```{.python .execute}
 #| label: code-regulation-reporter-records
@@ -76,9 +88,18 @@ ax.legend(loc="lower right")
 plt.show()
 ```
 
-Two features of each trace in @fig-regulation-reporter-data carry biological meaning. The *level* at which it settles says how much protein the cell maintains, and the *response time*, for instance the time to cover half the rise, says how quickly the cell adapts. The three cells settle at different levels, yet cover half their rise at about the same time. We want a model that says which cellular process controls each feature. Measurements of an unregulated reporter in *E. coli* found a response time of about one cell generation, as this model will predict for a stable protein [@rosenfeld2002].
+Two features of each trace in @fig-regulation-reporter-data carry biological meaning. The *level* at which it settles says how much protein the cell maintains, and the *response time*, for instance the time to cover half the rise, says how quickly the cell adapts. The three cells settle at different levels, yet cover half their rise at about the same time. We want a model that says which cellular process controls each feature, and why measurements of an unregulated reporter in *E. coli* found a response time of about one cell generation [@rosenfeld2002].
 
-The intensity $y_k$ is a measurement; the model describes the protein concentration $x(t)$, which changes continuously between images. For now, assume calibration has removed the background and converted intensity to concentration, and ignore measurement error and the time a new GFP molecule needs to become fluorescent. The problem is then: given the production and removal rates and the starting concentration, predict $x(t)$ for all $t\geq0$, and find which rate controls the level and which the speed. The biological inference runs in reverse. Once the forward problem is solved, a measured trace becomes a two-number readout: the removal rate from the half-time and the production rate from the plateau.
+The intensity $y_k$ is a measurement; the model describes the protein concentration $x(t)$, which changes continuously between images. For now, assume calibration has removed the background and converted intensity to concentration, and ignore measurement error and the time a new GFP molecule needs to become fluorescent. The forward problem is then the following.
+
+::: {#def-induction-response}
+## Response to induction
+**Input:** a constant production rate, a removal rate constant, and a starting concentration $x_0$.
+
+**Output:** the concentration $x(t)$ for all $t\geq0$, with its steady level and half-time as functions of the two rates.
+:::
+
+The biological inference runs in reverse. Once the forward problem is solved, a measured trace becomes a two-number readout: the removal rate from the half-time and the production rate from the plateau.
 
 ## A balance of production and removal
 
@@ -156,7 +177,7 @@ $$
 $$
 Measured from the steady level, the deviation obeys pure decay: it shrinks at a rate proportional to its own size.
 
-::: {#prp-linear-response}
+::: {#thm-linear-response}
 ## Solution of the production-removal model
 The unique solution of @eq-production-removal is
 $$
@@ -169,7 +190,11 @@ Let $x$ be any solution and $e=x-x^*$, so $\dot e=-\alpha e$. Multiply the devia
 $$
 \frac{d}{dt}\bigl(e^{\alpha t}e(t)\bigr)=e^{\alpha t}\bigl(\dot e(t)+\alpha e(t)\bigr)=0 .
 $$
-A function with zero derivative is constant, so $e^{\alpha t}e(t)=e(0)=x_0-x^*$ for every $t$. Dividing by $e^{\alpha t}$ gives $e(t)=(x_0-x^*)e^{-\alpha t}$, which is @eq-linear-response. The argument applies to every solution, so there is only one.
+A function with zero derivative is constant, so
+$$
+e^{\alpha t}e(t)=e(0)=x_0-x^*\quad\Longrightarrow\quad e(t)=(x_0-x^*)\,e^{-\alpha t},
+$$
+which is @eq-linear-response. The argument applies to every solution, so there is only one.
 :::
 
 By @eq-linear-response, the concentration is the steady level plus whatever deviation remains. The initial deviation is multiplied by $e^{-\alpha t}$, which starts at one and decays to zero: after time $1/\alpha$, called the *relaxation time*, the factor is $e^{-1}\approx0.37$. The time at which half the deviation remains is easier to read off a trace. Setting $e^{-\alpha t_{1/2}}=1/2$ gives
@@ -267,19 +292,24 @@ Halving the step to $h=1/4$ and taking eight steps gives $x_8\approx1.800$ at $t
 
 ## When the time step is too large
 
-A large step saves work, so how large can $h$ be? Repeat the deviation argument for the Euler sequence, writing $e_k=x_k-x^*$ and using $\beta=\alpha x^*$:
-$$
-e_{k+1}=x_k+h(\alpha x^*-\alpha x_k)-x^*=(1-\alpha h)\,e_k .
-$$
-The exact solution multiplies the deviation by $e^{-\alpha h}$ over one interval of length $h$; Euler multiplies it by $\lambda=1-\alpha h$ instead. Applying the update $k$ times gives $e_k=\lambda^k e_0$. Powers $\lambda^k$ tend to zero exactly when $|\lambda|<1$, which for $\alpha h>0$ means $\alpha h<2$, and they alternate in sign exactly when $\lambda<0$, that is, when $\alpha h>1$. This proves the following.
-
-::: {#prp-euler-deviation}
-## Behavior of Euler steps for the linear model
-For the production-removal model, forward Euler gives
+A large step saves work, so how large can $h$ be? The deviation argument answers this for the Euler sequence too. For the production-removal model, forward Euler gives
 $$
 x_k=x^*+\lambda^k\,(x_0-x^*),\qquad \lambda=1-\alpha h.
 $$ {#eq-euler-closed-form}
 If $x_0\neq x^*$, the approximations converge to $x^*$ if and only if $0<\alpha h<2$, and they approach it without changing sides of $x^*$ if and only if $\alpha h\leq1$.
+
+::: {.proof}
+Sketch. Write $e_k=x_k-x^*$ and use $\beta=\alpha x^*$:
+$$
+e_{k+1}=x_k+h(\alpha x^*-\alpha x_k)-x^*=(1-\alpha h)\,e_k=\lambda e_k,
+\qquad\text{so}\qquad e_k=\lambda^k e_0 .
+$$
+The exact solution multiplies the deviation by $e^{-\alpha h}$ over one interval of length $h$; Euler multiplies it by $\lambda$ instead. The powers of $\lambda$ behave as the conditions state:
+$$
+\lambda^k\to0\iff|1-\alpha h|<1\iff0<\alpha h<2,
+\qquad
+\lambda^k\ge0\ \text{for all }k\iff\lambda\ge0\iff\alpha h\le1 .
+$$
 :::
 
 Euler's factor keeps only the first two terms of the Taylor series $e^{-\alpha h}=1-\alpha h+(\alpha h)^2/2-\cdots$, which is accurate when $\alpha h$ is small, but unlike the exact factor it can be negative when $\alpha h$ is not.

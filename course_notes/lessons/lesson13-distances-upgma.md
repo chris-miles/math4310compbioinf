@@ -26,9 +26,9 @@ cf.use_style()
 
 ## From sampled sequences to shared ancestry
 
-Lessons 9 to 12 labeled regions within one genome. We now compare the genomes of different organisms to ask how they are related. Suppose we have DNA from several organisms or viral samples and want to know which are more closely related. Their common ancestors are usually unavailable to sequence. We instead compare the descendants: sequencing gives a DNA letter string from each sample, and substitutions accumulated since their ancestors can leave different letters at corresponding positions. A *phylogeny*, or evolutionary tree, describes the inferred pattern of shared ancestry. Its branches can also represent the amount of sequence change along each lineage.
+Lessons 9 to 12 labeled regions within one genome. We now compare DNA from several organisms or viral samples to ask which are more closely related. Their common ancestors are usually unavailable to sequence. We instead compare the descendants: sequencing gives a DNA letter string from each sample, and substitutions accumulated since their ancestors can leave different letters at corresponding positions. A *phylogeny*, or evolutionary tree, describes the inferred pattern of shared ancestry. Its branches can also represent the amount of sequence change along each lineage.
 
-During the 2003 SARS outbreak, researchers asked which animal the new coronavirus had come from. They aligned sequences of the Spike protein, which the virus uses to attach to host cells, from coronaviruses found in patients and in animals; viruses from palm civets were the closest relatives of the human ones [@compeau2015]. Such a comparison can only rank the viruses that have been sampled: bat coronaviruses, sequenced later, suggested that civets may have been an intermediate host. Here we develop the distance-based inference on synthetic DNA.
+During the 2003 SARS outbreak, researchers asked which animal the new coronavirus had come from. An early guess was birds, by analogy with bird flu, but the viral genome sequenced in April 2003 ruled them out. Coronavirus genomes differ in gene content and order, so instead of aligning whole genomes, researchers aligned a single gene, encoding the Spike protein the virus uses to attach to host cells, across coronaviruses from patients and from animals; viruses from palm civets were the closest relatives of the human ones [@compeau2015]. Such a comparison can only rank the viruses that have been sampled, and later sampling of bats pointed to civets as an intermediate rather than the original host. Here we develop the distance-based inference on synthetic DNA.
 
 The sequences must be *homologous*: descended from a corresponding sequence in a common ancestor. Our input is a supplied *multiple alignment*, with one sequence per row and corresponding positions in the same columns. @fig-upgma-data shows a made-up alignment of four samples beside the kind of tree we want to infer from it.
 
@@ -110,7 +110,16 @@ We need to distinguish a branching pattern from the distances it predicts. A roo
 $$
 d_T(i,j)=\sum_{e\in P_T(i,j)}\ell_e.
 $$
-These are *additive tree distances*. Given an $n\times n$ matrix $D=(d_{ij})$, our exact reconstruction question is to find a tree with $d_T(i,j)=d_{ij}$ for every pair. Arbitrary matrices need not admit such a tree; we will establish a guarantee under a stronger assumption.
+These are *additive tree distances*. We want to reverse this computation [@compeau2015].
+
+::: {#def-distance-tree-problem}
+## Distance-based tree reconstruction
+**Input:** an $n\times n$ distance matrix $D=(d_{ij})$ for $n$ sampled sequences.
+
+**Output:** a tree $T$ with the samples as tips and nonnegative branch lengths that *fits* $D$: $d_T(i,j)=d_{ij}$ for every pair $i,j$.
+:::
+
+Arbitrary matrices need not admit a fitting tree; we will establish a guarantee under a stronger assumption.
 
 Pairwise distances alone generally do not locate the root. UPGMA adds a *molecular-clock assumption*: all lineages accumulate substitutions at the same rate, and the tips are sampled at the same time. Under this model every root-to-tip path has the same length [@durbin1998]. A node's height $h_u$ is its distance down to any descendant tip. Thus tips have height zero and an edge from parent $u$ to child $v$ has length $\ell_{uv}=h_u-h_v$.
 
@@ -138,7 +147,7 @@ A clock tree has this property. For three tips, either all share the same most r
 
 ## UPGMA: merge the closest clusters
 
-Start with one cluster per tip. After a merge, a cluster represents an inferred ancestral group. How should we measure its separation from another group? UPGMA uses the average over all original cross-cluster tip pairs:
+UPGMA builds the tree from the bottom up as if the data came from a clock tree, which lets it return a tree even when the matrix fits none exactly [@compeau2015]. Start with one cluster per tip. After a merge, a cluster represents an inferred ancestral group. How should we measure its separation from another group? UPGMA uses the average over all original cross-cluster tip pairs:
 $$
 d(C,D)=\frac{1}{|C||D|}\sum_{i\in C}\sum_{j\in D}d_{ij}.
 $$
@@ -292,15 +301,24 @@ Given an ultrametric distance matrix, UPGMA constructs a rooted tree whose tip-t
 :::
 
 ::: {.proof}
-Maintain the following invariant: for any two active clusters $C,D$, every original distance $d_{ij}$ with $i\in C,j\in D$ equals the stored cluster distance $d(C,D)$. This holds initially for singleton clusters.
-
-Suppose $C,D$ are selected at minimum distance $\delta$, and let $E$ be another active cluster. Choose tips $i\in C,j\in D,k\in E$. By the invariant,
+For active clusters $C,D$, maintain the invariant
 $$
-d_{ij}=\delta,\qquad d_{ik}=d(C,E),\qquad d_{jk}=d(D,E).
+d_{ij}=d(C,D)\qquad\text{for every }i\in C,\ j\in D,
 $$
-The last two distances are at least $\delta$. They must be equal: if one were larger, it would be the unique largest distance in this triple, contradicting ultrametricity. Hence $d(C,E)=d(D,E)$, and their weighted average equals that same value. All distances from $C\cup D$ to $E$ are therefore equal to the new stored distance. This proves the invariant by induction.
+which holds initially for singletons. Suppose $C,D$ merge at minimum distance $\delta$, and let $E$ be another active cluster. For tips $i\in C$, $j\in D$, $k\in E$, the invariant gives the triple
+$$
+d_{ij}=\delta,\qquad d_{ik}=d(C,E)\geq\delta,\qquad d_{jk}=d(D,E)\geq\delta.
+$$
+If the last two differed, the larger would be the unique largest distance in the triple, which ultrametricity forbids. Hence
+$$
+d(C\cup D,E)=\frac{|C|\,d(C,E)+|D|\,d(D,E)}{|C|+|D|}=d(C,E)=d(D,E),
+$$
+so every original distance from $C\cup D$ to $E$ equals the stored one, and the invariant survives the merge.
 
-When two tips first enter the same cluster, they are in opposite children of a merge. Their original distance is that merge's $\delta$. The new node has height $\delta/2$; branch lengths telescope from it to each tip to give $\delta/2$. Their tree path distance is thus $\delta$, as required.
+Two tips $i,j$ first share a cluster at a merge with distance $\delta=d_{ij}$. Its node has height $\delta/2$, and branch lengths telescope from it down to each tip, so
+$$
+d_T(i,j)=\frac{\delta}{2}+\frac{\delta}{2}=d_{ij}.
+$$
 :::
 
 The proof also shows when the size weights matter: on ultrametric input the two distances being averaged are equal, so every weighting gives the same tree. The weights changed a distance in @exm-upgma-four-samples only because that matrix is not ultrametric.
@@ -311,7 +329,7 @@ With $k$ active clusters, searching all pairs costs $\mathcal{O}(k^2)$ and updat
 
 ## When evolutionary rate changes the answer
 
-A small distance can reflect a recent ancestor, a slow rate, or both. Suppose the true tree separates the pair A,B from the pair C,D. Give A and C terminal branches of length 1, B and D terminal branches of length 8, and the edge connecting the pairs length 1, all in the same hundredths-of-a-substitution units. Summing along the paths gives
+A small distance can reflect a recent ancestor, a slow rate, or both. Without a clock, the smallest entry of a matrix need not pair two tips that are neighbors in the tree that produced it [@compeau2015]. Suppose the true tree separates the pair A,B from the pair C,D. Give A and C terminal branches of length 1, B and D terminal branches of length 8, and the edge connecting the pairs length 1, all in the same hundredths-of-a-substitution units. Summing along the paths gives
 
 | | A | B | C | D |
 |---|---:|---:|---:|---:|
@@ -358,9 +376,9 @@ for ax in axes:
 plt.show()
 ```
 
-The true distances still contain information about the branching pattern. For example, $d_{AB}+d_{CD}=18$, while both $d_{AC}+d_{BD}$ and $d_{AD}+d_{BC}$ equal 20: the latter paths cross the connecting edge twice. Methods for additive distances can use such relationships without imposing a clock; neighbor joining is one example and normally returns an unrooted tree [@durbin1998].
+The true distances still contain information about the branching pattern. For example, $d_{AB}+d_{CD}=18$, while both $d_{AC}+d_{BD}$ and $d_{AD}+d_{BC}$ equal 20: the latter paths cross the connecting edge twice. Methods for additive distances can use such relationships without imposing a clock; neighbor joining is one example and normally returns an unrooted tree [@durbin1998; @compeau2015].
 
-Distance summaries discard which columns supplied the differences. The next lesson keeps those characters and asks how many changes a candidate tree requires.
+In the SARS comparison, the smallest distances marked civet viruses as the closest relatives of the human ones; the unequal-rate example shows that this reading assumes no lineage evolved unusually slowly. Distance summaries also discard which columns supplied the differences. The next lesson keeps those characters and asks how many changes a candidate tree requires.
 
 ## Exercises
 

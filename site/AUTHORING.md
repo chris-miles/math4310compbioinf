@@ -51,7 +51,7 @@ The definition goes here.
 See @def-example.
 ~~~
 
-Definitions, theorems, propositions, examples, exercises, figures, and labeled equations are numbered per lecture. Keep IDs unique across the course. Unresolved references fail the build. Standard Markdown footnotes, raw HTML, fenced divs, and collapsible callouts also work.
+Definitions, theorems, examples, exercises, figures, and labeled equations are numbered per lecture. Keep IDs unique across the course. Unresolved references fail the build. Standard Markdown footnotes, raw HTML, fenced divs, and collapsible callouts also work.
 
 ## Python examples and figures
 

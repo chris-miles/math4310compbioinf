@@ -6,19 +6,15 @@ These rules govern drafting and revision by human and LLM authors. A student sho
 
 ## Audience and tone
 
-Write for upper-division undergraduates who know basic computational linear algebra and basic programming. Assume they can work with matrices and matrix multiplication; basic eigenvalue ideas may be familiar, but explain any new use. Do not reteach for loops or other elementary programming constructs. Their biology background is basic cell biology, with little or no bioinformatics. Explain the relevant biological context and data-producing technology rather than assuming familiarity with sequencing, genome annotation, expression assays, or genetic inference. A formal probability, statistics, algorithms, genetics, or optimization course is not assumed; introduce the probability and modeling ideas needed for the calculation where they arise.
+Write for upper-division undergraduates, mostly bioinformatics majors. For most of them this is the only theory and algorithms course they will take, so teach ideas they can use beyond these topics and tools: representing data, formulating a model or objective, deriving and analyzing a computation, and checking what its result supports. Students learn these from the calculations and examples; do not announce them as the course's philosophy or claim that a method is future-proof. Where it helps the lesson, connect them to judging AI-assisted analyses: understanding inputs, checking assumptions and outputs, and interpreting evidence. Most lessons need no explicit discussion of AI.
 
-The target is concise, self-contained lecture notes. Use enough connected prose to set up the problem and explain the reasoning, without expanding into book-length background or treating every topic as a survey. Concision does not permit unexplained formulas, missing assumptions, or skipped mathematical arguments. Preserve mathematical and applied depth through focused derivations, worked examples, and interpretation.
+Assume basic computational linear algebra, introductory programming, single-variable calculus, and basic cell biology. Matrix multiplication, derivatives, logarithms, for loops, and other elementary programming constructs need no review; eigenvalues may be familiar, but explain any new use. Do not assume multivariable calculus, differential equations, a proof-based course, or a formal course in probability, statistics, algorithms, genetics, or optimization. Introduce what an argument needs where it arises, such as partial derivatives before a Jacobian or conditional probability before Bayes' rule. Spell out the logic of a proof, such as why a list of cases is exhaustive, instead of relying on the name of a technique. Do not send students to an appendix to learn a prerequisite for the next line, or interrupt an application with a general review of elementary probability.
+
+Students have little or no training in bioinformatics methods; some may have run tools such as BLAST in an applied course without learning how they work. Explain the relevant biological context and data-producing technology rather than assuming familiarity with sequencing, genome annotation, expression assays, or genetic inference.
+
+Aim for concise, self-contained lecture notes that give a first careful treatment of the theory: complexity, noise, dimensionality, and model assumptions. Use enough connected prose to set up the problem and explain the reasoning, without book-length background or surveys. Concision does not permit unexplained formulas, missing assumptions, or skipped mathematical arguments. Advanced ideas such as EM, constrained optimization, or information theory are welcome when the lesson supplies the needed background; otherwise make the extension optional.
 
 Use the voice of a patient instructor working through a precise question. Treat students as capable learners with different backgrounds. State what we know, explain the next step, and give them something concrete to check. Warmth comes from anticipating a reasonable difficulty and resolving it. Avoid calling a step "obvious," "trivial," or "easy."
-
-Advanced ideas are welcome when the lesson supplies the needed background and reasoning. Explain a new use of conditioning or a new optimization constraint where it arises. Do not send students to an appendix to learn a prerequisite for the next line, or interrupt an application with a general review of elementary probability.
-
-The target is a first careful treatment of the theory: complexity, noise, dimensionality, and model assumptions. Keep the main argument at undergraduate level. Do not assume constrained optimization, EM, or information theory; introduce the needed idea or make the advanced extension optional. The computing reference is for setup and notation conventions, not compressed mathematical prerequisite courses.
-
-Students should learn to identify the data, the question, the model, and the limits of an answer. Develop those habits through the calculations and examples. Do not repeatedly announce them as the course's philosophy.
-
-This may be a student's only course in computational bioinformatics methods. As a general design consideration, favor examples that give practice with ideas and technical skills transferable to other biological problems as tools change. When it helps the lesson, connect that practice to judging AI-assisted analyses: understanding inputs, checking assumptions and outputs, and interpreting evidence. Neither transfer nor AI needs an explicit discussion in every lesson; avoid forced connections and claims that a method is future-proof.
 
 ## The reference and what to learn from it
 
@@ -48,15 +44,15 @@ Section order may vary to explain the subject. Local formatting conventions shou
 
 **Required: every substantial section must make its purpose clear before asking the reader to absorb new machinery.** The purpose may come from biology, an unresolved computation, or a new question about an existing result. A short continuation can inherit its purpose from the preceding paragraph. Do not manufacture a fresh biological story for every subsection.
 
-**Required: set the stage before introducing the mathematical method.** Explain which experiment or technology supplies the available data and what a record literally looks like: for example, measured bases become letter strings, reads are fragments without genomic coordinates, and an expression matrix records measurements for named genes across samples or cells. State the biological question and the inference we want, then translate it into a concrete mathematical problem with explicit inputs, desired output, and assumptions. Solve that problem and interpret what the result supports biologically. Explain only the technological and biological details needed for this chain of reasoning; a continuing lesson may recall an established setup instead of rebuilding it.
+**Required: set the stage before introducing the mathematical method.** Explain which experiment or technology supplies the available data and what a record literally looks like: for example, measured bases become letter strings, reads are fragments without genomic coordinates, and an expression matrix records measurements for named genes across samples or cells. State the biological question and the inference we want, then translate it into a concrete mathematical problem, stated in a `def-` block with **Input** and **Output** lines and its assumptions, as `def-string-reconstruction` in Lesson 6 does. Solve that problem and interpret what the result supports biologically. Explain only the technological and biological details needed for this chain of reasoning; a continuing lesson may recall an established setup instead of rebuilding it.
 
 Use this progression in the lesson's main explanation, not solely in a biology callout. "Sequence analysis is important in modern biology" gives the reader no problem to solve. Mathematical definitions and algorithms should answer a question the reader already understands.
 
 Use Lesson 1's sequencing-to-read comparison as the clarity benchmark throughout the book. At a topic's first appearance, briefly explain what the technology measures, show what one resulting record looks like, and state what we want to learn biologically. Terms such as read, reference, alignment, expression count, and reporter need that orientation before they can carry an explanation. A continuing lesson can recall the established data and pose its new question. Keep the Core question understandable before the lesson's technical definitions, and use a small sketch or comparison when it can show the problem more clearly than another paragraph. Show real or realistic data before abstracting it: reads stacked against a reference, an expression heat map with gene names, a reporter time course. A cited published figure can serve when its license permits reuse (see `STYLE_FIGURES.md`).
 
-**Required: keep the biological meaning connected to the work throughout when informative.** Explain how modeling choices represent the data, why a computational obstacle matters for the inference, what an algorithm's behavior means for the biological question, and what results and limitations allow us to conclude. An opening motivation followed by mathematics with no return to that question is insufficient. Do not force a biological aside into every algebraic step; place these connections where they help the reader understand a choice or an answer.
+**Required: keep the biological meaning connected to the work throughout when informative.** Explain how modeling choices represent the data, why a computational obstacle matters for the inference, what an algorithm's behavior means for the biological question, and what results and limitations allow us to conclude. Anchor the opening in one specific case, such as an organism, a dataset, or a discovery, and return to it once the method is built to say what the answer shows there. The return can be a sentence or two, and a continuing lesson can reuse its module's case. Do not force a biological aside into every algebraic step; place these connections where they help the reader understand a choice or an answer.
 
-Use a named dataset or historical example when it clarifies that inference. Cite empirical and historical claims. Mark toy situations with language such as "suppose" or "in this example." Biological motivation belongs in the main explanation wherever it is needed; it is not confined to an opening `.biology` box.
+Cite empirical and historical claims. Mark toy situations with language such as "suppose" or "in this example." Biological motivation belongs in the main explanation wherever it is needed; it is not confined to an opening `.biology` box.
 
 A bridge should identify the specific relationship between two sections. Common relationships include:
 
@@ -79,7 +75,7 @@ Bridges can occur at the opening of a section, between two displays, after a wor
 Use the following sequence as a default, not as a set of headings:
 
 1. Establish the local question and recall only what is needed to answer it.
-2. Describe the proposed idea in ordinary language, possibly on a small instance.
+2. If an obvious approach exists, run it on a small instance and show where it fails or becomes too costly, as the deletion read defeats the Hamming scan in Lesson 1. Then describe the proposed idea in ordinary language or a picture.
 3. Give the precise definition, equation, or algorithm.
 4. Explain the reasoning that makes it work and show its use on an example.
 5. Interpret the result, including the assumption that matters for its biological use.
@@ -112,7 +108,7 @@ Short annotations beside a display can identify cases or operations. Split a lon
 
 ### Examples and interpretation
 
-Use one small running instance through the definition, calculation, code, and figure when possible. Reusing an instance lets the reader concentrate on the new idea. Change the instance when the change itself teaches something, and explain why.
+Real data shows what a measurement looks like and why the question matters; trace the method itself on a small toy instance. Use one such running instance through the definition, calculation, code, and figure when possible. Reusing an instance lets the reader concentrate on the new idea. Change the instance when the change itself teaches something, and explain why.
 
 A worked example must expose a decision or calculation, not just report a result. Show one table entry, one update, or one competing pair of candidates in detail. Keep instances small enough to trace by hand, but choose them so the new idea changes the answer; an example on which the old method already succeeds cannot show why the new one is needed. Explain what the answer means in the example, including what it supports biologically.
 
@@ -120,7 +116,7 @@ Most hand examples should take about five minutes. A longer example is appropria
 
 ### Correctness, assumptions, and cost
 
-State claims precisely and justify them. Use numbered propositions or theorems for the central results. Default to a proof sketch containing the step on which correctness depends. For dynamic programming, saying "optimal substructure" is insufficient: explain why replacing a prefix by a better prefix would improve the whole solution. A short full proof belongs in the main text when that argument is the lesson. Put longer optional proofs in "Going deeper" blocks and identify any result used without proof.
+State claims precisely and justify them. The readers are bioinformatics students, not mathematicians: give them a taste of theory through at most one or two Theorems per lesson, reserved for the central result, each followed by an argument a student can retell. State smaller facts in a sentence or display, unboxed, with a proof sketch if they need one; do not box them as lemmas, propositions, or corollaries. Default to a proof sketch containing the step on which correctness depends, carried by a few displayed equations with brief connecting sentences rather than a dense paragraph. For dynamic programming, saying "optimal substructure" is insufficient: explain why replacing a prefix by a better prefix would improve the whole solution. A short full proof belongs in the main text when that argument is the lesson. Put longer optional proofs in "Going deeper" blocks and identify any result used without proof.
 
 Keep the model, the algorithm, and the biological conclusion distinct. An exact optimum under a scoring rule need not be the true evolutionary history. State such a qualification once, where it changes an interpretation, after saying what the result does support. A disclaimer after every result buries the claims it qualifies.
 
@@ -226,22 +222,22 @@ Retain recognizable topic names: "Global Alignment," "Markov Chains," "Viterbi D
 
 ### Default budget
 
-Prepare roughly one hour of taught material within the scheduled meeting. This is a teaching-duration target, not an hour of reading or a word-count target. Lesson 1, about 3,000 words of source including code, marks the typical scale and may be slightly short. A lesson well below that scale usually lacks a worked example, a figure, or interpretation; supply what is missing rather than a new topic. Concise, self-contained notes must supply enough derivation, worked examples, biological interpretation, and practice for a full lesson; they must not become skeletal summaries. Estimate time for explanation, board work, tracing an algorithm, and student calculation as well as prose. Add material that advances the lesson's question, without padding. Spend most of the lesson on its one or two central ideas; a side topic that would get only a paragraph is usually better cut or made an exercise.
+Prepare roughly one hour of taught material, leaving the rest of the 80-minute meeting for questions and discussion. Estimate time for explanation, board work, tracing an algorithm, and student calculation, not reading time. Lesson 1 marks the typical scale: about 3,000 words of prose outside code blocks, about 4,000 including code. A lesson well below that scale usually lacks a worked example, a figure, or interpretation; supply what is missing rather than a new topic. A lesson well above it usually needs cutting: remove filler before any explanation. Spend most of the lesson on its one or two central ideas; a side topic that would get only a paragraph is usually better cut or made an exercise. Depth means explaining why a step works, so polish by rewriting and cutting and keep the length roughly the same.
 
 Use these ranges to keep the scale of lessons consistent. They are pacing defaults, not quotas or acceptance tests.
 
 | Element | Default per lesson |
 |---|---|
 | Numbered definitions | 2 to 4; define minor terms in a sentence |
-| Numbered propositions or theorems | 1 or 2, each with justification |
+| Theorems | 0 to 2, each with justification |
 | Worked examples | 2 or 3 |
 | Code chunks | 2 or 3, short |
-| Figures | 2 to 4; at least one shows the central idea at work, not only computed values; a lesson that introduces a kind of data shows what it looks like |
+| Figures | 3 to 6; at least one shows the central idea at work, not only computed values, and may use panels for successive steps of a construction or proof; prefer a figure to prose that describes a picture; a lesson that introduces a kind of data shows what it looks like |
 | Interruptive callouts | At most 2, including Key idea boxes; numbered environments are not callouts |
 | Exercises | 3 to 5 |
 | "Going deeper" blocks | 0 to 2, genuinely optional |
 
-Never add a definition, example, or figure to meet a count. Use more when the explanation requires them, and check that the lesson still fits its time budget. There is no separate word allowance for prose outside mathematical environments: essential reasoning belongs wherever the reader needs it.
+Never add a definition, example, or figure to meet a count. Use more when the explanation requires them, and check that the lesson still fits its time budget. The Lesson 1 word count indicates scale; it is not a cap or a quota, and essential reasoning belongs wherever the reader needs it.
 
 If a lesson is too long, remove a secondary topic or move a technical extension to optional material. Preserve the sentences that explain why a definition appears, how a derivation works, or what a result means. If a lesson is short, check whether it leaves enough to interpret and practice before adding another topic. Lesson 1 provides examples of local conventions and reused instances, not an exemption from this guide's clarity checks.
 
@@ -275,12 +271,11 @@ Reference with `@def-alphabet`. The site builder numbers per lesson ("Definition
 | Prefix | Use |
 |---|---|
 | `def-` | Definition |
-| `thm-` | Theorem |
-| `lem-` | Lemma |
-| `cor-` | Corollary |
-| `prp-` | Proposition |
-| `exm-` | The lesson's worked example |
+| `thm-` | Theorem: the lesson's central result only |
+| `exm-` | A worked example |
 | `exr-` | End-of-lesson exercise, one task each; multi-part problems belong in problem sets |
+
+The builder still accepts `lem-`, `cor-`, and `prp-`, but lessons do not use them. The site draws definitions and theorems in hairline boxes and sets worked examples (`exm-`) between hairline rules, so a reader can find them again. A box holds only the statement or the worked calculation; motivation, interpretation, and bridges stay in the surrounding prose. Box what a reader will return to, such as a problem statement, a key result, or a traced example, not every calculation or remark.
 
 Proofs and proof sketches go in `::: {.proof}` directly after the statement. The site builder labels it "Proof." Open a sketch with "Sketch." as the first word.
 
@@ -307,7 +302,6 @@ Do not use `callout-note` with a "Definition:" title in place of a `def-` block;
 - Accent colors are subordinate. Use them only for small elements such as callout borders, charts, or infographics. Do not use accent colors for headings, links, page backgrounds, or other major brand-bearing elements.
 - Avoid blue or purple as stand-alone interface colors; they can read as other regional university colors.
 - Headings use Montserrat Bold when available. Body copy uses Source Sans when available, with system sans-serif fallbacks.
-- Use the website format deliberately: callouts, margin notes, collapsible code, and accessible figure captions can carry structure that a PDF cannot.
 
 ## Math notation
 
@@ -327,7 +321,7 @@ Do not use `callout-note` with a "Definition:" title in place of a `def-` block;
 
 ## Cross-references
 
-Use Quarto labels everywhere; never "see the figure above." Standard prefixes: `@sec-`, `@fig-`, `@tbl-`, `@eq-`, plus the theorem-like prefixes above.
+Use Quarto labels everywhere; never "see the figure above." Standard prefixes: `@sec-`, `@fig-`, `@tbl-`, `@eq-`, plus the environment prefixes above.
 
 ## Equations
 
@@ -363,7 +357,7 @@ Code serves mathematical understanding. Mention real tools such as BWA, BLAST, a
 
 Allow a student's preferred language unless a particular task needs a restriction. Python and scientific packages describe the lecture examples, not a universal submission requirement. Chris will rarely inspect code line by line; emphasize the reasoning, independently justified checks, actual outputs, and interpretation. Code should remain reproducible and explainable.
 
-For an introductory problem set, aim for 3 or 4 problems and about one hour; later sets usually have 4 or 5. Combine small hand calculations or proofs, a compact coding or debugging task, and a concrete interpretation question. Let students use AI where permitted by the course policy. Ask for meaningful validation and a brief disclosure, not long process narratives. No take-home question is literally LLM-proof; unsupported claims of AI resistance do not belong in student material. Do not introduce new graded quizzes or assessment weights without a course-level decision.
+For an introductory problem set, aim for 3 or 4 problems and about one hour; later sets usually have 4 or 5. Combine small hand calculations or proofs, a compact coding or debugging task, and a concrete interpretation question. Let students use AI where permitted by the course policy. Ask for meaningful validation and a brief disclosure, not long process narratives. A problem adapted from a book uses our own wording and instance and says so at its end ("Adapted from @compeau2015, Ch. 5."). No take-home question is literally LLM-proof; unsupported claims of AI resistance do not belong in student material. Do not introduce new graded quizzes or assessment weights without a course-level decision.
 
 ## Required review before accepting a lesson
 

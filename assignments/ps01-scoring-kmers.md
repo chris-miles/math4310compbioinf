@@ -2,15 +2,17 @@
 published: true
 title: "Problem Set 1: Comparing Sequences and Checking Results"
 subtitle: "Lessons 1 and 2 · About 60 minutes"
+nocite: |
+  @compeau2015
 ---
 
 Submit a short write-up with your calculations, actual program outputs, and explanations, plus the code needed to reproduce those outputs. The problems total 100 points. Use the due date posted in Canvas.
 
 Python, R, Julia, MATLAB, or another language is fine. You may copy and adapt code from the notes and use AI to help write or debug it. Briefly disclose that help and state how you checked the result. The [AI policy](../course-info.html#tools-data-and-ai-use) applies.
 
-Chris will rarely read your code line by line. Most of the evidence for your work should be in the write-up: a calculation with a known answer, a test that would catch a specific mistake, and an explanation of what an output means. Keep those explanations short and specific. For the hand calculations, make a first attempt without tools as exam practice; then use tools to check and correct it.
+Chris will rarely read your code line by line. Most of the evidence for your work should be in the write-up: a calculation with a known answer, a test that would catch a specific mistake, and an explanation of what an output means. Keep those explanations short and specific. For the hand calculations in Problems 1, 2, and 4a, make a first attempt without tools as exam practice; then use tools to check and correct it.
 
-## 1. Two ways to count a change (25 points, about 12 minutes)
+## 1. Two ways to count a change (20 points, about 10 minutes)
 
 Let $x=\texttt{ACGTA}$ and $y=\texttt{CGTAA}$.
 
@@ -22,7 +24,7 @@ c. Suppose these strings are short fragments from corresponding genomic regions.
 
 **Evidence to submit:** marked strings, the edit sequence, and the lower-bound argument.
 
-## 2. Matches as evidence (25 points, about 15 minutes)
+## 2. Matches as evidence (25 points, about 13 minutes)
 
 Use the synthetic pair model from Lesson 2. Background bases are independent and uniform, so every ordered pair has probability $1/16$. Under the related model, each matching pair has probability $1/8$ and each mismatching pair has probability $1/24$.
 
@@ -41,7 +43,7 @@ c. A classmate says, “The higher score proves that candidate A is related.” 
 
 **Evidence to submit:** both scores, one independent ratio calculation, and the interpretation. A screenshot of a calculator alone is not enough.
 
-## 3. Repair a k-mer counter and test the repair (30 points, about 23 minutes)
+## 3. Repair a k-mer counter and test the repair (30 points, about 20 minutes)
 
 This Python code has an intentional counting error. It should count every overlapping length-$k$ word, including repeated occurrences.
 
@@ -66,22 +68,46 @@ b. Run your repaired function on the four cases below. Report the input, expecte
 - That same string with $k$ equal to its length.
 - That same string with $k$ one greater than its length.
 
-c. For valid $k$, check that the sum of all reported counts equals $\max(n-k+1,0)$. Explain why this check would detect the supplied bug, but would *not* detect a program that assigned the right total count to the wrong words.
+c. For valid $k$, check that the sum of all reported counts equals $\max(n-k+1,0)$. Explain why, for $1\le k\le n$, this check would detect the supplied bug, but would *not* detect a program that assigned the right total count to the wrong words.
 
 **Evidence to submit:** your corrected function, the four output comparisons, and a two- or three-sentence explanation connecting the loop bounds to the legal starting positions. If a test fails, preserve the failed output and explain the correction.
 
-## 4. What the counts cannot tell us (20 points, about 10 minutes)
+## 4. What word counts keep and what they hide (25 points, about 14 minutes)
 
-A researcher compares $\texttt{AACAA}$ and $\texttt{ACAAA}$ using their 2-mer count dictionaries.
+a. By hand, list the 2-mer dictionaries of $\texttt{AACAA}$ and $\texttt{ACAAA}$, then check them with your repaired function. Use these outputs to assess the claim “identical counts mean identical sequences.” Name a 3-mer that occurs in one string but not the other.
 
-a. List both dictionaries by hand, then check them with your repaired function. A claim is made: “Identical counts mean identical sequences.” Use these outputs to assess the claim.
+b. Now count words in a real genome, the [phiX174 genome](../data/phix174-NC_001422.1.fasta) (5,386 bases, NCBI accession NC_001422.1), treated as linear as [the data notes](https://github.com/chris-miles/math4310compbioinf/blob/main/data/README.md) describe. The code below reads it into one string and shows how to generate a seeded random genome of the same length for part d.
 
-b. Repeat the comparison at $k=3$. Identify a particular word that distinguishes the strings. Explain why this result does not prove that increasing $k$ will always solve an assembly problem with short or erroneous reads.
+```python
+import random
 
-**Evidence to submit:** the dictionaries and a concise interpretation of what was preserved and what was lost.
+def read_fasta(path: str) -> str:
+    """Return the sequence of a one-record FASTA file as one string."""
+    with open(path) as handle:
+        return "".join(line.strip() for line in handle if not line.startswith(">"))
+
+phix = read_fasta("data/phix174-NC_001422.1.fasta")   # path from the repository root
+
+rng = random.Random(4310)                               # choose and report your own seed
+random_genome = "".join(rng.choice("ACGT") for _ in range(len(phix)))
+```
+
+Before counting, compute the expected number of occurrences of one particular 9-mer, such as $\texttt{ACGTTGCAA}$, in a genome of this length whose letters are independent and uniform. Then write down a guess for the largest count that *any* 9-mer reaches in such a random genome.
+
+c. Count the 9-mers of phiX174 with your repaired function. Report the total count, checked as in Problem 3c, the number of distinct 9-mers, and the most frequent 9-mer with its count.
+
+d. Generate 20 random genomes of length 5,386 with independent uniform letters, using a fixed seed that you report. Record the largest 9-mer count in each genome. Compare these 20 values with your guess from part b and with phiX174. Explain why the largest count in a random genome is far above the expected count from part b. Then say in one or two sentences what the phiX174 count does show and what it does not.
+
+Adapted from @compeau2015, Ch. 1.
+
+**Evidence to submit:** both dictionaries, the expected count and your written guess, the three phiX174 outputs, the 20 maxima with their seed, and the interpretation.
 
 ## Submission check
 
 Include enough output to reproduce each conclusion without opening the code. A compact table or pasted text is preferable to screenshots. End with two or three sentences naming any code, tools, AI assistance, or people you used and describing one check you performed independently. State “No outside assistance” if applicable.
 
-Credit follows the evidence: correct calculations, a justified lower bound, tests with independently known answers, and conclusions limited to what the data support. A program that runs without errors is only the beginning of a check.
+Credit follows the evidence: correct calculations, a justified lower bound, tests with independently known answers, predictions compared honestly with outputs, and conclusions limited to what the data support. A program that runs without errors is only the beginning of a check.
+
+::: {#refs}
+**References**
+:::

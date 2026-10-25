@@ -3,7 +3,7 @@ published: true
 title: "Log-Odds Scoring"
 subtitle: "Lesson 2 · 2027-01-13 · Week 1"
 nocite: |
-  @durbin1998
+  @durbin1998, @compeau2015
 ---
 
 ## Core question
@@ -75,7 +75,9 @@ Both models assume that distinct alignment columns are independent and use the s
 
 A probability specifies a sampling frequency: if we repeatedly generate aligned pairs under $M$, about a fraction $p_{ab}$ of them are the pair $(a,b)$. Because $p_{ab}$ describes both letters together, the entire $4\times4$ table sums to one. A probability conditional on the first letter being A would instead describe frequencies only among pairs whose first letter is A, so those values would sum to one across that row.
 
-One way to estimate $p_{ab}$ is to count aligned pairs in representative sequences already known to be related and normalize the counts. Unobserved pairs need a small positive allowance to satisfy our strictly positive model. Background letter frequencies provide $q_a$. In this lesson, we treat the probabilities as calibrated separately and supplied as inputs, rather than estimating them from the candidate pair we want to judge. The choice of related sequences matters: close relatives generally preserve more identities than distant relatives [@durbin1998], and a model for read mapping must also allow for sequencing errors. With the probabilities fixed, we can examine the scoring rule without first solving an estimation problem.
+One way to estimate $p_{ab}$ is to count aligned pairs in sequences already known to be related and normalize the counts. Those counts require alignments, and choosing alignments requires scores. Biologists break the circle by starting with very close relatives, whose alignment is clear under almost any reasonable score, and moving to more distant comparisons once their counts give better scores [@compeau2015].
+
+Unobserved pairs need a small positive allowance to satisfy our strictly positive model. Background letter frequencies provide $q_a$. In this lesson, we treat the probabilities as calibrated separately and supplied as inputs, rather than estimating them from the candidate pair we want to judge. The choice of related sequences matters: close relatives generally preserve more identities than distant relatives [@durbin1998], and a model for read mapping must also allow for sequencing errors.
 
 Consider a synthetic DNA model with $q_a=1/4$ for every base. In the related model, each of the four matching pairs has probability $1/8$, and each of the twelve mismatching pairs has probability $1/24$.
 
@@ -101,23 +103,22 @@ A positive entry means that this pair is more likely under $M$ than under $R$. I
 
 ## Adding evidence across columns
 
-::: {#prp-pair-additivity}
-## Additive scores are log likelihood ratios
-Under @def-pair-models,
+A sum of column scores is useful only if the total means something for the whole alignment. Under @def-pair-models it does: the total is the log likelihood ratio of the two models for the entire alignment,
 $$
 S(x,y)=\log_2\frac{P(x,y\mid M)}{P(x,y\mid R)}.
 $$
-:::
 
 ::: {.proof}
-Independence across columns gives $P(x,y\mid M)=\prod_{i=1}^n p_{x_i y_i}$ and $P(x,y\mid R)=\prod_{i=1}^n q_{x_i}q_{y_i}$. Therefore
+Sketch. Independence across columns makes each model's probability a product over columns:
+$$
+P(x,y\mid M)=\prod_{i=1}^n p_{x_i y_i},\qquad P(x,y\mid R)=\prod_{i=1}^n q_{x_i}q_{y_i}.
+$$
+The logarithm of a product is the sum of the logarithms, so
 $$
 \log_2\frac{P(x,y\mid M)}{P(x,y\mid R)}
-=\log_2\prod_{i=1}^n\frac{p_{x_i y_i}}{q_{x_i}q_{y_i}}
 =\sum_{i=1}^n\log_2\frac{p_{x_i y_i}}{q_{x_i}q_{y_i}}
 =S(x,y).
 $$
-The second equality uses the logarithm-of-a-product rule. Each observed pair contributes exactly its column score.
 :::
 
 A score of 3 bits means the observed alignment is eight times as likely under $M$ as under $R$. It does not give a probability that $M$ is true. For illustration, suppose $M$ and $R$ are the only possibilities. Before seeing these letters, we assign $M$ probability $1/100$ and $R$ probability $99/100$. These *prior probabilities* express how often we expect each origin among candidate pairs before using their alignment evidence. Bayes' rule combines those starting odds with the likelihood ratio:
@@ -267,9 +268,9 @@ $$
 \mathbb E_R[s]=\frac{16}{25}\log_2(9/8)+\frac{1}{75}(3)-\frac{26}{75}
 \approx-0.198.
 $$
-Unselected A-rich background columns now decrease the score on average. The sign is a consequence of using two normalized probability models, as the next proposition shows.
+Unselected A-rich background columns now decrease the score on average. The sign is a consequence of using two normalized probability models, as the next theorem shows.
 
-::: {#prp-background-log-odds}
+::: {#thm-background-log-odds}
 ## Background expectation of a log-odds score
 For strictly positive normalized pair distributions $p$ and $r$,
 $$
@@ -279,7 +280,13 @@ with equality only when $p=r$.
 :::
 
 ::: {.proof}
-Sketch. For $u>0$, the derivative of $u-1-\ln u$ is $1-1/u$, negative below 1 and positive above 1. Its minimum is therefore zero at $u=1$, proving $\ln u\leq u-1$. Apply this inequality to $u=p_{ab}/r_{ab}$, multiply by $r_{ab}$, and sum. The upper bound is $\sum p_{ab}-\sum r_{ab}=0$. Dividing by $\ln2$ converts to bits. Equality requires $p_{ab}/r_{ab}=1$ for every pair, since every weight $r_{ab}$ is positive.
+Sketch. The argument rests on $\ln u\leq u-1$ for $u>0$: the function $u-1-\ln u$ has derivative $1-1/u$, negative below $u=1$ and positive above, so its minimum value is zero at $u=1$. Apply the inequality to $u=p_{ab}/r_{ab}$, weight by $r_{ab}$, and sum:
+$$
+\sum_{a,b}r_{ab}\ln\frac{p_{ab}}{r_{ab}}
+\leq\sum_{a,b}r_{ab}\Bigl(\frac{p_{ab}}{r_{ab}}-1\Bigr)
+=\sum_{a,b}p_{ab}-\sum_{a,b}r_{ab}=1-1=0.
+$$
+Dividing by $\ln2$ converts to bits. Equality requires $p_{ab}/r_{ab}=1$ in every term, because each weight $r_{ab}$ is positive.
 :::
 
 Thus a properly calibrated log-odds table has negative background expectation unless its two models coincide. Exchanging the roles of $p$ and $r$ in the same argument shows that the expectation under $M$ is positive.
@@ -335,7 +342,7 @@ plt.show()
 
 The simulated totals follow their expected slopes. Under $+1/-1$ scoring, A-rich background columns match with probability $49/75$ and gain about $0.31$ points each, so the chance stream still climbs steadily, at about half the related rate of $0.65$ points per column, and a long unrelated alignment ends with a large positive total. Under the calibrated table, the background stream loses about $0.198$ bits per column, or about $59$ bits in expectation over 300 columns, while the related stream gains about $0.27$ bits per column. Only the calibrated score makes the direction of the walk tell us which model produced the pairs.
 
-The derivation scores a supplied ungapped alignment. Adding gap scores creates an alignment objective whose best alignment we search for in Lesson 3. Reporting the best of many candidates changes the distribution of the reported score, because the search gives unrelated sequence many opportunities to produce a high score.
+The derivation scores a supplied ungapped alignment. Once gaps are allowed, the search itself can manufacture agreement. With free gaps, maximizing the match count between two related protein domains collects many chance matches and splits apart several of the aligned positions that biologists use to predict each domain's function [@compeau2015]. Lesson 3 therefore adds a score for each gap and searches for the best-scoring alignment. Reporting the best of many candidates also changes the distribution of the reported score, because the search gives unrelated sequence many opportunities to produce a high score.
 
 ## Exercises
 
